@@ -1,0 +1,4 @@
+/data/*
+!/data/staticFormats.ts
+/logs/*
+/node_modules/*
