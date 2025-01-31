@@ -1,11 +1,8 @@
 {
   "folders": [
     {
-      "path": "client"
+      "path": "."
     },
-    {
-      "path": "server"
-    }
   ],
   "settings": {},
   "extensions": {
