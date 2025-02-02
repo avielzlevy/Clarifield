@@ -2,6 +2,7 @@
     "app_name": "Clarifield",
     "viewer": "Viewer",
     "admin": "Admin",
+    "entities":"Entities",
     "definitions": "Definitions",
     "definition": "Definition",
     "formats": "Formats",

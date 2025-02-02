@@ -17,7 +17,7 @@
         "icon": { "id": "home", "color": "terminal.ansiBlue" },
         "isBackground": true,
         "options": {
-          "cwd": "${workspaceFolder:client}" // Change just the folder name
+          "cwd": "${workspaceFolder}/client" // Change just the folder name
         },
         "runOptions": { "runOn": "folderOpen" },
         "command": "cmd", // <-- your shell here
@@ -33,7 +33,7 @@
         "icon": { "id": "flame", "color": "terminal.ansiRed" },
         "isBackground": true,
         "options": {
-          "cwd": "${workspaceFolder:server}"
+          "cwd": "${workspaceFolder}/server"
         },
         "runOptions": { "runOn": "folderOpen" },
         "command": "cmd", // <-- your shell here

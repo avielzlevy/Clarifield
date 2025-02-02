@@ -15,12 +15,13 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
-import { ImportContacts, TextFields, Person, ExitToApp, DeviceHub, Settings as SettingIcon } from '@mui/icons-material';
+import { ImportContacts, TextFields, Person, ExitToApp, DeviceHub, Settings as SettingIcon,DataObject } from '@mui/icons-material';
 import ThemeSwitch from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
 import { useAuth } from '../contexts/AuthContext';
 import axios from 'axios';
+import Entities from '../pages/Entities';
 import Definitions from '../pages/Definitions';
 import Formats from '../pages/Formats';
 import SignIn from '../pages/SignIn';
@@ -49,7 +50,9 @@ function PageContent() {
     <Box component="main">
       {page === 'home' ?
         auth === true ? <AdminHome /> : <ViewerHome />
-        : page === 'definitions' ? (
+        : page === 'entities' ? (
+          <Entities />
+        ) : page === 'definitions' ? (
           <Definitions />
         ) : page === 'validation' ? (
           <Validation />
@@ -101,6 +104,7 @@ function NavBar(props) {
   };
 
   const drawerItems = [
+    { text: 'entities', icon: <DataObject />, route: 'entities' },
     { text: 'definitions', icon: <ImportContacts />, route: 'definitions' },
     { text: 'formats', icon: <TextFields />, route: 'formats' },
     { text: 'validation', icon: <DeviceHub />, route: 'validation' },
