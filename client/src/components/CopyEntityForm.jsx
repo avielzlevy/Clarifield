@@ -1,52 +1,65 @@
-import React from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import { Box, Checkbox, FormControlLabel } from '@mui/material';
 
-// This component renders a field. If the field has children, it renders them recursively.
-function FieldCheckbox({ field }) {
-    console.log('field:', field);
-  // Check if the field has children
+/**
+ * This is a controlled, recursive checkbox component.
+ * - It receives a `field` object with properties: label, selected, and (optionally) children.
+ * - It also receives a callback `onChange(path, newField)` which is used to update the field
+ *   in the overall state. The `path` is an array of indexes that locates the field in the tree.
+ */
+function CopyFieldCheckbox({ field, onChange, path = [] }) {
   const isParent = field.children && field.children.length > 0;
-  
-  // For a simple field (no children) we store its own checked state.
-  // For a parent, we will derive its checked state from the children.
-  const [checked, setChecked] = React.useState(false);
-  
-  // For a parent field, store an array of booleans for each child.
-  const [childChecked, setChildChecked] = React.useState(
-    isParent ? field.children.map(() => false) : []
-  );
 
-  // If the field is a parent, determine whether all children are checked or only some
-  const allChildrenChecked = isParent ? childChecked.every(Boolean) : false;
-  const someChildrenChecked = isParent ? childChecked.some(Boolean) : false;
+  // For a parent, derive checked/indeterminate from its children.
+  const allChildrenSelected = isParent ? field.children.every((child) => child.selected) : false;
+  const someChildrenSelected = isParent ? field.children.some((child) => child.selected) : false;
+  const renderedChecked = isParent ? allChildrenSelected : field.selected;
+  const renderedIndeterminate = isParent ? (someChildrenSelected && !allChildrenSelected) : false;
 
-  // The parent's rendered checkbox:
-  // - For a simple field, use its own "checked" state.
-  // - For a parent, show it as checked if all children are checked.
-  // - Also, mark it as "indeterminate" if only some (but not all) children are checked.
-  const renderedChecked = isParent ? allChildrenChecked : checked;
-  const renderedIndeterminate = isParent ? (someChildrenChecked && !allChildrenChecked) : false;
-
-  // When the parent checkbox changes:
-  // - If this field is a parent, update all children to the new value.
-  // - Otherwise, update its own state.
-  const handleParentChange = (event) => {
+  // When the checkbox is toggled...
+  const handleChange = (event) => {
     const newVal = event.target.checked;
-    if (isParent) {
-      setChildChecked(childChecked.map(() => newVal));
-    } else {
-      setChecked(newVal);
-    }
+    // If this field has children, update them all to the new value.
+    const markAll = (fld, value) => {
+      let updated = { ...fld, selected: value };
+      if (fld.children) {
+        updated.children = fld.children.map((child) => markAll(child, value));
+      }
+      return updated;
+    };
+    const newField = isParent ? markAll(field, newVal) : { ...field, selected: newVal };
+    onChange(path, newField);
   };
 
-  // Handle a change in a child checkbox.
-  const handleChildChange = (index, event) => {
-    const newVal = event.target.checked;
-    setChildChecked((prev) => {
-      const next = [...prev];
-      next[index] = newVal;
-      return next;
+  // When a child changes, update the children array.
+  const handleChildChange = (childPath, newChildField) => {
+    const newChildren = field.children.map((child, index) => {
+      if (childPath[0] === index) {
+        if (childPath.length === 1) {
+          return newChildField;
+        } else {
+          // Recursively update nested children.
+          return updateNested(child, childPath.slice(1), newChildField);
+        }
+      }
+      return child;
     });
+    // Optionally update parent's own "selected" based on its children.
+    const updatedField = { ...field, children: newChildren, selected: newChildren.every(child => child.selected) };
+    onChange(path, updatedField);
+  };
+
+  // Helper for updating a nested field.
+  const updateNested = (fld, childPath, newChildField) => {
+    if (childPath.length === 0) return newChildField;
+    const index = childPath[0];
+    const newChildren = fld.children.map((child, i) => {
+      if (i === index) {
+        return updateNested(child, childPath.slice(1), newChildField);
+      }
+      return child;
+    });
+    return { ...fld, children: newChildren, selected: newChildren.every(child => child.selected) };
   };
 
   return (
@@ -57,18 +70,18 @@ function FieldCheckbox({ field }) {
           <Checkbox
             checked={renderedChecked}
             indeterminate={renderedIndeterminate}
-            onChange={handleParentChange}
+            onChange={handleChange}
           />
         }
       />
       {isParent && (
         <Box sx={{ ml: 3 }}>
           {field.children.map((child, index) => (
-            // Note: Here we use FieldCheckbox recursively so that children could in
-            // turn have their own children.
-            <FieldCheckbox
+            <CopyFieldCheckbox
               key={index}
               field={child}
+              path={[...path, index]}
+              onChange={handleChildChange}
             />
           ))}
         </Box>
@@ -77,19 +90,74 @@ function FieldCheckbox({ field }) {
   );
 }
 
-function EditEntityForm(props) {
-  const { node } = props;
-  console.log('copying node:', node);
-  
+/**
+ * CopyEntityForm is used in "copy" mode to let the user select the fields.
+ * It uses forwardRef so that the parent dialog can call getSelectedFields() when needed.
+ */
+const CopyEntityForm = forwardRef(({ node }, ref) => {
+  // Initialize state from node.data.fields by adding a selected property.
+  const [fields, setFields] = useState(() => {
+    const addSelected = (fieldsArray) =>
+      fieldsArray.map((field) => ({
+        ...field,
+        selected: false,
+        children: field.children ? addSelected(field.children) : undefined,
+      }));
+    return addSelected(node.data.fields || []);
+  });
+
+  // Update the field at the given path in the tree.
+  const handleFieldChange = (path, newField) => {
+    setFields((prev) => {
+      const newFields = [...prev];
+      const updateAtPath = (arr, path, value) => {
+        if (path.length === 1) {
+          arr[path[0]] = value;
+        } else {
+          updateAtPath(arr[path[0]].children, path.slice(1), value);
+          // Optionally update parent's selected property.
+          arr[path[0]].selected = arr[path[0]].children.every((child) => child.selected);
+        }
+      };
+      updateAtPath(newFields, path, newField);
+      return newFields;
+    });
+  };
+
+  // Expose a method to get the selected fields. We filter out any fields that were not checked.
+  useImperativeHandle(ref, () => ({
+    getSelectedFields: () => {
+      const filterSelected = (fieldsArray) =>
+        fieldsArray.reduce((acc, field) => {
+          if (field.selected) {
+            // If the field has children, include only the selected ones (if any).
+            const newField = { label: field.label };
+            if (field.children) {
+              const filteredChildren = filterSelected(field.children);
+              if (filteredChildren.length > 0) {
+                newField.children = filteredChildren;
+              }
+            }
+            acc.push(newField);
+          }
+          return acc;
+        }, []);
+      return filterSelected(fields);
+    },
+  }));
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-      {node &&
-        node.data &&
-        node.data.fields.map((field, index) => (
-          <FieldCheckbox key={index} field={field} />
-        ))}
+      {fields.map((field, index) => (
+        <CopyFieldCheckbox
+          key={index}
+          field={field}
+          path={[index]}
+          onChange={handleFieldChange}
+        />
+      ))}
     </Box>
   );
-}
+});
 
-export default EditEntityForm;
+export default CopyEntityForm;

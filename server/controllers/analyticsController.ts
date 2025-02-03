@@ -1,4 +1,4 @@
-import { Context, RouterContext } from "../deps.ts";
+import { Context } from "../deps.ts";
 import { Analytics } from "../models/analytics.ts";
 
 const DATA_FILE = "./data/analytics.json";

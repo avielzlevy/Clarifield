@@ -9,7 +9,6 @@ import FlagIcon from '@mui/icons-material/Flag';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
-import { useRtl } from '../contexts/RtlContext';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 
