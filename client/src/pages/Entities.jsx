@@ -5,6 +5,7 @@ import { useTheme } from '@mui/material/styles';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import EntityCard from '../components/EntityCard';
 import EntitiesDialog from './EntitiesDialog';
+import axios from 'axios';
 
 function Entities() {
     // Register your custom node type.
@@ -19,80 +20,44 @@ function Entities() {
     const [dialogMode, setDialogMode] = useState(null);
 
     // Define your nodes.
-    const [nodes, setNodes] = useState([
-        {
-            id: '1',
-            type: 'entityCard',
-            position: { x: 0, y: 0 },
-            data: {
-                label: 'User',
-                fields: [
-                    { label: 'id' },
-                    { label: 'firstName' },
-                    { label: 'lastName' },
-                    { label: 'email' },
-                    { label: 'appointments' },
-                ],
-            },
-        },
-        {
-            id: '2',
-            type: 'entityCard',
-            position: { x: 250, y: 1000 },
-            data: {
-                label: 'Employee',
-                fields: [
-                    { label: 'id' },
-                    { label: 'employeeId' },
-                    { label: 'firstName' },
-                    { label: 'lastName' },
-                    { label: 'email' },
-                    {
-                        label: 'appointments', 
-                        children: [
-                            { label: 'id' },
-                            { label: 'date' },
-                            { label: 'time' },
-                            { 
-                                label: 'user', 
-                                children: [
-                                    { label: 'id' },
-                                    { label: 'firstName' },
-                                    { label: 'lastName' },
-                                    { label: 'email' },
-                                ]
-                            }
-                        ]
-                    },
-                ],
-            },
-        },
-    ].map((node) => ({
-        ...node,
-        data: {
-            ...node.data,
-            onCopy: () => {
-                setDialogMode('copy');
-                setDialogOpen(true);
-            },
-            onEdit: () => {
-                setDialogMode('edit');
-                setDialogOpen(true);
-            },
-            onMouseEnter: () => {
-                setSelectedNode(node);
-            },
-            onMouseLeave: () => {
-                setSelectedNode(null);
-            }
-        },
-    })));
-
+    const [nodes, setNodes] = useState([]);
     // Custom search dialog state.
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState(null);
-
+    useEffect(() => {
+        const fetchEntities = async () => {
+            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
+            console.log([response.data]);
+            return Object.values(response.data).map((node, index) => ({
+                id: index.toString(),
+                type: 'entityCard',
+                position: { x: index * 150, y: 100 },
+                data: {
+                    label: node.label,
+                    fields: node.fields,
+                    onCopy: () => {
+                        setDialogMode('copy');
+                        setDialogOpen(true);
+                    },
+                    onEdit: () => {
+                        setDialogMode('edit');
+                        setDialogOpen(true);
+                    },
+                    onMouseEnter: () => {
+                        setSelectedNode(node);
+                    },
+                    onMouseLeave: () => {
+                        setSelectedNode(null);
+                    },
+                    onEntityClick: () => {
+                        search(node.label);
+                    }
+                },
+            }));
+        };
+        fetchEntities().then((nodes) => setNodes(nodes));
+    }, []);
     // When the React Flow instance becomes available, check localStorage for the center coordinates.
     useEffect(() => {
         if (reactFlowInstance) {
@@ -139,28 +104,32 @@ function Entities() {
     const handleSearchKeyDown = (event) => {
         if (event.key === 'Enter') {
             event.preventDefault();
-            const searchTerm = searchQuery.trim().toLowerCase();
-            if (!searchTerm) return;
-
-            // Find the first node whose label includes the search term.
-            const foundNode = nodes.find((node) =>
-                node.data.label.toLowerCase().includes(searchTerm)
-            );
-
-            // If a node is found and we have a React Flow instance, center the view on that node.
-            if (foundNode && reactFlowInstance) {
-                const newCenter = {
-                    x: foundNode.position.x + 50,
-                    y: foundNode.position.y + 100,
-                };
-                reactFlowInstance.setCenter(newCenter.x, newCenter.y, { duration: 500 });
-                localStorage.setItem('reactFlowCenter', JSON.stringify(newCenter));
-                setSelectedNode(foundNode);
-                setSearchOpen(false);
-                setSearchQuery('');
-            }
+            search(searchQuery);
         }
     };
+
+    const search = (searchQuery) => {
+        const searchTerm = searchQuery.trim().toLowerCase();
+        if (!searchTerm) return;
+
+        // Find the first node whose label includes the search term.
+        const foundNode = nodes.find((node) =>
+            node.data.label.toLowerCase().includes(searchTerm)
+        );
+
+        // If a node is found and we have a React Flow instance, center the view on that node.
+        if (foundNode && reactFlowInstance) {
+            const newCenter = {
+                x: foundNode.position.x + 50,
+                y: foundNode.position.y + 100,
+            };
+            reactFlowInstance.setCenter(newCenter.x, newCenter.y, { duration: 500 });
+            localStorage.setItem('reactFlowCenter', JSON.stringify(newCenter));
+            setSelectedNode(foundNode);
+            setSearchOpen(false);
+            setSearchQuery('');
+        }
+    }
 
     const onNodesChange = useCallback(
         (changes) => {

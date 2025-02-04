@@ -8,16 +8,17 @@ import {
     IconButton,
     Box
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
+import React, { useEffect } from 'react';
+import DataObjectIcon from '@mui/icons-material/DataObject';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useTheme } from '@mui/material/styles';
 
 function EntityCard(node) {
     const { data } = node;
-    // useEffect(() => {
-    //     console.log(node);
-    // }, [data]);
+    useEffect(() => {
+        console.log(node);
+    }, [data]);
 
     
     const theme = useTheme();
@@ -96,9 +97,10 @@ function EntityCard(node) {
                         </ListSubheader>
                     }
                 >
-                    {data.fields.map((field, index) => (
+                    {data.fields&&data.fields.map((field, index) => (
                         <ListItem
                             key={index}
+                            onClick={field.type==='entity' ? data.onEntityClick : undefined}
                             sx={{
                                 width: '90%',
                                 backgroundColor:
@@ -106,10 +108,9 @@ function EntityCard(node) {
                                         ? '#272727'
                                         : '#e9e9e9',
                                 padding: 0,
-                                
                             }}
                         >
-                            {field.children && <AddIcon sx={{height:10,width:10}} />}
+                            {field.type==='entity' && <DataObjectIcon sx={{height:10,width:10}} />}
                             <ListItemText
                                 slotProps={{ primary: { sx: { fontSize:10 } } }}
                                 primary={field.label}

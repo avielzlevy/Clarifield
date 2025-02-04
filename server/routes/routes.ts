@@ -63,6 +63,6 @@ router
   .post("/api/analytic", addAnalytic)
   .get("/api/addons", getAddons)
   .get("/api/entities", getEntities)
-  .post("/api/entity",auditLogger, addEntity);
+  .post("/api/entities",auditLogger, addEntity);
 
 export default router;
