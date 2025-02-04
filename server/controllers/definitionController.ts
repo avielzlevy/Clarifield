@@ -27,7 +27,7 @@ export const getDefinitions = async (ctx: Context) => {
   ctx.response.body = definitions;
 };
 
-export const getDefinition = async (ctx:RouterContext<"/api/definition/:name",{"name":string}>) => {
+export const getDefinition = (ctx:RouterContext<"/api/definition/:name",{"name":string}>) => {
   const {name} = ctx.params
   if (!name) {
     ctx.response.status = 400;

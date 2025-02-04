@@ -11,14 +11,14 @@ function EditEntityForm(props) {
             flexDirection: 'column',
             gap: 1,
         }}>
-            {node && node.data && node.data.fields.map((field, index) => (
+            {node && node && node.fields.map((field, index) => (
                 <TextField
                     key={index}
                     value={field.label}
                     onChange={(e) => {
-                        const newFields = [...node.data.fields];
+                        const newFields = [...node.fields];
                         newFields[index] = { ...field, label: e.target.value };
-                        setNode({ ...node, data: { ...node.data, fields: newFields } });
+                        setNode({ ...node,  fields: newFields });
                     }}
                 />
             ))}

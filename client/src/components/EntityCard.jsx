@@ -8,19 +8,16 @@ import {
     IconButton,
     Box
 } from '@mui/material';
-import React, { useEffect } from 'react';
+import React from 'react';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { useTheme } from '@mui/material/styles';
+import { useAuth } from '../contexts/AuthContext';
 
 function EntityCard(node) {
     const { data } = node;
-    useEffect(() => {
-        console.log(node);
-    }, [data]);
-
-    
+    const { auth } = useAuth();
     const theme = useTheme();
 
     return (
@@ -52,11 +49,11 @@ function EntityCard(node) {
                     zIndex: 10,
                 }}
             >
-                <IconButton sx={{height:10,width:10}} onClick={data.onEdit}>
-                    <EditIcon sx={{height:10,width:10}}/>
-                </IconButton>
-                <IconButton sx={{height:10,width:10}} onClick={data.onCopy}>
-                    <ContentCopyIcon sx={{height:10,width:10}}/>
+                {auth && <IconButton sx={{ height: 10, width: 10 }} onClick={data.onEdit}>
+                    <EditIcon sx={{ height: 10, width: 10 }} />
+                </IconButton>}
+                <IconButton sx={{ height: 10, width: 10 }} onClick={data.onCopy}>
+                    <ContentCopyIcon sx={{ height: 10, width: 10 }} />
                 </IconButton>
             </Box>
 
@@ -90,17 +87,17 @@ function EntityCard(node) {
                                 padding: 0,
                                 lineHeight: 1,
                                 fontSize: 10,
-                                fontWeight: 'bold', 
+                                fontWeight: 'bold',
                             }}
                         >
-                            {data.label}
+                            {data.label.charAt(0).toUpperCase() + data.label.slice(1)}  
                         </ListSubheader>
                     }
                 >
-                    {data.fields&&data.fields.map((field, index) => (
+                    {data.fields && data.fields.map((field, index) => (
                         <ListItem
                             key={index}
-                            onClick={field.type==='entity' ? data.onEntityClick : undefined}
+                            onClick={field.type === 'entity' ? ()=>data.onEntityClick(field.label) : undefined}
                             sx={{
                                 width: '90%',
                                 backgroundColor:
@@ -110,9 +107,9 @@ function EntityCard(node) {
                                 padding: 0,
                             }}
                         >
-                            {field.type==='entity' && <DataObjectIcon sx={{height:10,width:10}} />}
+                            {field.type === 'entity' && <DataObjectIcon sx={{ height: 10, width: 10 }} />}
                             <ListItemText
-                                slotProps={{ primary: { sx: { fontSize:10 } } }}
+                                slotProps={{ primary: { sx: { fontSize: 10 } } }}
                                 primary={field.label}
                                 sx={{ textAlign: 'center' }}
                             />

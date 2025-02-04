@@ -35,17 +35,17 @@ export const getAffected = (ctx: Context) => {
     string
   >;
 
-  const { format, definition } = query;
+  const { format, definition,entity } = query;
 
   // Validate that only one query parameter is provided
-  const providedParams = [format, definition].filter(
+  const providedParams = [format, definition,entity].filter(
     (param) => param !== undefined
   );
   if (providedParams.length !== 1) {
     ctx.response.status = 400;
     ctx.response.body = {
       message:
-        "Please provide exactly one query parameter: format, definition.",
+        "Please provide exactly one query parameter: format, definition,entity.",
     };
     return;
   }
