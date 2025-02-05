@@ -11,46 +11,74 @@ import CopyEntityForm from '../components/CopyEntityForm';
 import { enqueueSnackbar } from 'notistack'
 import axios from 'axios';
 import ChangeWarning from '../components/ChangeWarning';
+import { useAuth } from '../contexts/AuthContext';
 
-function EntitiesDialog(props) {
+function EntityDialog(props) {
   const { open, onClose, selectedNode, setSelectedNode, mode, nodes, setNodes } = props;
   const [checkedFields, setCheckedFields] = useState([]);
-  const [affectedEntities, setAffectedEntities] = useState([]);
+  const [affectedItems, setAffectedItems] = useState(null);
   const [definitions, setDefinitions] = useState({});
-  const [formats, setFormats] = useState({});
-  const [entities, setEntities] = useState({});
-  const getAffectedEntities = () => {
-    const source = selectedNode.label.toLowerCase()
-    console.log(`entities: ${JSON.stringify(entities)}`);
-    const entitiesNames = Object.keys(entities);
-    const affectedEntities = entitiesNames.filter(entity => {
-      const fields = entities[entity].fields;
-      for (const field of fields) {
-        if (field.type === 'entity' && field.label.toLowerCase() === source) {
-          return true;
-        }
-      }
-      return false;
-    });
-    setAffectedEntities(affectedEntities);
-  }
+  const { logout } = useAuth();
+  const token = localStorage.getItem('token');
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchDefinitions = async () => {
       const definitionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
-      setDefinitions(definitionsResponse.data);
-      const formatsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
-      setFormats(formatsResponse.data);
-      const entitiesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
-      setEntities(entitiesResponse.data);
-    }
-    fetchData();
+      const definitions = definitionsResponse.data;
+      setDefinitions(definitions);
+    };
+    fetchDefinitions();
   }, []);
-  useEffect(() => {
-    if (selectedNode)
-      getAffectedEntities();
-  }, [selectedNode]);
-  const handleAction = async () => {
 
+  const getAffectedEntities = async () => {
+    let affectedDefinitions, affectedEntities;
+    const source = selectedNode.label.toLowerCase()
+    try {
+      const affectedDefinitionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/affected?definition=${source}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      affectedDefinitions = affectedDefinitionsResponse.status === 200 ? affectedDefinitionsResponse.data : {};
+    } catch (e) {
+      if(e.response.status === 401) {
+        logout();
+        return;
+      }
+      affectedDefinitions = {};
+    }
+    try {
+      const affectedEntitiesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/affected?entity=${source}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      affectedEntities = affectedEntitiesResponse.status === 200 ? affectedEntitiesResponse.data : {};
+    } catch (e) {
+      if(e.response.status === 401) {
+        logout();
+        return;
+      }
+      affectedEntities = {};
+    }
+    const affectedAll = { ...affectedDefinitions, ...affectedEntities };
+    if (Object.keys(affectedAll).length === 0) {
+      setAffectedItems(null);
+      return;
+    }
+    setAffectedItems(affectedAll);
+  }
+
+  useEffect(() => {
+    if (selectedNode&&mode==='edit')
+      getAffectedEntities();
+  }, [selectedNode, mode]);
+
+  const handleAction = async () => {
+    const formatsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
+    const formats = formatsResponse.data;
+    const entitiesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
+    const entities = entitiesResponse.data;
     if (mode === 'edit') {
       // Edit the selected node
       const newNodes = [...nodes];
@@ -101,10 +129,10 @@ function EntitiesDialog(props) {
   return (
     <>
       <Dialog open={open} onClose={onClose}>
-        <DialogTitle>{mode === 'edit' ? 'Edit' : 'Copy'} Entity {mode === 'edit' && <ChangeWarning items={affectedEntities} level='warning' />}</DialogTitle>
+        <DialogTitle>{mode === 'edit' ? 'Edit' : 'Copy'} Entity {mode === 'edit' && <ChangeWarning items={affectedItems} level='warning' />}</DialogTitle>
         <DialogContent>
           {mode === 'edit' ? (
-            <EditEntityForm node={selectedNode} setNode={setSelectedNode} />
+            <EditEntityForm node={selectedNode} setNode={setSelectedNode} definitions={definitions} />
           ) : (
             <CopyEntityForm
               node={selectedNode}
@@ -128,4 +156,4 @@ function EntitiesDialog(props) {
   );
 }
 
-export default EntitiesDialog;
+export default EntityDialog;

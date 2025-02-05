@@ -13,10 +13,12 @@ import { enqueueSnackbar } from 'notistack';
 import { useEffect } from 'react';
 import ChangeWarning from '../components/ChangeWarning';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 
 function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch }) {
   const [format, setFormat] = useState({ name: '', pattern: '', description: '' });
   const [patternError, setPatternError] = useState('');
+  const { logout } = useAuth();
   const token = localStorage.getItem('token');
   const { t } = useTranslation();
 
@@ -50,9 +52,8 @@ function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch }) 
       onClose();
     } catch (error) {
       if (error.response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        enqueueSnackbar(t('session_expired'), { variant: 'error' });
+        logout();
+        return;
       }
       else if (error.response.status === 409) {
         enqueueSnackbar(t('format_exists_error'), { variant: 'error' });

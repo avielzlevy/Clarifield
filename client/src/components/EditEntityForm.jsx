@@ -1,29 +1,35 @@
-import React from 'react'
-import { TextField,Box } from '@mui/material'
-//WIP looking to make every textfield an autocomplete field
-//the fields must be populated with available fields from definitions
+import React from 'react';
+import { Autocomplete, TextField, Box } from '@mui/material';
+
 function EditEntityForm(props) {
-    const { node, setNode } = props;
-    console.log('editing node:', node);
+    const { node, setNode, definitions } = props;
+
+    const handleFieldChange = (index, newValue) => {
+        const newFields = [...node.fields];
+        newFields[index] = { ...newFields[index], label: newValue };
+        setNode({ ...node, fields: newFields });
+    };
+
     return (
-        <Box sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 1,
-        }}>
-            {node && node && node.fields.map((field, index) => (
-                <TextField
+        <Box sx={{}}>
+            {node && node.fields.map((field, index) => (
+                <Autocomplete
                     key={index}
+                    options={Object.keys(definitions)}
                     value={field.label}
-                    onChange={(e) => {
-                        const newFields = [...node.fields];
-                        newFields[index] = { ...field, label: e.target.value };
-                        setNode({ ...node,  fields: newFields });
-                    }}
+                    onChange={(event, newValue) => handleFieldChange(index, newValue)}
+                    renderInput={(params) => (
+                        <TextField 
+                            {...params} 
+                            label={`Field ${index + 1}`} 
+                            variant="outlined" 
+                            fullWidth
+                        />
+                    )}
                 />
             ))}
         </Box>
-    )
+    );
 }
 
-export default EditEntityForm
+export default EditEntityForm;

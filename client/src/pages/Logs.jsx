@@ -5,12 +5,14 @@ import {
   TableHead, TableRow, Paper, Typography,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 
 const LogsPage = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
+  const { logout } = useAuth();
   useEffect(() => {
     // Retrieve the authentication token (adjust according to your auth implementation)
     const token = localStorage.getItem('token');
@@ -31,6 +33,10 @@ const LogsPage = () => {
         const parsedLogs = parseLogs(logsData);
         setLogs(parsedLogs);
       } catch (err) {
+        if(err.response.status === 401) {
+          logout();
+          return;
+        }
         setError(err.message);
       } finally {
         setLoading(false);

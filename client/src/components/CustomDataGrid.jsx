@@ -16,7 +16,7 @@ function CustomDataGrid(props) {
   const { rows, columns, handleDeleteRow, handleEditRow, favorites, setFavorites, handleReportRow, onCopy, formats } = props;
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
-  const { auth } = useAuth();
+  const { auth,logout } = useAuth();
   const { t } = useTranslation();
   const [viewportSize, setViewportSize] = useState({
     width: window.innerWidth,

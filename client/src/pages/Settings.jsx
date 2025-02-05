@@ -3,7 +3,9 @@ import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } fr
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../contexts/AuthContext';
 const Settings = () => {
+    const { logout } = useAuth();
     const token = localStorage.getItem('token');
     const [settings, setSettings] = useState({ namingConvention: '' });
     const { t } = useTranslation();
@@ -17,6 +19,10 @@ const Settings = () => {
             setSettings(response.data);
             console.log({ data: response.data });
         } catch (error) {
+            if (error.response.status === 401) {
+                logout();
+                return;
+            }
             console.error('Error fetching settings:', error);
             enqueueSnackbar(t('settings_fetch_failed'), { variant: 'error' });
         }
@@ -32,19 +38,22 @@ const Settings = () => {
         }));
     };
 
-    const handleApplyClick = () => {
-        axios
-            .put(`${process.env.REACT_APP_API_URL}/api/settings`, settings, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-            .then(() => {
-                console.log('Settings applied successfully');
-                enqueueSnackbar(t('settings_update_success'), { variant: 'success' });
-            })
-            .catch((error) => {
-                console.error('Error applying settings:', error);
-                enqueueSnackbar(t('settings_update_failed'), { variant: 'error' });
-            });
+    const handleApplyClick = async () => {
+        try {
+            await axios
+                .put(`${process.env.REACT_APP_API_URL}/api/settings`, settings, {
+                    headers: { Authorization: `Bearer ${token}` },
+                })
+            console.log('Settings applied successfully');
+            enqueueSnackbar(t('settings_updated'), { variant: 'success' });
+        } catch (error) {
+            if (error.response.status === 401) {
+                logout();
+                return;
+            }
+            console.error('Error applying settings:', error);
+            enqueueSnackbar(t('settings_update_failed'), { variant: 'error' });
+        }
     };
 
     return (
@@ -54,17 +63,18 @@ const Settings = () => {
                 flexDirection: 'column',
                 gap: 2,
                 padding: 2,
-                flexGrow: 1,}}
+                flexGrow: 1,
+            }}
         >
             <Typography variant="h6" gutterBottom>
                 {t('settings')}
             </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2,maxWidth: 400 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: 400 }}>
                 <FormControl fullWidth>
                     <InputLabel id="naming-convention-label">
-                    {t('naming_conventions')}
-                        </InputLabel>
+                        {t('naming_conventions')}
+                    </InputLabel>
                     <Select
                         labelId="naming-convention-label"
                         id="naming-convention"

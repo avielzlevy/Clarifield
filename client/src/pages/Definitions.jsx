@@ -32,7 +32,7 @@ function Definitions() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [actionedDefinition, setActionedDefinition] = useState(null);
   const [affected, setAffected] = useState(null);
-  const { auth } = useAuth();
+  const { auth,logout } = useAuth();
   const token = localStorage.getItem('token');
   const fetchDefinitions = async () => {
     try {
@@ -71,9 +71,13 @@ function Definitions() {
 
   const deleteDefinition = async (deletedDefintion) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/definitions/${deletedDefintion.name}`, {
+      const response = await axios.delete(`${process.env.REACT_APP_API_URL}/api/definitions/${deletedDefintion.name}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
+      if (response.status === 401) {
+        logout()
+        return
+      }
       setDefinitions((prev) => prev.filter((def) => def.name !== deletedDefintion.name));
       enqueueSnackbar('Definition deleted successfully', { variant: 'success' });
       setDeleteDialogOpen(false);
@@ -93,7 +97,11 @@ function Definitions() {
       const affected = response.data;
       setAffected(affected);
     } catch (error) {
-      if (error.response.status === 404) {
+      if(error.response.status === 401){
+        logout()
+        return
+      }
+      else if (error.response.status === 404) {
         setAffected(null);
       } else {
         console.error('Error fetching affected:', error);
@@ -249,12 +257,12 @@ function Definitions() {
     }
   }
 
-  const handleCopy = async (selectedData,type) => {
+  const handleCopy = async (selectedData, type) => {
     const data = selectedData.map((def) => {
       const formatPattern = formats[def.format]?.pattern || 'Pattern not found';
       const regexType = determineRegexType(formatPattern);
-      sendAnalytics(def.name,'definition',1)
-      sendAnalytics(formatPattern,'format',1)
+      sendAnalytics(def.name, 'definition', 1)
+      sendAnalytics(formatPattern, 'format', 1)
       return {
         name: def.name,
         type: regexType,
@@ -393,7 +401,7 @@ function Definitions() {
 
   return (
     <Box sx={{
-      padding:'4px',
+      padding: '4px',
       width: '100%',
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -420,7 +428,7 @@ function Definitions() {
           handleReportRow={handleReportDialogClick}
           onCopy={handleCopy}
           formats={formats}
-          />
+        />
         <DefinitionDialog mode={dialogMode} open={DialogOpen} onClose={handleAddDialogClose} editedDefinition={actionedDefinition} affected={affected} refetch={fetchDefinitions} />
         <DeleteDialog open={deleteDialogOpen} onClose={handleDeleteDialogClose} deletedItem={actionedDefinition} onDelete={deleteDefinition} />
         <ReportDialog open={reportDialogOpen} onClose={handleReportDialogClose} reportedItem={actionedDefinition} />

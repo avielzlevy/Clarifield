@@ -11,12 +11,14 @@ import {
 import { Autocomplete } from '@mui/material'; // Import Autocomplete
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack'; // Import useSnackbar
+import { useAuth } from '../contexts/AuthContext'; // Import logout
 
-function DefinitionDialog({mode, open, onClose,editedDefinition,refetch}) {
+function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
   const [definition, setDefinition] = useState({ name: '', format: '', description: '' });
   const [formats, setFormats] = useState([]);
   const [namingConvention, setNamingConvention] = useState('');
   const [namingConventionError, setNamingConventionError] = useState('');
+  const { logout } = useAuth();
 
   const fetchFormats = async () => {
     try {
@@ -31,7 +33,7 @@ function DefinitionDialog({mode, open, onClose,editedDefinition,refetch}) {
 
   useEffect(() => {
     fetchFormats();
-    if(editedDefinition){
+    if (editedDefinition) {
       setDefinition(editedDefinition)
     }
     const token = localStorage.getItem('token');
@@ -42,6 +44,10 @@ function DefinitionDialog({mode, open, onClose,editedDefinition,refetch}) {
         });
         setNamingConvention(response.data.namingConvention);
       } catch (error) {
+        if (error.response.status === 401) {
+          logout()
+          return
+        }
         console.error('Error fetching naming convention:', error);
         enqueueSnackbar('Error fetching naming convention', { variant: 'error' });
       }
@@ -51,7 +57,7 @@ function DefinitionDialog({mode, open, onClose,editedDefinition,refetch}) {
 
   const handleSubmit = async () => {
 
-    
+
     // Naming convention validation
     if (namingConvention) {
       switch (namingConvention) {
@@ -88,15 +94,14 @@ function DefinitionDialog({mode, open, onClose,editedDefinition,refetch}) {
     try {
       await axios[mode === 'add' ? 'post' : 'put'](`${process.env.REACT_APP_API_URL}/api/definitions${mode === 'add' ? '' : `/${definition.name}`}`, definition, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
+      })
       refetch();
       setDefinition({ name: '', format: '', description: '' });
       onClose()
     } catch (error) {
       if (error.response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
-        enqueueSnackbar('Session expired. Please sign in again.', { variant: 'error' });
+        logout();
+        return;
       }
       else if (error.response.status === 409) {
         enqueueSnackbar('Definition already exists', { variant: 'error' });

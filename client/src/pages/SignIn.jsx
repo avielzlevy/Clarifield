@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 function SignIn() {
   const [credentials, setCredentials] = useState({ username: '', password: '' });
   const { setPage } = usePage();
-  const { setAuth } = useAuth();
+  const { login } = useAuth();
   const { t } = useTranslation();
   const { enqueueSnackbar } = useSnackbar(); // Access enqueueSnackbar via useSnackbar
 
@@ -18,11 +18,16 @@ function SignIn() {
     e.preventDefault();
     try {
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/signin`, credentials);
-      localStorage.setItem('token', response.data.token);
       localStorage.setItem('username', response.data.username);
-      setAuth(true);
+      login(response.data.token);
       enqueueSnackbar(t('signed_in'), { variant: 'success' });
-      setPage('home');
+      const previousPage = localStorage.getItem('previousPage');
+      if (previousPage) {
+        setPage(previousPage);
+        localStorage.removeItem('previousPage');
+      } else {
+        setPage('home');
+      }
     } catch (error) {
       console.error('Authentication failed', error);
       // Extract a more specific error message if available

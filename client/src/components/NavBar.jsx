@@ -15,7 +15,7 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
-import { ImportContacts, TextFields, Person, ExitToApp, DeviceHub, Settings as SettingIcon,DataObject } from '@mui/icons-material';
+import { ImportContacts, TextFields, Person, ExitToApp, DeviceHub, Settings as SettingIcon, DataObject } from '@mui/icons-material';
 import ThemeSwitch from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
@@ -35,16 +35,15 @@ import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 function PageContent() {
   const { page } = usePage();
-  const { setAuth, auth } = useAuth();
+  const { logout,login, auth } = useAuth();
   const token = localStorage.getItem('token');
   if (token)
     axios.get(`${process.env.REACT_APP_API_URL}/api/token/verify`, { headers: { Authorization: `Bearer ${token}` } })
       .then(() => {
-        setAuth(true);
+        login(token);
       })
       .catch(() => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('username');
+        logout();
       });
   return (
     <Box component="main">
@@ -63,7 +62,7 @@ function PageContent() {
         ) : page === 'settings' ? (
           <Settings />
         ) : page === 'analytics' ? (
-          <Analytics/>
+          <Analytics />
         ) : page === 'logs' ? (
           <Logs />
         ) : (<div>Page Not Found</div>)}
@@ -76,8 +75,8 @@ const drawerWidth = 240;
 
 function NavBar(props) {
   const { theme, setTheme } = props;
-  const { setPage } = usePage();
-  const { setAuth, auth } = useAuth();
+  const { page,setPage } = usePage();
+  const { auth,logout } = useAuth();
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username') || 'Viewer';
   const { t } = useTranslation();
@@ -90,17 +89,18 @@ function NavBar(props) {
           setPage('home');
         })
         .catch(() => {
+          localStorage.setItem('previousPage', page);
           setPage('signin');
+          logout()
         });
     } else {
+      localStorage.setItem('previousPage', page);
       setPage('signin');
     }
   };
 
   const handleSignOut = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    setAuth(false);
+    logout();
   };
 
   const drawerItems = [

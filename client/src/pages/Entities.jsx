@@ -1,10 +1,10 @@
-import { ReactFlow, Controls, Background, applyNodeChanges } from '@xyflow/react';
+import { ReactFlow, Controls, Background, applyNodeChanges, useViewport, ReactFlowProvider } from '@xyflow/react';
 import { Box, Dialog, DialogTitle, DialogContent, TextField, CircularProgress } from '@mui/material';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from '@mui/material/styles';
-import { useMemo, useState, useEffect, useCallback,useRef } from 'react';
+import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import EntityCard from '../components/EntityCard';
-import EntitiesDialog from './EntitiesDialog';
+import EntityDialog from './EntityDialog';
 import axios from 'axios';
 
 function Entities() {
@@ -17,6 +17,18 @@ function Entities() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState(null);
+    const [storedCenter, setStoredCenter] = useState(() => {
+        const storedCenter = localStorage.getItem('reactFlowCenter');
+        if (storedCenter) {
+            try {
+                return JSON.parse(storedCenter);
+            } catch (error) {
+                console.error('Failed to parse center coordinates:', error);
+            }
+        }
+        return { x: 0, y: 0 };
+    });
+    const viewport = useViewport();
 
     const nodesRef = useRef(nodes);
     const reactFlowInstanceRef = useRef(null);
@@ -102,18 +114,8 @@ function Entities() {
     };
 
     useEffect(() => {
-        if (reactFlowInstanceRef.current) {
-            const storedCenter = localStorage.getItem('reactFlowCenter');
-            if (storedCenter) {
-                try {
-                    const { x, y } = JSON.parse(storedCenter);
-                    reactFlowInstanceRef.current.setCenter(x, y, { duration: 0 });
-                } catch (error) {
-                    console.error('Failed to parse center coordinates:', error);
-                }
-            }
-        }
-    }, [reactFlowInstanceRef.current]); // Only run when instance ref changes
+        localStorage.setItem('reactFlowCenter', JSON.stringify(viewport));
+    }, [viewport]);
 
     const onInit = (instance) => {
         // console.log('ReactFlow instance initialized:', instance);
@@ -128,10 +130,10 @@ function Entities() {
         const currentNodes = nodesRef.current;
         // console.log('Current nodes:', currentNodes);
 
-        const foundNode = currentNodes.find(node => 
+        const foundNode = currentNodes.find(node =>
             node.data.label.toLowerCase().includes(searchTerm)
         );
-        
+
         // console.log('Found node:', foundNode);
         // console.log('React Flow instance:', reactFlowInstanceRef.current);
 
@@ -187,6 +189,7 @@ function Entities() {
                         nodes={nodes}
                         nodeTypes={nodeTypes}
                         onNodesChange={onNodesChange}
+                        defaultViewport={storedCenter}
                         snapToGrid
                         style={{
                             '--xy-controls-button-background-color-default':
@@ -225,7 +228,7 @@ function Entities() {
                     />
                 </DialogContent>
             </Dialog>
-            <EntitiesDialog
+            <EntityDialog
                 open={dialogOpen}
                 onClose={() => setDialogOpen(false)}
                 selectedNode={selectedNode}
@@ -238,4 +241,12 @@ function Entities() {
     );
 }
 
-export default Entities;
+function EntitiesWithProvider(props) {
+    return (
+        <ReactFlowProvider>
+            <Entities {...props} />
+        </ReactFlowProvider>
+    );
+}
+
+export default EntitiesWithProvider;

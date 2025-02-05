@@ -23,7 +23,7 @@ function Formats() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [actionedFormat, setActionedFormat] = useState(null);
   const [affected, setAffected] = useState(null);
-  const { auth } = useAuth();
+  const { auth,logout } = useAuth();
   const token = localStorage.getItem('token');
   const { t } = useTranslation();
 
@@ -60,6 +60,10 @@ function Formats() {
       handleDeleteDialogClose();
       setActionedFormat(null);
     } catch (error) {
+      if (error.response.status === 401) {
+        logout()
+        return;
+      }
       console.error('Error deleting format:', error);
       enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
       handleDeleteDialogClose();
@@ -74,7 +78,11 @@ function Formats() {
       const affected = response.data;
       setAffected(affected);
     } catch (error) {
-      if (error.response.status === 404) {
+      if (error.response.status === 401) {
+        logout()
+        return;
+      }
+      else if (error.response.status === 404) {
         setAffected(null);
       } else {
         console.error('Error fetching affected:', error);
@@ -123,7 +131,8 @@ function Formats() {
 
   const columns = [
     { field: 'name', headerName: t('name'), flex: 1 },
-    { field: 'pattern', headerName: t('pattern'), flex: 2 ,
+    {
+      field: 'pattern', headerName: t('pattern'), flex: 2,
       renderCell: (params) => (
         <Typography variant="body2" sx={{
           marginTop: '3%',

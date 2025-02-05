@@ -58,13 +58,16 @@ export const getAffected = (ctx: Context) => {
   if (format) {
     initialReference = decodeURIComponent(format);
     referenceKey = "format";
-    files = ["definitions.json", "models.json", "schemas.json"];
+    files = ["definitions.json"];
   } else if (definition) {
     initialReference = decodeURIComponent(definition);
     referenceKey = "definition";
-    files = ["models.json", "schemas.json"];
-  }
-
+    files = ["entities.json"];
+  } else if (entity) {
+    initialReference = decodeURIComponent(entity);
+    referenceKey = "entity";
+    files = ["entities.json"];
+  } 
   // Initialize usages and references
   const usages: Record<string, string[]> = {};
   let currentReferences: Set<string> = new Set([initialReference]);
@@ -95,7 +98,7 @@ export const getAffected = (ctx: Context) => {
 
     for (const [name, item] of Object.entries(data)) {
       let isMatch = false;
-
+      
       switch (referenceKey) {
         case "format":
           // Search definitions that use the specified format
@@ -104,18 +107,15 @@ export const getAffected = (ctx: Context) => {
           }
           break;
         case "definition":
-          // Search models that use the specified definition
-          if (
-            item.definitions &&
-            Array.isArray(item.definitions) &&
-            item.definitions.includes(initialReference)
-          ) {
+          // Search entities that use the specified definition
+          console.log(`testing ${JSON.stringify(item.fields,null,2)} against ${initialReference}`)
+          if (item.fields.filter((field:any)=>field.label === initialReference).length > 0) {
             isMatch = true;
           }
           break;
-        case "model":
-          // Search schemas that use the specified model
-          if (item.model === initialReference) {
+        case "entity":
+          // Search entities that use the specified entity
+          if (item.label === initialReference||item.fields.filter((field:any)=>field.label === initialReference).length > 0) {
             isMatch = true;
           }
           break;
@@ -139,9 +139,10 @@ export const getAffected = (ctx: Context) => {
     // Update the referenceKey for the next file in the chain
     if (referenceKey === "format") {
       referenceKey = "definition";
-    } else if (referenceKey === "definition") {
-      referenceKey = "model";
+    } else if (referenceKey === "definition"||referenceKey === "entity") {
+      referenceKey = "entity";
     }
+
 
     // If no new references are found, stop searching further files
     if (currentReferences.size === 0) {
