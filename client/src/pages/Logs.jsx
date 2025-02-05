@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   Table, TableBody, TableCell, TableContainer,
-  TableHead, TableRow, Paper, Typography,
+  TableHead, TableRow, Paper, Typography, CircularProgress, Box
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,7 +33,7 @@ const LogsPage = () => {
         const parsedLogs = parseLogs(logsData);
         setLogs(parsedLogs);
       } catch (err) {
-        if(err.response.status === 401) {
+        if (err.response.status === 401) {
           logout();
           return;
         }
@@ -70,7 +70,23 @@ const LogsPage = () => {
   };
 
   if (loading) {
-    return <p>Loading logs...</p>;
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light blur overlay
+        backdropFilter: 'blur(5px)', // Apply blur
+        zIndex: 9999, // Ensure it's above everything
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <CircularProgress />
+    </Box>
   }
 
   if (error) {
