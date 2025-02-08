@@ -108,7 +108,7 @@ export const getAffected = (ctx: Context) => {
           break;
         case "definition":
           // Search entities that use the specified definition
-          console.log(`testing ${JSON.stringify(item.fields,null,2)} against ${initialReference}`)
+          // console.log(`testing ${JSON.stringify(item.fields,null,2)} against ${initialReference}`)
           if (item.fields.filter((field:any)=>field.label === initialReference).length > 0) {
             isMatch = true;
           }

@@ -4,7 +4,6 @@ import {
   Typography,
   IconButton,
 } from '@mui/material';
-import SyntaxHighlighter from 'react-syntax-highlighter';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import FormatDialog from './FormatDialog';
@@ -61,7 +60,7 @@ function Formats() {
       setActionedFormat(null);
     } catch (error) {
       if (error.response.status === 401) {
-        logout()
+        logout({ mode: 'bad_token' });
         return;
       }
       console.error('Error deleting format:', error);
@@ -79,7 +78,7 @@ function Formats() {
       setAffected(affected);
     } catch (error) {
       if (error.response.status === 401) {
-        logout()
+        logout({ mode: 'bad_token' });
         return;
       }
       else if (error.response.status === 404) {

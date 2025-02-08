@@ -52,7 +52,7 @@ function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch }) 
       onClose();
     } catch (error) {
       if (error.response.status === 401) {
-        logout();
+        logout({ mode: 'bad_token' });
         return;
       }
       else if (error.response.status === 409) {

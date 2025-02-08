@@ -17,7 +17,7 @@ import {
   getAnalytics,
   addAnalytic,
 } from "../controllers/analyticsController.ts";
-import { getEntities, addEntity } from "../controllers/entitiesController.ts";
+import { getEntities, addEntity,updateEntity } from "../controllers/entitiesController.ts";
 import {
   getReports,
   addReport,
@@ -63,6 +63,7 @@ router
   .post("/api/analytic", addAnalytic)
   .get("/api/addons", getAddons)
   .get("/api/entities", getEntities)
-  .post("/api/entities",auditLogger, addEntity);
+  .post("/api/entities",auditLogger,authMiddleware, addEntity)
+  .put("/api/entity/:name",auditLogger,authMiddleware, updateEntity);
 
 export default router;

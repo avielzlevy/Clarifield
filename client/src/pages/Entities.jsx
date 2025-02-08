@@ -1,11 +1,13 @@
 import { ReactFlow, Controls, Background, applyNodeChanges, useViewport, ReactFlowProvider } from '@xyflow/react';
-import { Box, Dialog, DialogTitle, DialogContent, TextField, CircularProgress } from '@mui/material';
+import { Box, Dialog, DialogTitle, DialogContent, TextField, CircularProgress, Fab } from '@mui/material';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from '@mui/material/styles';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import EntityCard from '../components/EntityCard';
 import EntityDialog from './EntityDialog';
 import axios from 'axios';
+import AddIcon from '@mui/icons-material/Add';
 
 function Entities() {
     const nodeTypes = useMemo(() => ({ entityCard: EntityCard }), []);
@@ -17,7 +19,8 @@ function Entities() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState(null);
-    const [storedCenter, setStoredCenter] = useState(() => {
+    const { auth } = useAuth();
+    const [storedCenter] = useState(() => {
         const storedCenter = localStorage.getItem('reactFlowCenter');
         if (storedCenter) {
             try {
@@ -38,7 +41,7 @@ function Entities() {
     }, [nodes]);
 
     // Move fetchEntities outside useEffect so we can reuse it
-    const fetchEntities = async () => {
+    const fetchNodes = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
             const newNodes = Object.values(response.data).map((node, index) => ({
@@ -56,31 +59,34 @@ function Entities() {
                         setDialogMode('edit');
                         setDialogOpen(true);
                     },
+                    onDelete: () => {
+                        setDialogMode('delete');
+                        setDialogOpen(true);
+                    },
                     onMouseEnter: () => {
                         setSelectedNode(node);
                     },
                     onMouseLeave: () => {
                         setSelectedNode(null);
+                        setDialogMode(null);
                     },
                     onEntityClick: (nodeLabel) => {
                         search(nodeLabel);
                     }
                 },
             }));
-            return newNodes;
+            setNodes(newNodes);
+            setLoading(false);
         } catch (error) {
             console.error('Error fetching entities:', error);
-            return [];
+            setNodes([]);
+            setLoading(false);
         }
     };
 
     // Initial data fetch
     useEffect(() => {
-        fetchEntities().then((newNodes) => {
-            setNodes(newNodes);
-            // console.log('Nodes:', newNodes);
-            setLoading(false);
-        });
+        fetchNodes()
     }, []);
 
     useEffect(() => {
@@ -174,41 +180,59 @@ function Entities() {
                     <CircularProgress />
                 </Box>
             ) : (
-                <Box
-                    sx={{
-                        height: '89.5vh',
-                        width: '100%',
-                        backgroundColor: theme.palette.background.paper !== '#fff'
-                            ? theme.palette.background.paper
-                            : '#e9e9e9',
-                        border: `1px solid ${theme.palette.divider}`,
-                    }}
-                >
-                    <ReactFlow
-                        onInit={onInit}
-                        nodes={nodes}
-                        nodeTypes={nodeTypes}
-                        onNodesChange={onNodesChange}
-                        defaultViewport={storedCenter}
-                        snapToGrid
-                        style={{
-                            '--xy-controls-button-background-color-default':
-                                theme.palette.background.paper !== '#fff' ? '#393939' : '#e9e9e9',
-                            '--xy-controls-button-background-color-hover-default':
-                                theme.palette.background.paper !== '#fff' ? '#5c5c5c' : '#bfbcbc',
-                            '--xy-controls-button-color-default': theme.palette.text.primary,
-                            '--xy-controls-button-color-hover-default': 'inherit',
-                            '--xy-controls-button-border-color-default': '#5c5c5c',
-                            '--xy-node-color-default':
-                                theme.palette.background.paper !== '#fff' ? '#fafafa' : '#393939',
-                            '--xy-node-border-default': theme.palette.divider,
-                            '--xy-node-background-color-default':
-                                theme.palette.background.paper !== '#fff' ? '#393939' : '#b0b0b0',
+                <Box sx={{ position: 'relative', height: '89.5vh', width: '100%' }}>
+                    <Box
+                        sx={{
+                            height: '100%',
+                            width: '100%',
+                            backgroundColor: theme.palette.background.paper !== '#fff'
+                                ? theme.palette.background.paper
+                                : '#e9e9e9',
+                            border: `1px solid ${theme.palette.divider}`,
                         }}
                     >
-                        <Background />
-                        <Controls />
-                    </ReactFlow>
+                        <ReactFlow
+                            onInit={onInit}
+                            nodes={nodes}
+                            nodeTypes={nodeTypes}
+                            onNodesChange={onNodesChange}
+                            defaultViewport={storedCenter}
+                            snapToGrid
+                            style={{
+                                '--xy-controls-button-background-color-default':
+                                    theme.palette.background.paper !== '#fff' ? '#393939' : '#e9e9e9',
+                                '--xy-controls-button-background-color-hover-default':
+                                    theme.palette.background.paper !== '#fff' ? '#5c5c5c' : '#bfbcbc',
+                                '--xy-controls-button-color-default': theme.palette.text.primary,
+                                '--xy-controls-button-color-hover-default': 'inherit',
+                                '--xy-controls-button-border-color-default': '#5c5c5c',
+                                '--xy-node-color-default':
+                                    theme.palette.background.paper !== '#fff' ? '#fafafa' : '#393939',
+                                '--xy-node-border-default': theme.palette.divider,
+                                '--xy-node-background-color-default':
+                                    theme.palette.background.paper !== '#fff' ? '#393939' : '#b0b0b0',
+                            }}
+                        >
+                            <Background />
+                            <Controls />
+                        </ReactFlow>
+                    </Box>
+                    {auth === true && <Fab
+                        color="primary"
+                        aria-label="add"
+                        onClick={() => {
+                            setDialogMode('create');
+                            setDialogOpen(true);
+                        }}
+                        sx={{
+                            position: 'absolute',
+                            bottom: 16,
+                            right: 16,
+                            zIndex: 999,
+                        }}
+                    >
+                        <AddIcon />
+                    </Fab>}
                 </Box>
             )}
             <Dialog open={searchOpen} onClose={handleSearchClose}>
@@ -230,12 +254,16 @@ function Entities() {
             </Dialog>
             <EntityDialog
                 open={dialogOpen}
-                onClose={() => setDialogOpen(false)}
+                onClose={() => {
+                    setDialogOpen(false)
+                    setDialogMode(null)
+                }}
                 selectedNode={selectedNode}
                 setSelectedNode={setSelectedNode}
                 mode={dialogMode}
                 nodes={nodes}
                 setNodes={setNodes}
+                fetchNodes={fetchNodes}
             />
         </>
     );

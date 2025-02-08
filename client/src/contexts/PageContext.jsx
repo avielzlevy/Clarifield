@@ -11,9 +11,16 @@ export const usePage = () => {
 // Context Provider component
 export const PageProvider = ({ children }) => {
   const [page, setPage] = useState('home');
-
+  //automaticly redirect to the home page if nonauthenticated user is on a page that requires authentication
+  const authRedirect = () => {
+    const authedPages = ['settings', 'analytics', 'logs'];
+    if (!localStorage.getItem('token') && authedPages.includes(page)) {
+      setPage('home');
+    }
+  };
+  authRedirect()
   return (
-    <PageContext.Provider value={{ page, setPage }}>
+    <PageContext.Provider value={{ page, setPage,authRedirect }}>
       {children}
     </PageContext.Provider>
   );

@@ -75,7 +75,7 @@ function Definitions() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       if (response.status === 401) {
-        logout()
+        logout({ mode: 'bad_token' });
         return
       }
       setDefinitions((prev) => prev.filter((def) => def.name !== deletedDefintion.name));
@@ -98,7 +98,7 @@ function Definitions() {
       setAffected(affected);
     } catch (error) {
       if(error.response.status === 401){
-        logout()
+        logout({ mode: 'bad_token' });
         return
       }
       else if (error.response.status === 404) {

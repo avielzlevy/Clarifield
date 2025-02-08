@@ -17,10 +17,10 @@ const Settings = () => {
                 headers: { Authorization: `Bearer ${token}` },
             });
             setSettings(response.data);
-            console.log({ data: response.data });
+            // console.log({ data: response.data });
         } catch (error) {
             if (error.response.status === 401) {
-                logout();
+                logout({ mode: 'bad_token' });
                 return;
             }
             console.error('Error fetching settings:', error);
@@ -44,11 +44,11 @@ const Settings = () => {
                 .put(`${process.env.REACT_APP_API_URL}/api/settings`, settings, {
                     headers: { Authorization: `Bearer ${token}` },
                 })
-            console.log('Settings applied successfully');
+            // console.log('Settings applied successfully');
             enqueueSnackbar(t('settings_updated'), { variant: 'success' });
         } catch (error) {
             if (error.response.status === 401) {
-                logout();
+                logout({ mode: 'bad_token' });
                 return;
             }
             console.error('Error applying settings:', error);

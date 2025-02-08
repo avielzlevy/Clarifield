@@ -2,8 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
     Box,
     Typography,
-    Tabs,
-    Tab,
     Card,
     CardHeader,
     Divider,
@@ -24,7 +22,6 @@ const Problems = () => {
 
     const fetchDefinitions = async () => {
         try {
-            console.log(`test`);
             // Fetch definitions and formats
             const [definitionsRes, formatsRes] = await Promise.all([
                 axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`),

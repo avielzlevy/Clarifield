@@ -29,13 +29,14 @@ function App() {
   });
 
   return (
-    <AuthProvider>
+
       <PageProvider>
+            <AuthProvider>
         <RtlProvider>
           <RtlConsumerComponent theme={theme} setTheme={setTheme} />
         </RtlProvider>
+        </AuthProvider>
       </PageProvider>
-    </AuthProvider>
   );
 }
 

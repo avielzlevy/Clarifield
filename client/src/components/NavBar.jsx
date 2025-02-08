@@ -43,7 +43,7 @@ function PageContent() {
         login(token);
       })
       .catch(() => {
-        logout();
+        logout({mode:'bad_token'});
       });
   return (
     <Box component="main">
@@ -91,7 +91,7 @@ function NavBar(props) {
         .catch(() => {
           localStorage.setItem('previousPage', page);
           setPage('signin');
-          logout()
+          logout({ mode: 'bad_token' });
         });
     } else {
       localStorage.setItem('previousPage', page);
@@ -100,7 +100,7 @@ function NavBar(props) {
   };
 
   const handleSignOut = () => {
-    logout();
+    logout({ mode: 'logout' });
   };
 
   const drawerItems = [

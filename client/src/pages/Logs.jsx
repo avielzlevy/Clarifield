@@ -34,7 +34,7 @@ const LogsPage = () => {
         setLogs(parsedLogs);
       } catch (err) {
         if (err.response.status === 401) {
-          logout();
+          logout({ mode: 'bad_token' });
           return;
         }
         setError(err.message);

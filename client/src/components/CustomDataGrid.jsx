@@ -8,7 +8,6 @@ import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlin
 import FlagIcon from '@mui/icons-material/Flag';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
-import i18next from 'i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 
@@ -16,8 +15,8 @@ function CustomDataGrid(props) {
   const { rows, columns, handleDeleteRow, handleEditRow, favorites, setFavorites, handleReportRow, onCopy, formats } = props;
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
-  const { auth,logout } = useAuth();
-  const { t } = useTranslation();
+  const { auth } = useAuth();
+  const { t, i18n  } = useTranslation();
   const [viewportSize, setViewportSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -59,7 +58,7 @@ function CustomDataGrid(props) {
   const [locale, setLocale] = useState(undefined);
   useEffect(() => {
     const loadLocale = async () => {
-      switch (i18next.language) {
+      switch (i18n.language) {
         case 'he':
           const { heIL } = await import('@mui/x-data-grid/locales'); // Adjust import path if needed
           setLocale(heIL.components.MuiDataGrid.defaultProps.localeText);
@@ -86,7 +85,7 @@ function CustomDataGrid(props) {
       }
     };
     loadLocale();
-  }, [i18next.language]);
+  }, [i18n.language]);
 
 
   const handleFavorite = (id) => {

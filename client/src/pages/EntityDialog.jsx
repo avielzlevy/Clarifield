@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,24 +12,34 @@ import { enqueueSnackbar } from 'notistack'
 import axios from 'axios';
 import ChangeWarning from '../components/ChangeWarning';
 import { useAuth } from '../contexts/AuthContext';
+import CreateEntityForm from '../components/CreateEntityForm';
+import DeleteEntityForm from '../components/DeleteEntityForm';
 
 function EntityDialog(props) {
-  const { open, onClose, selectedNode, setSelectedNode, mode, nodes, setNodes } = props;
+  const { open, onClose, selectedNode, setSelectedNode, mode, fetchNodes } = props;
   const [checkedFields, setCheckedFields] = useState([]);
   const [affectedItems, setAffectedItems] = useState(null);
   const [definitions, setDefinitions] = useState({});
+  const [entities, setEntities] = useState({});
+  const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
   const { logout } = useAuth();
   const token = localStorage.getItem('token');
+  const fetchDefinitions = async () => {
+    const definitionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
+    const definitions = definitionsResponse.data;
+    setDefinitions(definitions);
+  };
+  const fetchEntities = async () => {
+    const entitiesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
+    const entities = entitiesResponse.data;
+    setEntities(entities);
+  };
   useEffect(() => {
-    const fetchDefinitions = async () => {
-      const definitionsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
-      const definitions = definitionsResponse.data;
-      setDefinitions(definitions);
-    };
     fetchDefinitions();
+    fetchEntities();
   }, []);
 
-  const getAffectedEntities = async () => {
+  const getAffectedEntities = useCallback(async () => {
     let affectedDefinitions, affectedEntities;
     const source = selectedNode.label.toLowerCase()
     try {
@@ -40,8 +50,8 @@ function EntityDialog(props) {
       });
       affectedDefinitions = affectedDefinitionsResponse.status === 200 ? affectedDefinitionsResponse.data : {};
     } catch (e) {
-      if(e.response.status === 401) {
-        logout();
+      if (e.response.status === 401) {
+        logout({ mode: 'bad_token' });
         return;
       }
       affectedDefinitions = {};
@@ -55,37 +65,45 @@ function EntityDialog(props) {
         });
       affectedEntities = affectedEntitiesResponse.status === 200 ? affectedEntitiesResponse.data : {};
     } catch (e) {
-      if(e.response.status === 401) {
-        logout();
+      if (e.response.status === 401) {
+        logout({ mode: 'bad_token' });
         return;
       }
       affectedEntities = {};
     }
     const affectedAll = { ...affectedDefinitions, ...affectedEntities };
+    // console.log(`Affected all: ${JSON.stringify(affectedAll)}`);
     if (Object.keys(affectedAll).length === 0) {
       setAffectedItems(null);
       return;
     }
     setAffectedItems(affectedAll);
-  }
+  }, [selectedNode, token, logout]);
 
   useEffect(() => {
-    if (selectedNode&&mode==='edit')
+    // console.log(`Selected node: ${JSON.stringify(selectedNode)}`);
+    if (selectedNode && mode === 'edit')
       getAffectedEntities();
-  }, [selectedNode, mode]);
+  }, [selectedNode, mode,getAffectedEntities]);
 
   const handleAction = async () => {
     const formatsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
     const formats = formatsResponse.data;
-    const entitiesResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
-    const entities = entitiesResponse.data;
     if (mode === 'edit') {
       // Edit the selected node
-      const newNodes = [...nodes];
-      const index = newNodes.findIndex((node) => node.id === selectedNode.id);
-      newNodes[index] = selectedNode;
-      setNodes(newNodes);
-    } else {
+      // console.log(`Editing node: ${JSON.stringify(selectedNode)}`);
+      const responseEdit = await axios.put(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, selectedNode, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (responseEdit.status === 200) {
+        fetchNodes();
+        enqueueSnackbar('Entity edited successfully!', { variant: 'success' });
+      } else {
+        enqueueSnackbar('Failed to edit entity!', { variant: 'error' });
+      }
+    } else if (mode === 'copy') {
       // Copy mode: Create an object with only the checked fields
       if (checkedFields.length === 0) {
         return; // Don't copy if nothing is selected
@@ -122,23 +140,73 @@ function EntityDialog(props) {
       } catch (err) {
         console.error('Failed to copy:', err);
       }
+    } else if (mode === 'create') {
+      // Create mode: Create a new entity
+      try {
+        await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        fetchNodes();
+        enqueueSnackbar('Entity created successfully!', { variant: 'success' });
+      } catch (e) {
+        console.log(e);
+        if (e.response.status === 400) {
+          enqueueSnackbar('Failed to create entity!', { variant: 'error' });
+        } else if (e.response.status === 409) {
+          enqueueSnackbar('Entity already exists!', { variant: 'error' });
+        } else if (e.response.status === 401) {
+          logout({ mode: 'bad_token' });
+          onClose();
+          return;
+        } else {
+          enqueueSnackbar('Failed to create entity!', { variant: 'error' });
+        }
+      }
+    } else if (mode === 'delete') {
+      // Delete mode: Delete the selected node
+      try {
+        await axios.delete(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        fetchNodes();
+        enqueueSnackbar('Entity deleted successfully!', { variant: 'success' });
+      } catch (e) {
+        if (e.response.status === 400) {
+          enqueueSnackbar('Failed to delete entity!', { variant: 'error' });
+        } else if (e.response.status === 401) {
+          logout({ mode: 'bad_token' });
+          onClose();
+          return;
+        } else {
+          enqueueSnackbar('Failed to delete entity!', { variant: 'error' });
+        }
+      }
     }
+
     onClose();
   };
 
   return (
     <>
       <Dialog open={open} onClose={onClose}>
-        <DialogTitle>{mode === 'edit' ? 'Edit' : 'Copy'} Entity {mode === 'edit' && <ChangeWarning items={affectedItems} level='warning' />}</DialogTitle>
+        <DialogTitle>{mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : 'Create'} Entity
+          {mode === 'edit' && affectedItems && <ChangeWarning items={affectedItems} level='warning' />}
+        </DialogTitle>
         <DialogContent>
           {mode === 'edit' ? (
-            <EditEntityForm node={selectedNode} setNode={setSelectedNode} definitions={definitions} />
-          ) : (
+            <EditEntityForm node={selectedNode} setNode={setSelectedNode} definitions={definitions} entities={entities}/>
+          ) : mode === 'copy' ? (
             <CopyEntityForm
               node={selectedNode}
               onCheckChange={setCheckedFields}
             />
-          )}
+          ) ? mode === 'create' : (
+            <CreateEntityForm definitions={definitions} entities={entities} newEntity={newEntity} setNewEntity={setNewEntity} />
+          ) ? mode === 'delete' : <DeleteEntityForm node={selectedNode} affected={affectedItems} />: null}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Close</Button>
@@ -148,7 +216,7 @@ function EntityDialog(props) {
             color="primary"
             disabled={mode === 'copy' && checkedFields.length === 0}
           >
-            {mode === 'edit' ? 'Edit' : 'Copy'}
+            {mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : 'Create'}
           </Button>
         </DialogActions>
       </Dialog>

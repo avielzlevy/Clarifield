@@ -45,7 +45,7 @@ function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
         setNamingConvention(response.data.namingConvention);
       } catch (error) {
         if (error.response.status === 401) {
-          logout()
+          logout({ mode: 'bad_token' });
           return
         }
         console.error('Error fetching naming convention:', error);
@@ -53,7 +53,7 @@ function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
       }
     };
     fetchNamingConvention();
-  }, [editedDefinition]);
+  }, [editedDefinition,logout]);
 
   const handleSubmit = async () => {
 
@@ -100,7 +100,7 @@ function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
       onClose()
     } catch (error) {
       if (error.response.status === 401) {
-        logout();
+        logout({ mode: 'bad_token' });
         return;
       }
       else if (error.response.status === 409) {
