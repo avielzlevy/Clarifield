@@ -1,4 +1,4 @@
-import { Context,RouterContext } from "../deps.ts";
+import { Context, RouterContext } from "../deps.ts";
 import { Entity } from "../models/entities.ts";
 
 const DATA_FILE = "./data/entities.json";
@@ -7,7 +7,7 @@ const DATA_FILE = "./data/entities.json";
  * Reads the entities from the DATA_FILE.
  * If the file doesn't exist, it creates an empty JSON object.
  */
-const readEntities = async (): Promise<Record<string, Entity>> => {
+export const readEntities = async (): Promise<Record<string, Entity>> => {
   try {
     const data = await Deno.readTextFile(DATA_FILE);
     return JSON.parse(data);
@@ -19,7 +19,7 @@ const readEntities = async (): Promise<Record<string, Entity>> => {
   }
 };
 
-const writeEntities = async (entities: Record<string, Entity>) => {
+export const writeEntities = async (entities: Record<string, Entity>) => {
   // If all validations pass, write the entities to the data file.
   await Deno.writeTextFile(DATA_FILE, JSON.stringify(entities, null, 2));
 };
@@ -211,4 +211,28 @@ export const updateEntity = async (
     ctx.response.status = 400;
     ctx.response.body = { message: error };
   }
+};
+
+export const deleteEntity = async (
+  ctx: RouterContext<"/api/entity/:name", { name: string }>
+) => {
+  const { name } = ctx.params;
+  if (!name) {
+    ctx.response.status = 400;
+    ctx.response.body = { message: "Invalid entity name" };
+    return;
+  }
+
+  const entities = await readEntities();
+
+  if (!entities[name]) {
+    ctx.response.status = 404;
+    ctx.response.body = { message: "Entity not found" };
+    return;
+  }
+
+  delete entities[name];
+  await writeEntities(entities);
+
+  ctx.response.status = 204;
 };

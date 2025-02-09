@@ -5,11 +5,20 @@ import {
   toKebabCase,
   toSnakeCase,
   transformKeys,
+  transformEntityKeys,
 } from "./nameConvert.ts";
 import {
   readDefinitions,
   writeDefinitions,
 } from "../controllers/definitionController.ts";
+import {
+  readEntities,
+  writeEntities,
+} from "../controllers/entitiesController.ts";
+import {
+  readAnalytics,
+  writeAnalytics,
+} from "../controllers/analyticsController.ts";
 
 const DATA_FILE = "./data/settings.json";
 
@@ -61,21 +70,35 @@ export const updateSettings = async (ctx: Context) => {
 
 const ApplySettings = async (settings: { [key: string]: any }) => {
   const definitions = await readDefinitions();
+  const entities = await readEntities();
+  const analytics = await readAnalytics();
   let newDefinitions = definitions;
+  let newEntities = entities;
+  let newAnalytics = analytics;
   switch (settings.namingConvention) {
     case "camelCase":
       newDefinitions = transformKeys(definitions, toCamelCase);
+      newEntities = transformEntityKeys(entities, toCamelCase, true);
+      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toCamelCase)};
       break;
     case "PascalCase":
       newDefinitions = transformKeys(definitions, toPascalCase);
+      newEntities = transformEntityKeys(entities, toPascalCase, true);
+      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toPascalCase)};
       break;
     case "kebab-case":
       newDefinitions = transformKeys(definitions, toKebabCase);
+      newEntities = transformEntityKeys(entities, toKebabCase, true);
+      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toKebabCase)};
       break;
     case "snake_case":
     default:
       newDefinitions = transformKeys(definitions, toSnakeCase);
+      newEntities = transformEntityKeys(entities, toSnakeCase, true);
+      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toSnakeCase)};
       break;
   }
   await writeDefinitions(newDefinitions);
+  await writeEntities(newEntities);
+  await writeAnalytics(newAnalytics);
 };

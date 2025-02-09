@@ -89,7 +89,7 @@ function CustomDataGrid(props) {
 
 
   const handleFavorite = (id) => {
-    console.log(`Favorite ${id}`);
+    // console.log(`Favorite ${id}`);
     sendAnalytics(id,'definition',3)
     const formatUsed = rows.find((row) => row.id === id).format;
     sendAnalytics(formatUsed,'format',3)

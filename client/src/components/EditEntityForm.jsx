@@ -42,10 +42,6 @@ function EditEntityForm(props) {
       }
     }
 
-    if (!group) {
-      console.log(`${label} is not a valid group`);
-    }
-
     const newFields = [...node.fields];
     newFields[index] = {
       ...newFields[index],

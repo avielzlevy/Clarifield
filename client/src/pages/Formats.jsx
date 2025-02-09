@@ -151,7 +151,7 @@ function Formats() {
       padding: '4px',
       width: '100%',
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center'}}>
         <Typography variant="h5" gutterBottom>
           {t('formats')}
         </Typography>

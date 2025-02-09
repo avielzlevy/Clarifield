@@ -25,40 +25,53 @@ const Analytics = () => {
   useEffect(() => {
     const fetchData = async () => {
       const analytics = await getAnalytics();
-
+      if (!analytics || (!analytics.format && !analytics.definition)) {
+        setLoading(false);
+        setFormatsData({ labels: [], datasets: [] });
+        setDefinitionsData({ labels: [], datasets: [] });
+        return;
+      }
       // Prepare formats data, sorted in descending order
-      const formatEntries = Object.entries(analytics.format).sort((a, b) => b[1] - a[1]);
-      const formatLabels = formatEntries.map(([key]) => key);
-      const formatValues = formatEntries.map(([, value]) => value);
-      setFormatsData({
-        labels: formatLabels,
-        datasets: [
-          {
-            // label: t("formats"),
-            data: formatValues,
-            backgroundColor: "rgba(75, 192, 192, 0.6)",
-            borderColor: "rgba(75, 192, 192, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-
-      // Prepare definitions data, sorted in descending order
-      const definitionEntries = Object.entries(analytics.definition).sort((a, b) => b[1] - a[1]);
-      const definitionLabels = definitionEntries.map(([key]) => key);
-      const definitionValues = definitionEntries.map(([, value]) => value);
-      setDefinitionsData({
-        labels: definitionLabels,
-        datasets: [
-          {
-            // label: t("definitions"),
-            data: definitionValues,
-            backgroundColor: "rgba(153, 102, 255, 0.6)",
-            borderColor: "rgba(153, 102, 255, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
+      if (analytics.format) {
+        const formatEntries = Object.entries(analytics.format).sort((a, b) => b[1] - a[1]);
+        const formatLabels = formatEntries.map(([key]) => key);
+        const formatValues = formatEntries.map(([, value]) => value);
+        setFormatsData({
+          labels: formatLabels,
+          datasets: [
+            {
+              // label: t("formats"),
+              data: formatValues,
+              backgroundColor: "rgba(75, 192, 192, 0.6)",
+              borderColor: "rgba(75, 192, 192, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
+      } else {
+        setFormatsData({ labels: [], datasets: [] });
+      }
+      if (analytics.definition) {
+        // Prepare definitions data, sorted in descending order
+        const definitionEntries = Object.entries(analytics.definition).sort((a, b) => b[1] - a[1]);
+        const definitionLabels = definitionEntries.map(([key]) => key);
+        const definitionValues = definitionEntries.map(([, value]) => value);
+        setDefinitionsData({
+          labels: definitionLabels,
+          datasets: [
+            {
+              // label: t("definitions"),
+              data: definitionValues,
+              backgroundColor: "rgba(153, 102, 255, 0.6)",
+              borderColor: "rgba(153, 102, 255, 1)",
+              borderWidth: 1,
+            },
+          ],
+        });
+      }
+      else {
+        setDefinitionsData({ labels: [], datasets: [] });
+      }
 
       setLoading(false);
     };

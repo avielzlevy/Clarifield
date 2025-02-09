@@ -45,10 +45,6 @@ const CreateEntityForm = (props) => {
           }
         }
       
-        if (!group) {
-          console.log(`${label} is not a valid group`);
-        }
-      
         const newFields = [...newEntity.fields];
         newFields[index] = {
           ...newFields[index],

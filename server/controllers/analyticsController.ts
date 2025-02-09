@@ -3,7 +3,7 @@ import { Analytics } from "../models/analytics.ts";
 
 const DATA_FILE = "./data/analytics.json";
 // Utility functions to read and write the analytics file
-const readAnalytics = async ()=>{
+export const readAnalytics = async ()=>{
   try {
     const data = await Deno.readTextFile(DATA_FILE);
     return JSON.parse(data);
@@ -14,7 +14,7 @@ const readAnalytics = async ()=>{
     return {};
   }
 };
-const writeAnalytics = async (analytics 
+export  const writeAnalytics = async (analytics 
     : { [type: string]: Analytics })=>{
   await Deno.writeTextFile(DATA_FILE, JSON.stringify(analytics, null, 2));
 };

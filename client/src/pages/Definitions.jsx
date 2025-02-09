@@ -405,7 +405,7 @@ function Definitions() {
       width: '100%',
     }}>
       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h5">
+        <Typography variant="h5" gutterBottom>
           {t('definitions')}
         </Typography>
         {auth === true ? <IconButton

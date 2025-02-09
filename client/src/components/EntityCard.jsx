@@ -98,6 +98,8 @@ function EntityCard(node) {
                                 lineHeight: 1,
                                 fontSize: 10,
                                 fontWeight: 'bold',
+                                mt: 1,
+                                mb: 1,
                             }}
                         >
                             {data.label.charAt(0).toUpperCase() + data.label.slice(1)}

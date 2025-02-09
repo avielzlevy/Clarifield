@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 
@@ -17,7 +17,6 @@ function CopyEntityForm({ node, onCheckChange }) {
       return newChecked;
     });
   };
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       {node && node.fields.map((field, index) => (
@@ -33,13 +32,13 @@ function CopyEntityForm({ node, onCheckChange }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography>{field.label}</Typography>
               {field.type === 'entity' && (
-                <DataObjectIcon 
-                  sx={{ 
-                    height: 16, 
+                <DataObjectIcon
+                  sx={{
+                    height: 16,
                     width: 16,
                     color: 'primary.main',
-                    ml: 0.5 
-                  }} 
+                    ml: 0.5
+                  }}
                 />
               )}
             </Box>

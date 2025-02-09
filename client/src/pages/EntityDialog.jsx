@@ -14,6 +14,7 @@ import ChangeWarning from '../components/ChangeWarning';
 import { useAuth } from '../contexts/AuthContext';
 import CreateEntityForm from '../components/CreateEntityForm';
 import DeleteEntityForm from '../components/DeleteEntityForm';
+import { sendAnalytics } from '../utils/analytics';
 
 function EntityDialog(props) {
   const { open, onClose, selectedNode, setSelectedNode, mode, fetchNodes } = props;
@@ -22,6 +23,7 @@ function EntityDialog(props) {
   const [definitions, setDefinitions] = useState({});
   const [entities, setEntities] = useState({});
   const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
+  const [sureDelete, setSureDelete] = useState(false);
   const { logout } = useAuth();
   const token = localStorage.getItem('token');
   const fetchDefinitions = async () => {
@@ -82,9 +84,10 @@ function EntityDialog(props) {
 
   useEffect(() => {
     // console.log(`Selected node: ${JSON.stringify(selectedNode)}`);
+    // console.log(`Mode: ${mode}`);
     if (selectedNode && mode === 'edit')
       getAffectedEntities();
-  }, [selectedNode, mode,getAffectedEntities]);
+  }, [selectedNode, mode, getAffectedEntities]);
 
   const handleAction = async () => {
     const formatsResponse = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
@@ -117,6 +120,7 @@ function EntityDialog(props) {
             format: formats[definitions[field.label].format].pattern,
           }
           checkedFieldsData[field.label] = item;
+          sendAnalytics(field.label, 'definition', 1);
         } else if (field.type === 'entity') {
           const entity = entities[field.label];
           let entityData = {};
@@ -126,6 +130,7 @@ function EntityDialog(props) {
               format: formats[definitions[entityField.label].format].pattern,
             }
             entityData[entityField.label] = item;
+            sendAnalytics(entityField.label, 'definition', 1);
           }
           checkedFieldsData[entity.label] = entityData;
         }
@@ -151,7 +156,7 @@ function EntityDialog(props) {
         fetchNodes();
         enqueueSnackbar('Entity created successfully!', { variant: 'success' });
       } catch (e) {
-        console.log(e);
+        // console.log(e);
         if (e.response.status === 400) {
           enqueueSnackbar('Failed to create entity!', { variant: 'error' });
         } else if (e.response.status === 409) {
@@ -165,7 +170,6 @@ function EntityDialog(props) {
         }
       }
     } else if (mode === 'delete') {
-      // Delete mode: Delete the selected node
       try {
         await axios.delete(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, {
           headers: {
@@ -175,15 +179,15 @@ function EntityDialog(props) {
         fetchNodes();
         enqueueSnackbar('Entity deleted successfully!', { variant: 'success' });
       } catch (e) {
-        if (e.response.status === 400) {
-          enqueueSnackbar('Failed to delete entity!', { variant: 'error' });
-        } else if (e.response.status === 401) {
+        if (e.response.status === 401) {
           logout({ mode: 'bad_token' });
           onClose();
           return;
         } else {
           enqueueSnackbar('Failed to delete entity!', { variant: 'error' });
         }
+      } finally {
+        setSureDelete(false);
       }
     }
 
@@ -193,20 +197,20 @@ function EntityDialog(props) {
   return (
     <>
       <Dialog open={open} onClose={onClose}>
-        <DialogTitle>{mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : 'Create'} Entity
-          {mode === 'edit' && affectedItems && <ChangeWarning items={affectedItems} level='warning' />}
+        <DialogTitle>{mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : mode === 'create' ? 'Create' : mode === 'delete' ? 'Delete' : null} Entity
+          {mode === 'edit' ? affectedItems && <ChangeWarning items={affectedItems} level='warning' /> : mode === 'delete' ? affectedItems && <ChangeWarning items={affectedItems} level='error' /> : null}
         </DialogTitle>
         <DialogContent>
           {mode === 'edit' ? (
-            <EditEntityForm node={selectedNode} setNode={setSelectedNode} definitions={definitions} entities={entities}/>
+            <EditEntityForm node={selectedNode} setNode={setSelectedNode} definitions={definitions} entities={entities} />
           ) : mode === 'copy' ? (
             <CopyEntityForm
               node={selectedNode}
               onCheckChange={setCheckedFields}
             />
-          ) ? mode === 'create' : (
+          ) : mode === 'create' ? (
             <CreateEntityForm definitions={definitions} entities={entities} newEntity={newEntity} setNewEntity={setNewEntity} />
-          ) ? mode === 'delete' : <DeleteEntityForm node={selectedNode} affected={affectedItems} />: null}
+          ) : mode === 'delete' ? <DeleteEntityForm node={selectedNode} affected={affectedItems} sureDelete={sureDelete} setSureDelete={setSureDelete} onDelete={handleAction} onCancel={onClose} /> : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Close</Button>
@@ -214,9 +218,9 @@ function EntityDialog(props) {
             onClick={handleAction}
             variant="contained"
             color="primary"
-            disabled={mode === 'copy' && checkedFields.length === 0}
+            disabled={(mode === 'copy' && checkedFields.length === 0) || (mode === 'delete' && !sureDelete)}
           >
-            {mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : 'Create'}
+            {mode === 'edit' ? 'Edit' : mode === 'copy' ? 'Copy' : mode === 'create' ? 'Create' : mode === 'delete' ? 'Delete' : null}
           </Button>
         </DialogActions>
       </Dialog>

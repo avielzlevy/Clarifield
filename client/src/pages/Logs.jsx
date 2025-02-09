@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const LogsPage = () => {
   const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
   const { logout } = useAuth();
@@ -18,6 +18,7 @@ const LogsPage = () => {
     const token = localStorage.getItem('token');
 
     const fetchLogs = async () => {
+      setLoading(true);
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/logs`, {
           headers: {
@@ -69,24 +70,25 @@ const LogsPage = () => {
     });
   };
 
-  if (loading) {
-    <Box
-      sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light blur overlay
-        backdropFilter: 'blur(5px)', // Apply blur
-        zIndex: 9999, // Ensure it's above everything
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-      }}
-    >
-      <CircularProgress />
-    </Box>
+  if (loading === true) {
+    return (
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light blur overlay
+          backdropFilter: 'blur(5px)', // Apply blur
+          zIndex: 9999, // Ensure it's above everything
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <CircularProgress />
+      </Box>)
   }
 
   if (error) {
