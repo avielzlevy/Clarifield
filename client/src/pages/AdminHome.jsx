@@ -49,7 +49,7 @@ const AdminHomepage = () => {
 
 
   return (
-    <Box sx={{ padding: 3, display: "flex", gap: 3, height: "93vh" }}>
+    <Box sx={{ padding: 1, display: "flex", gap: 2, height: "89.5vh" }}>
       {/* Section 1: Reports */}
       <Paper
         sx={{

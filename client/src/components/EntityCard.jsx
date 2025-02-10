@@ -32,7 +32,7 @@ function EntityCard(node) {
                 '&:hover': {
                     cursor: 'pointer',
                 },
-                width: 100,
+                // width: 100,
             }}
         >
             {/* Toolbar: Appears above the Paper on hover */}
@@ -53,7 +53,7 @@ function EntityCard(node) {
                         display: 'flex',
                         // gap: 1,
                     }}
-                >   
+                >
                     {auth === true && <IconButton sx={{ height: 10, width: 10 }} onClick={data.onEdit}>
                         <EditIcon sx={{ height: 10, width: 10 }} />
                     </IconButton>}
@@ -69,21 +69,27 @@ function EntityCard(node) {
 
             {/* Main Paper Content */}
             <Paper
+                elevation={1}
                 sx={{
                     display: 'flex',
                     justifyContent: 'center',
-                    padding: 0.5,
+                    padding: 0,
+                    width: 'auto',
+                    border: `1px solid ${theme.palette.custom.light}`,
+                    borderRadius: 2,
                 }}
             >
                 <List
                     sx={{
                         width: '100%',
-                        bgcolor: 'background.paper',
+                        // bgcolor: 'background.paper',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
                         gap: 0.3,
+                        marginLeft: '10px',
+                        marginRight: '10px',
                     }}
                     component="nav"
                     aria-labelledby="subheader"
@@ -92,6 +98,8 @@ function EntityCard(node) {
                             component="div"
                             id="subheader"
                             sx={{
+                                backgroundColor: '#ffffff00',
+                                color: 'custom.bright',
                                 textAlign: 'center',
                                 zIndex: 1,
                                 padding: 0,
@@ -111,19 +119,19 @@ function EntityCard(node) {
                             key={index}
                             onClick={field.type === 'entity' ? () => data.onEntityClick(field.label) : undefined}
                             sx={{
-                                width: '90%',
-                                backgroundColor:
-                                    theme.palette.background.paper !== '#fff'
-                                        ? '#272727'
-                                        : '#e9e9e9',
-                                padding: 0,
+                                // width: '90%',
+                                backgroundColor: theme.palette.mode === 'light' ?
+                                    'custom.light' : 'background.paper',
+                                borderRadius: 2,
+                                // marginLeft: '10px',
+                                // marginRight: '10px',
                             }}
                         >
                             {field.type === 'entity' && <DataObjectIcon sx={{ height: 10, width: 10 }} />}
                             <ListItemText
                                 slotProps={{ primary: { sx: { fontSize: 10 } } }}
                                 primary={field.label}
-                                sx={{ textAlign: 'center' }}
+                                sx={{ textAlign: 'center', }}
                             />
                         </ListItem>
                     ))}

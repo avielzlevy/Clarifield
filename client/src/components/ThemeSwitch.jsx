@@ -1,12 +1,12 @@
 import React from 'react'
-import {ToggleButton,ToggleButtonGroup} from '@mui/material';
-import {LightMode,DarkMode} from '@mui/icons-material';
+import {IconButton,ToggleButtonGroup} from '@mui/material';
+import {LightModeOutlined as LightMode,DarkModeOutlined as DarkMode} from '@mui/icons-material';
 import darkTheme from '../themes/darkTheme';
 import lightTheme from '../themes/lightTheme';
 
 
 
-function ThemeSwitch(props) {
+function ThemeButton(props) {
     const {theme,setTheme} = props;
     const changeTheme = (theme) => {
         switch (theme) {
@@ -23,19 +23,10 @@ function ThemeSwitch(props) {
         }
     }
     return (
-        <ToggleButtonGroup
-            // color="primary"
-            value={theme.palette.mode}
-            exclusive
-            onChange={(event, value) => {
-                changeTheme(value);
-            }}
-            aria-label="Platform"
-        >
-            <ToggleButton value="dark"><DarkMode sx={{color:'black'}}/></ToggleButton>
-            <ToggleButton value="light"><LightMode sx={{color:'white'}}/></ToggleButton>
-        </ToggleButtonGroup>
+        <IconButton disableRipple>
+            {theme.palette.mode === 'dark' ? <LightMode sx={{color:'#FFD242'}} onClick={() => changeTheme('light')}/> : <DarkMode sx={{color:'black'}} onClick={() => changeTheme('dark')}/>}
+        </IconButton>
     )
 }
 
-export default ThemeSwitch
+export default ThemeButton

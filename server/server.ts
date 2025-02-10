@@ -52,17 +52,17 @@ const keyPath = `${Deno.cwd()}\\certs\\key.pem`;
 
 const useHttps = existsSync(certPath) && existsSync(keyPath);
 console.log(certPath);
-
+const port = Deno.env.get("PORT") ? Number(Deno.env.get("PORT")) : 443;
 if (useHttps) {
   console.log("Certificate and key found, using HTTPS on port 443");
   await app.listen({
-    port: 443,
+    port,
     hostname: "0.0.0.0",
     secure: true,
     cert: Deno.readTextFileSync(certPath),
     key: Deno.readTextFileSync(keyPath),
   });
 } else {
-  console.log("No certificate found, falling back to HTTP on port 443");
-  await app.listen({ port: 443 });
+  console.log(`No certificate found, falling back to HTTP on port  ${port}`);
+  await app.listen({ port});
 }

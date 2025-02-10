@@ -187,7 +187,7 @@ function Entities() {
                             width: '100%',
                             backgroundColor: theme.palette.background.paper !== '#fff'
                                 ? theme.palette.background.paper
-                                : '#e9e9e9',
+                                : '#c8c8c8',
                             border: `1px solid ${theme.palette.divider}`,
                         }}
                     >
@@ -200,17 +200,17 @@ function Entities() {
                             snapToGrid
                             style={{
                                 '--xy-controls-button-background-color-default':
-                                    theme.palette.background.paper !== '#fff' ? '#393939' : '#e9e9e9',
+                                    theme.palette.background.paper !== '#fff' ? theme.palette.custom.light : '#e9e9e9',
                                 '--xy-controls-button-background-color-hover-default':
-                                    theme.palette.background.paper !== '#fff' ? '#5c5c5c' : '#bfbcbc',
+                                    theme.palette.background.paper !== '#fff' ? theme.palette.custom.dark : '#bfbcbc',
                                 '--xy-controls-button-color-default': theme.palette.text.primary,
                                 '--xy-controls-button-color-hover-default': 'inherit',
                                 '--xy-controls-button-border-color-default': '#5c5c5c',
-                                '--xy-node-color-default':
-                                    theme.palette.background.paper !== '#fff' ? '#fafafa' : '#393939',
-                                '--xy-node-border-default': theme.palette.divider,
-                                '--xy-node-background-color-default':
-                                    theme.palette.background.paper !== '#fff' ? '#393939' : '#b0b0b0',
+                                // '--xy-node-color-default':
+                                    // theme.palette.background.paper !== '#fff' ? '#fafafa' : '#393939',
+                                // '--xy-node-border-default': theme.palette.divider,
+                                // '--xy-node-background-color-default':
+                                    // theme.palette.background.paper !== '#fff' ? '#393939' : '#b0b0b0',
                             }}
                         >
                             <Background />

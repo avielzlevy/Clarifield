@@ -61,9 +61,9 @@ const ViewerHomepage = () => {
 
 
   return (
-    <Box sx={{ padding: 3, display: "flex", gap: 3, height: "93vh" }}>
+    <Box sx={{ padding: 1, display: "flex", gap: 2, height: "89.5vh" }}>
       {/* Section 1: Empty */}
-      <Paper sx={{ flex: 1, padding: 2 }}>
+      <Paper sx={{ flex: 1, padding: 1 }}>
         <Addons files={addons} />
       </Paper>
       {/* Section 2: Empty */}

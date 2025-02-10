@@ -3,7 +3,7 @@ import {
   Box,
   Typography,
   Tooltip,
-  IconButton,
+  Button,
 } from '@mui/material';
 import DeleteDialog from './DeleteDialog';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,6 +14,8 @@ import CustomDataGrid from '../components/CustomDataGrid';
 import { enqueueSnackbar } from 'notistack';
 import ReportDialog from './ReportDialog';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
+import { useRtl } from '../contexts/RtlContext';
 import { sendAnalytics } from '../utils/analytics';
 
 
@@ -25,6 +27,8 @@ function Definitions() {
     return saved ? new Set(JSON.parse(saved)) : new Set();
   });
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { reverseWords } = useRtl();
   const [formats, setFormats] = useState({});
   const [DialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
@@ -32,7 +36,7 @@ function Definitions() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [actionedDefinition, setActionedDefinition] = useState(null);
   const [affected, setAffected] = useState(null);
-  const { auth,logout } = useAuth();
+  const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
   const fetchDefinitions = async () => {
     try {
@@ -97,7 +101,7 @@ function Definitions() {
       const affected = response.data;
       setAffected(affected);
     } catch (error) {
-      if(error.response.status === 401){
+      if (error.response.status === 401) {
         logout({ mode: 'bad_token' });
         return
       }
@@ -290,7 +294,7 @@ function Definitions() {
         let htmlTable = '<table border="1" cellspacing="0" cellpadding="5"><thead><tr>';
 
         // Add table headers
-        //TODO: Add support for rtl
+        // // TODO: Add support for rtl
         headers.reverse().forEach(header => {
           htmlTable += `<th>${header}</th>`;
         });
@@ -404,18 +408,24 @@ function Definitions() {
       padding: '4px',
       width: '100%',
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Typography variant="h5" gutterBottom>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
           {t('definitions')}
         </Typography>
-        {auth === true ? <IconButton
-          color="primary"
+        {auth === true ? <Button
+          sx={{
+            backgroundColor:theme.palette.custom.bright,
+            borderRadius: 3,
+            textTransform: 'none',
+          }}
           onClick={handleAddDialogClick}
-          aria-label="Add record"
-          size="small"
+          aria-label="new-definition"
+          // size="small"
+          variant="contained"
+          startIcon={<AddIcon />}
         >
-          <AddIcon />
-        </IconButton> : null}
+          {reverseWords(`${t('new')} ${t('definition')}`)}
+        </Button> : null}
       </Box>
       <Box sx={{ height: 500, width: '100%' }}>
         <CustomDataGrid

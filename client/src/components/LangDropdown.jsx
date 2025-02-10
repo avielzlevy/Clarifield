@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Button, Tooltip, Box } from '@mui/material';
-import { border, styled } from '@mui/system';
+import { useTheme, styled } from '@mui/material/styles';
 import i18next from 'i18next';
 import { useRtl } from '../contexts/RtlContext';
 
@@ -41,7 +41,8 @@ const LanguageItem = styled(Box)(({ theme, selected }) => ({
 
 function LangDropdown() {
     const [open, setOpen] = useState(false);
-    const { setRtl,setRtlLoading } = useRtl();
+    const { setRtl, setRtlLoading } = useRtl();
+    const theme = useTheme();
     const [selectedLang, setSelectedLang] = useState(() => {
         const lang = localStorage.getItem('lang');
         return lang ? languages.find((l) => l.code === lang) : languages[0];
@@ -55,7 +56,7 @@ function LangDropdown() {
     };
 
     useEffect(() => {
-        const rtlLangs = ['he','ar'];
+        const rtlLangs = ['he', 'ar'];
         i18next.changeLanguage(selectedLang.code);
         localStorage.setItem('lang', selectedLang.code);
         handleRtlSlowLoad();
@@ -72,8 +73,20 @@ function LangDropdown() {
     return (
         <Box>
             <Tooltip
+                slotProps={{
+                    tooltip: {
+                        sx: {
+                            bgcolor: theme.palette.custom.light
+                        }
+                    },
+                    arrow: {
+                        sx: {
+                            color: theme.palette.custom.light
+                        }
+                    }
+                }}
                 title={
-                    <LanguageGrid>
+                    <LanguageGrid >
                         {languages.map((lang) => (
                             <LanguageItem
                                 key={lang.code}
@@ -101,6 +114,7 @@ function LangDropdown() {
                         width: '2px',
                         height: '24px',
                         backgroundColor: 'transparent',
+                        mb: '4px',
                     }}
                 >
                     {selectedLang.flag}

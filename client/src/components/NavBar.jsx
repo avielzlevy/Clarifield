@@ -10,13 +10,23 @@ import {
   ListItemIcon,
   ListItemText,
   ListItemButton,
-  Avatar,
   Divider,
   Tooltip,
   CircularProgress,
 } from '@mui/material';
-import { ImportContacts, TextFields, Person, ExitToApp, DeviceHub, Settings as SettingIcon, DataObject } from '@mui/icons-material';
-import ThemeSwitch from './ThemeSwitch';
+import {
+  ImportContactsOutlined as ImportContacts,
+  TextFieldsOutlined as TextFields,
+  PersonOutlineOutlined as PersonIcon,
+  EngineeringOutlined as EnginnerIcon,
+  DeviceHubOutlined as DeviceHub,
+  Settings as SettingIcon,
+  DataObject,
+  SpaceDashboardRounded as DashboardIcon,
+  BarChartOutlined as AnalyticsIcon,
+  ReceiptOutlined as LogsIcon,
+} from '@mui/icons-material';
+import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -33,9 +43,10 @@ import Analytics from '../pages/Analytics';
 import Logs from '../pages/Logs';
 import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
+import SearchAll from './SearchAll';
 function PageContent() {
   const { page } = usePage();
-  const { logout,login, auth } = useAuth();
+  const { logout, login, auth } = useAuth();
   const token = localStorage.getItem('token');
   if (token)
     axios.get(`${process.env.REACT_APP_API_URL}/api/token/verify`, { headers: { Authorization: `Bearer ${token}` } })
@@ -43,7 +54,7 @@ function PageContent() {
         login(token);
       })
       .catch(() => {
-        logout({mode:'bad_token'});
+        logout({ mode: 'bad_token' });
       });
   return (
     <Box component="main">
@@ -75,8 +86,8 @@ const drawerWidth = 240;
 
 function NavBar(props) {
   const { theme, setTheme } = props;
-  const { page,setPage } = usePage();
-  const { auth,logout } = useAuth();
+  const { page, setPage } = usePage();
+  const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
   const username = localStorage.getItem('username') || 'Viewer';
   const { t } = useTranslation();
@@ -84,9 +95,9 @@ function NavBar(props) {
 
   const handleChangeUser = () => {
     if (token) {
-      axios.post('/api/token/verify', { token })
+      axios.get(`${process.env.REACT_APP_API_URL}/api/token/verify`, { headers: { Authorization: `Bearer ${token}` } })
         .then(() => {
-          setPage('home');
+          logout({ mode: 'logout' });
         })
         .catch(() => {
           localStorage.setItem('previousPage', page);
@@ -99,10 +110,6 @@ function NavBar(props) {
     }
   };
 
-  const handleSignOut = () => {
-    logout({ mode: 'logout' });
-  };
-
   const drawerItems = [
     { text: 'entities', icon: <DataObject />, route: 'entities' },
     { text: 'definitions', icon: <ImportContacts />, route: 'definitions' },
@@ -111,8 +118,8 @@ function NavBar(props) {
   ];
   if (auth === true) {
     drawerItems.push({ text: 'settings', icon: <SettingIcon />, route: 'settings' });
-    drawerItems.push({ text: 'analytics', icon: <SettingIcon />, route: 'analytics' });
-    drawerItems.push({ text: 'logs', icon: <SettingIcon />, route: 'logs' });
+    drawerItems.push({ text: 'analytics', icon: <AnalyticsIcon />, route: 'analytics' });
+    drawerItems.push({ text: 'logs', icon: <LogsIcon />, route: 'logs' });
   }
 
   return (
@@ -140,22 +147,43 @@ function NavBar(props) {
       )}
       <AppBar
         position="fixed"
-        sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
+        // sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
+        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        elevation={0}
       >
-        <Toolbar>
-
-          <Typography variant="h6" noWrap component="div" sx={{
-            '&:hover': {
-              cursor: 'pointer',
-            },
-          }}
-            onClick={() => setPage('home')}
-          >
-            {t('app_name')}
-          </Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          <LangDropdown />
-          <ThemeSwitch theme={theme} setTheme={setTheme} />
+        <Toolbar sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+        }}>
+          <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', ml: 10 }}>
+            <DashboardIcon sx={{ color: theme.palette.custom.bright }}
+            />
+            <Typography variant="h6" noWrap component="div" sx={{
+              '&:hover': {
+                cursor: 'pointer',
+              },
+              fontWeight: 'bold',
+            }}
+              onClick={() => setPage('home')}
+            >
+              {t('app_name')}
+            </Typography>
+          </Box>
+          <SearchAll />
+          <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
+              <IconButton color="inherit" onClick={handleChangeUser}>
+                {auth ? <EnginnerIcon /> : <PersonIcon />}
+              </IconButton>
+            </Tooltip>
+            {/* {auth === true ? <IconButton color="inherit" onClick={handleSignOut} >
+            <Avatar>
+              <ExitToApp />
+            </Avatar>
+          </IconButton> : null} */}
+            <LangDropdown />
+            <ThemeButton theme={theme} setTheme={setTheme} />
+          </Box>
         </Toolbar>
       </AppBar>
       <Drawer
@@ -171,42 +199,45 @@ function NavBar(props) {
         anchor="left">
         <Box sx={{
           display: 'flex',
-          justifyContent: 'space-around',
+          justifyContent: 'center',
           alignItems: 'center',
           height: 64,
         }}>
-          <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
-            <IconButton color="inherit" onClick={handleChangeUser}>
-              <Avatar>
-                <Person />
-              </Avatar>
-            </IconButton>
-          </Tooltip>
-          <Typography variant="subtitle1" sx={{ ml: 1 }}>
-            {username === 'Viewer' ? t('viewer') : t('admin')}
-          </Typography>
-          {auth === true ? <IconButton color="inherit" onClick={handleSignOut} >
-            <Avatar>
-              <ExitToApp />
-            </Avatar>
-          </IconButton> : null}
         </Box>
         <Divider />
-        <List>
+        <List sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 0.2,
+        }}>
           {drawerItems.map((item, index) => (
-            <ListItemButton key={index} onClick={() => setPage(item.route)} sx={{
-              '&.hover': {
-                backgroundColor: 'primary.main',
-                cursor: 'block'
-              },
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
+            <ListItemButton key={index} disableRipple onClick={() => setPage(item.route)}
+              sx={{
+                '&:hover': {
+                  bgcolor: theme.palette.custom.light,
+                  cursor: 'pointer',
+                },
+                color: theme.palette.mode === 'light' ?
+                  page === item.route ? theme.palette.custom.bright : undefined
+                  : page === item.route ? theme.palette.custom.dark : undefined,
+                bgcolor: theme.palette.mode === 'light' ?
+                  page === item.route ? theme.palette.custom.light : undefined
+                  : page === item.route ? theme.palette.custom.bright : undefined,
+                borderRadius: '20px',
+                width: '90%',
+                justifyContent: 'center',
+                alignItems: 'center',
 
-              <ListItemIcon sx={{ ml: '10%' }}>{item.icon}</ListItemIcon>
+              }}>
+
+              <ListItemIcon sx={{
+                color: theme.palette.mode === 'light' ?
+                  page === item.route ? theme.palette.custom.bright : undefined
+                  : page === item.route ? theme.palette.custom.db : undefined,
+                // ml: '10%'
+              }}>{item.icon}</ListItemIcon>
               <ListItemText primary={t(item.text)} />
             </ListItemButton >
           ))}
@@ -219,7 +250,7 @@ function NavBar(props) {
         <Toolbar />
         <PageContent />
       </Box>
-    </Box>
+    </Box >
   );
 }
 
