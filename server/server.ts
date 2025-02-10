@@ -33,11 +33,36 @@ app.use(async (context, next) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-if (Deno.env.get("PORT")) {
-  const port = parseInt(Deno.env.get("PORT") as string);
-  console.log(`Server running on http://localhost:${port}`);
-  await app.listen({ port });
+
+function existsSync(path: string): boolean {
+  try {
+    Deno.statSync(path);
+    return true;
+  } catch (e) {
+    if (e instanceof Deno.errors.NotFound) {
+      return false;
+    }
+    throw e;
+  }
+}
+
+// const useHttps = fs.existsSync('./certs/cert.pem') && fs.existsSync('./certs/key.pem');
+const certPath = `${Deno.cwd()}\\certs\\cert.pem`;
+const keyPath = `${Deno.cwd()}\\certs\\key.pem`;
+
+const useHttps = existsSync(certPath) && existsSync(keyPath);
+console.log(certPath);
+
+if (useHttps) {
+  console.log("Certificate and key found, using HTTPS on port 443");
+  await app.listen({
+    port: 443,
+    hostname: "0.0.0.0",
+    secure: true,
+    cert: Deno.readTextFileSync(certPath),
+    key: Deno.readTextFileSync(keyPath),
+  });
 } else {
-  console.log("Server running on http://localhost:443");
+  console.log("No certificate found, falling back to HTTP on port 443");
   await app.listen({ port: 443 });
 }
