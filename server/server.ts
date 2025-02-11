@@ -1,7 +1,7 @@
 import { Application, oakCors, send } from "./deps.ts";
 import router from "./routes/routes.ts";
+import "https://deno.land/x/dotenv/load.ts";
 const app = new Application();
-
 app.use(
   oakCors({
     origin: "*",
@@ -60,7 +60,7 @@ if(!certPath || !keyPath) {
   Deno.exit(1);
 }
 const useHttps = existsSync(certPath) && existsSync(keyPath);
-console.log(certPath);
+// console.log(certPath);
 const port = Deno.env.get("PORT") ? Number(Deno.env.get("PORT")) : 443;
 if (useHttps) {
   console.log("Certificate and key found, using HTTPS on port 443");

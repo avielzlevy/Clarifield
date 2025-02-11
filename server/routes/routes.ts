@@ -17,7 +17,7 @@ import {
   getAnalytics,
   addAnalytic,
 } from "../controllers/analyticsController.ts";
-import { getEntities, addEntity,updateEntity,deleteEntity } from "../controllers/entitiesController.ts";
+import { getEntities, addEntity,updateEntity,deleteEntity } from "../controllers/entityController.ts";
 import {
   getReports,
   addReport,

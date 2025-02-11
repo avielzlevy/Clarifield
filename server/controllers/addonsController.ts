@@ -1,8 +1,14 @@
+// controllers/addonController.ts
+
 import { Context } from "../deps.ts";
 import { encodeBase64 } from "jsr:@std/encoding/base64";
 import { Definition } from "../models/definition.ts";
 import { Format } from "../models/format.ts";
 import staticFormats from "../data/staticFormats.ts";
+
+// Import the repositories instead of reading JSON files directly.
+import * as defRepo from "../repositories/definitionRepository.ts";
+import * as formatRepo from "../repositories/formatRepository.ts";
 
 /**
  * Generates a base64-encoded TypeScript file containing:
@@ -20,11 +26,10 @@ const generateTypeScriptFileBase64 = (
     })
     .join("\n\n");
 
-  // Build the formats object, using commas
+  // Build the formats object
   const formatsMap = Object.entries(formats)
     .map(([key, value]) => {
-      // Double-check that value.pattern and value.description
-      // do NOT contain any trailing semicolons themselves
+      // Ensure value.pattern and value.description do not contain unwanted semicolons
       return `    "${key}": {\n        pattern: "${value.pattern}",\n        description: "${value.description}"\n    },`;
     })
     .join("\n\n");
@@ -42,9 +47,6 @@ ${formatsMap}
 };
 `;
 
-  // Uncomment this line if you want to inspect the exact output in plain text:
-  // console.log(tsContent);
-
   const base64Data = encodeBase64(tsContent);
   return {
     fileName: "standards.ts",
@@ -54,35 +56,41 @@ ${formatsMap}
   };
 };
 
-// Controller to generate the TypeScript file
+/**
+ * Controller to generate the TypeScript file.
+ *
+ * Instead of using synchronous file reads, this version awaits the repository functions
+ * so that the underlying storage (file or MongoDB) is abstracted.
+ */
 export const getTypeScriptFile = async (): Promise<{
   fileName: string;
   fileData: { base64: string };
 }> => {
-  const userDefinedDefinitions = Deno.readTextFileSync("./data/definitions.json");
-  const userDefinedFormats = Deno.readTextFileSync("./data/formats.json");
+  // Get user-defined definitions and formats from their repositories
+  const userDefinedDefinitions = await defRepo.getDefinitions();
+  const userDefinedFormats = await formatRepo.getFormats();
 
   // Merge static formats with user-defined formats
   const formats = {
     ...staticFormats,
-    ...JSON.parse(userDefinedFormats),
+    ...userDefinedFormats,
   };
 
-  // Read user-defined definitions
-  const definitions = {
-    ...JSON.parse(userDefinedDefinitions),
-  };
+  // Use the user-defined definitions as obtained from the repository
+  const definitions = { ...userDefinedDefinitions };
 
-  // Generate the TypeScript file
+  // Generate the TypeScript file content and encode it in base64
   return generateTypeScriptFileBase64(definitions, formats);
 };
 
-// Controller to get addons (and thereby trigger the TS file generation)
+/**
+ * Controller to get addons (which triggers the TS file generation)
+ */
 export const getAddons = async (ctx: Context) => {
   try {
     const tsFile = await getTypeScriptFile();
 
-    // Return an array of objects containing the generated TypeScript file
+    // Return an array containing the generated TypeScript file info
     ctx.response.status = 200;
     ctx.response.body = [tsFile];
   } catch (error: unknown) {

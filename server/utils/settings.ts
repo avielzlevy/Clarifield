@@ -10,15 +10,15 @@ import {
 import {
   readDefinitions,
   writeDefinitions,
-} from "../controllers/definitionController.ts";
+} from "../repositories/definitionRepository.ts";
 import {
   readEntities,
   writeEntities,
-} from "../controllers/entitiesController.ts";
+} from "../repositories/entityRepository.ts";
 import {
   readAnalytics,
   writeAnalytics,
-} from "../controllers/analyticsController.ts";
+} from "../repositories/analyticsRepository.ts";
 
 const DATA_FILE = "./data/settings.json";
 
