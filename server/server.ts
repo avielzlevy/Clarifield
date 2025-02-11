@@ -33,7 +33,6 @@ app.use(async (context, next) => {
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-
 function existsSync(path: string): boolean {
   try {
     Deno.statSync(path);
@@ -46,16 +45,26 @@ function existsSync(path: string): boolean {
   }
 }
 
-// const useHttps = fs.existsSync('./certs/cert.pem') && fs.existsSync('./certs/key.pem');
-const certPath = `${Deno.cwd()}\\certs\\cert.pem`;
-const keyPath = `${Deno.cwd()}\\certs\\key.pem`;
-
+let certPath, keyPath;
+if (Deno.build.os === "windows") {
+  certPath = `${Deno.cwd()}\\certs\\cert.pem`;
+  keyPath = `${Deno.cwd()}\\certs\\key.pem`;
+} else if (Deno.build.os === "linux") {
+  certPath = `${Deno.cwd()}/certs/cert.pem`;
+  keyPath = `${Deno.cwd()}/certs/key.pem`;
+} else {
+  console.log("You are running on a not supported OS");
+}
+if(!certPath || !keyPath) {
+  console.log("Certificate and key paths not found");
+  Deno.exit(1);
+}
 const useHttps = existsSync(certPath) && existsSync(keyPath);
 console.log(certPath);
 const port = Deno.env.get("PORT") ? Number(Deno.env.get("PORT")) : 443;
 if (useHttps) {
   console.log("Certificate and key found, using HTTPS on port 443");
-  await app.listen({
+  await app.listen(<any>{
     port,
     hostname: "0.0.0.0",
     secure: true,
@@ -64,5 +73,5 @@ if (useHttps) {
   });
 } else {
   console.log(`No certificate found, falling back to HTTP on port  ${port}`);
-  await app.listen({ port});
+  await app.listen({ port });
 }
