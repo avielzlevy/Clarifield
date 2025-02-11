@@ -12,6 +12,7 @@ export const getAnalytics = async (ctx: Context) => {
     const analytics = await analyticsRepo.getAnalytics();
     ctx.response.body = analytics;
   } catch (error) {
+    console.log(`Error in getAnalytics: ${error}`);
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
   }

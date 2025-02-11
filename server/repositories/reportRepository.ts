@@ -1,7 +1,10 @@
 // repositories/reportRepository.ts
 
 import { Reports } from "../models/report.ts";
-import { MongoClient, Collection } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
+import {
+  MongoClient,
+  Collection,
+} from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 
 // Define the shape of a report document.
 interface ReportDocument {
@@ -18,19 +21,21 @@ const DATA_FILE = "./data/reports.json";
 
 // Use a properly typed collection for MongoDB.
 let reportsCollection: Collection<ReportDocument>;
-
-if (getUseMongo()) {
-  const mongoUri = Deno.env.get("MONGO_URI");
-  const mongoDb = Deno.env.get("MONGO_DB");
-  if (!mongoUri) {
-    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+const initMongo = async () => {
+  if (getUseMongo()) {
+    const mongoUri = Deno.env.get("MONGO_URI");
+    const mongoDb = Deno.env.get("MONGO_DB");
+    if (!mongoUri) {
+      throw new Error(
+        "MONGO_URI and MONGO_DB must be set when USE_MONGO is true."
+      );
+    }
+    const client = new MongoClient();
+    await client.connect(mongoUri);
+    const db = client.database(mongoDb); // adjust your database name if needed
+    reportsCollection = db.collection<ReportDocument>("reports");
   }
-  const client = new MongoClient();
-  await client.connect(mongoUri);
-  const db = client.database(mongoDb); // adjust your database name if needed
-  reportsCollection = db.collection<ReportDocument>("reports");
-}
-
+};
 /**
  * Get all reports.
  * For file storage, the structure is:
@@ -38,6 +43,9 @@ if (getUseMongo()) {
  */
 export const getReports = async (): Promise<Reports> => {
   if (getUseMongo()) {
+    if (!reportsCollection) {
+      await initMongo();
+    }
     const docs = await reportsCollection.find({}).toArray();
     const reports: Reports = {};
     for (const doc of docs) {
@@ -69,18 +77,25 @@ export const getReports = async (): Promise<Reports> => {
 export const addReport = async (
   type: string,
   name: string,
-  description: string,
+  description: string
 ): Promise<void> => {
   if (getUseMongo()) {
+    if (!reportsCollection) {
+      await initMongo();
+    }
     const existing = await reportsCollection.findOne({ type, name });
     if (existing) {
       // Use $each to push a single element.
       await reportsCollection.updateOne(
         { type, name },
-        { $push: { descriptions: { $each: [description] } } },
+        { $push: { descriptions: { $each: [description] } } }
       );
     } else {
-      await reportsCollection.insertOne({ type, name, descriptions: [description] });
+      await reportsCollection.insertOne({
+        type,
+        name,
+        descriptions: [description],
+      });
     }
   } else {
     const reports = await getReports();
@@ -101,18 +116,25 @@ export const addReport = async (
  */
 export const deleteReport = async (
   type: string,
-  name: string,
+  name: string
 ): Promise<void> => {
   if (getUseMongo()) {
+    if (!reportsCollection) {
+      await initMongo();
+    }
     // deleteOne returns a number (1 if deleted, 0 if not found)
     const result = await reportsCollection.deleteOne({ type, name });
     if (!result) {
-      throw new Error(`Report with type '${type}' and name '${name}' not found`);
+      throw new Error(
+        `Report with type '${type}' and name '${name}' not found`
+      );
     }
   } else {
     const reports = await getReports();
     if (!reports[type] || !reports[type][name]) {
-      throw new Error(`Report with type '${type}' and name '${name}' not found`);
+      throw new Error(
+        `Report with type '${type}' and name '${name}' not found`
+      );
     }
     delete reports[type][name];
     if (Object.keys(reports[type]).length === 0) {
@@ -127,6 +149,9 @@ export const deleteReport = async (
  */
 export const clearReportsByType = async (type: string): Promise<void> => {
   if (getUseMongo()) {
+    if (!reportsCollection) {
+      await initMongo();
+    }
     // deleteMany returns a number.
     const deletedCount = await reportsCollection.deleteMany({ type });
     if (deletedCount === 0) {
@@ -147,6 +172,9 @@ export const clearReportsByType = async (type: string): Promise<void> => {
  */
 export const clearAllReports = async (): Promise<void> => {
   if (getUseMongo()) {
+    if (!reportsCollection) {
+      await initMongo();
+    }
     await reportsCollection.deleteMany({});
   } else {
     await Deno.writeTextFile(DATA_FILE, "{}");

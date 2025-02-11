@@ -19,16 +19,21 @@ interface AnalyticDoc {
 // Use a properly typed collection rather than any.
 let analyticsCollection: Collection<AnalyticDoc>;
 
-if (getUseMongo()) {
-  const mongoUri = Deno.env.get("MONGO_URI");
-  const mongoDb = Deno.env.get("MONGO_DB");
-  if (!mongoUri) {
-    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+const initMongo = async () => {
+  if (getUseMongo()) {
+    const mongoUri = Deno.env.get("MONGO_URI");
+    const mongoDb = Deno.env.get("MONGO_DB");
+    if (!mongoUri) {
+      throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+    }
+    const client = new MongoClient();
+    console.log(`Connecting to MongoDB at ${mongoUri}`);
+    await client.connect(mongoUri);
+    const db = client.database(mongoDb); // Adjust database name as needed.
+    console.log(`Connected to database "${mongoDb}"`);
+    analyticsCollection = db.collection<AnalyticDoc>("analytics");
+    console.log(`using collection "analytics" ${analyticsCollection}`);
   }
-  const client = new MongoClient();
-  await client.connect(mongoUri);
-  const db = client.database(mongoDb); // Adjust database name as needed.
-  analyticsCollection = db.collection<AnalyticDoc>("analytics");
 }
 
 /**
@@ -61,6 +66,10 @@ export const writeAnalytics = async (
  */
 export const getAnalytics = async (): Promise<AnalyticsMap> => {
   if (getUseMongo()) {
+    if(!analyticsCollection) {
+      await initMongo();
+    }
+    console.log(`Analytics collection: ${analyticsCollection}`);
     const docs = await analyticsCollection.find({}).toArray();
     const result: AnalyticsMap = {};
     for (const doc of docs) {
@@ -86,6 +95,9 @@ export const addAnalytic = async (
   amount: number,
 ): Promise<void> => {
   if (getUseMongo()) {
+    if(!analyticsCollection) {
+      await initMongo();
+    }
     await analyticsCollection.updateOne(
       { type, name },
       { $inc: { amount } },

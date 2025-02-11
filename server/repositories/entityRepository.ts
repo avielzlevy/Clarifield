@@ -13,24 +13,31 @@ const DATA_FILE = "./data/entities.json";
 // For MongoDB storage, we set up a collection.
 let entitiesCollection: Collection<Entity>;
 
-if (getUseMongo()) {
-  const mongoUri = Deno.env.get("MONGO_URI");
-  const mongoDb = Deno.env.get("MONGO_DB");
-  if (!mongoUri) {
-    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+const initMongo = async () => {
+  if (getUseMongo()) {
+    const mongoUri = Deno.env.get("MONGO_URI");
+    const mongoDb = Deno.env.get("MONGO_DB");
+    if (!mongoUri) {
+      throw new Error(
+        "MONGO_URI and MONGO_DB must be set when USE_MONGO is true."
+      );
+    }
+    const client = new MongoClient();
+    await client.connect(mongoUri);
+    const db = client.database(mongoDb); // adjust the database name as needed
+    // Use a collection named "entities"
+    entitiesCollection = db.collection<Entity>("entities");
   }
-  const client = new MongoClient();
-  await client.connect(mongoUri);
-  const db = client.database(mongoDb); // adjust the database name as needed
-  // Use a collection named "entities"
-  entitiesCollection = db.collection<Entity>("entities");
-}
+};
 
 /**
  * Returns all entities as a map keyed by the entity’s label.
  */
 export const getEntities = async (): Promise<Record<string, Entity>> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     const docs = await entitiesCollection.find({}).toArray();
     const result: Record<string, Entity> = {};
     for (const doc of docs) {
@@ -55,6 +62,9 @@ export const getEntities = async (): Promise<Record<string, Entity>> => {
  */
 export const addEntity = async (entity: Entity): Promise<void> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     const existing = await entitiesCollection.findOne({ label: entity.label });
     if (existing) {
       throw new Error(`Entity with label '${entity.label}' already exists`);
@@ -79,6 +89,9 @@ export const updateEntity = async (
   entity: Entity
 ): Promise<void> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     const result = await entitiesCollection.updateOne(
       { label: name },
       { $set: { label: entity.label, fields: entity.fields } }
@@ -106,6 +119,9 @@ export const updateEntity = async (
  */
 export const deleteEntity = async (name: string): Promise<void> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     const result = await entitiesCollection.deleteOne({ label: name });
     if (!result) {
       throw new Error(`Entity with label '${name}' not found`);
@@ -128,6 +144,9 @@ export const deleteEntity = async (name: string): Promise<void> => {
 
 export const readEntities = async (): Promise<Record<string, Entity>> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     const docs = await entitiesCollection.find({}).toArray();
     const result: Record<string, Entity> = {};
     for (const doc of docs) {
@@ -162,6 +181,9 @@ export const writeEntities = async (
   entities: Record<string, Entity>
 ): Promise<void> => {
   if (getUseMongo()) {
+    if (!entitiesCollection) {
+      await initMongo();
+    }
     // Remove all existing documents from the collection.
     await entitiesCollection.deleteMany({});
     // Insert the new entities (if any).

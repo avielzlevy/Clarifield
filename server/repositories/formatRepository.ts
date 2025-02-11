@@ -6,30 +6,37 @@ import { MongoClient } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 
 let formatsCollection: any; // will hold the Mongo collection if using Mongo
-if (getUseMongo()) {
+const initMongo = async () => {
+  if (getUseMongo()) {
     console.log("Using MongoDB");
-  // Set up the MongoDB connection.
-  // Make sure you set the MONGO_URI environment variable (e.g., "mongodb://localhost:27017")
-  const mongoUri = Deno.env.get("MONGO_URI");
-  const mongoDb = Deno.env.get("MONGO_DB");
-  if (!mongoUri) {
-    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+    // Set up the MongoDB connection.
+    // Make sure you set the MONGO_URI environment variable (e.g., "mongodb://localhost:27017")
+    const mongoUri = Deno.env.get("MONGO_URI");
+    const mongoDb = Deno.env.get("MONGO_DB");
+    if (!mongoUri) {
+      throw new Error(
+        "MONGO_URI and MONGO_DB must be set when USE_MONGO is true."
+      );
+    }
+
+    const client = new MongoClient();
+    await client.connect(mongoUri);
+
+    // Connect to a specific database and collection.
+    // Adjust the names as needed.
+    const db = client.database(mongoDb);
+    formatsCollection = db.collection<Format>("formats");
   }
-
-  const client = new MongoClient();
-  await client.connect(mongoUri);
-
-  // Connect to a specific database and collection.
-  // Adjust the names as needed.
-  const db = client.database(mongoDb);
-  formatsCollection = db.collection<Format>("formats");
-}
+};
 
 // Helper function to get the file path (if needed)
 const DATA_FILE = "./data/formats.json";
 
 export const getFormats = async (): Promise<{ [name: string]: Format }> => {
   if (getUseMongo()) {
+    if (!formatsCollection) {
+      await initMongo();
+    }
     // Get all documents from the collection.
     const mongoFormats = await formatsCollection.find({}).toArray();
     const formats: { [name: string]: Format } = {};
@@ -52,8 +59,14 @@ export const getFormats = async (): Promise<{ [name: string]: Format }> => {
   }
 };
 
-export const addFormat = async (name: string, format: Format): Promise<void> => {
+export const addFormat = async (
+  name: string,
+  format: Format
+): Promise<void> => {
   if (getUseMongo()) {
+    if (!formatsCollection) {
+      await initMongo();
+    }
     // Check for duplicates.
     const existing = await formatsCollection.findOne({ name });
     if (existing) {
@@ -71,8 +84,14 @@ export const addFormat = async (name: string, format: Format): Promise<void> => 
   }
 };
 
-export const updateFormat = async (name: string, format: Format): Promise<void> => {
+export const updateFormat = async (
+  name: string,
+  format: Format
+): Promise<void> => {
   if (getUseMongo()) {
+    if (!formatsCollection) {
+      await initMongo();
+    }
     const result = await formatsCollection.updateOne(
       { name },
       { $set: { pattern: format.pattern, description: format.description } }
@@ -93,6 +112,9 @@ export const updateFormat = async (name: string, format: Format): Promise<void> 
 
 export const deleteFormat = async (name: string): Promise<void> => {
   if (getUseMongo()) {
+    if (!formatsCollection) {
+      await initMongo();
+    }
     const result = await formatsCollection.deleteOne({ name });
     if (!result.deletedCount) {
       throw new Error(`Format with name '${name}' not found`);
