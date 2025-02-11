@@ -7,13 +7,13 @@ import {
 } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 
 // Determine storage mode using an environment variable.
-const useMongo = Deno.env.get("USE_MONGO") === "true";
+const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 const DATA_FILE = "./data/definitions.json";
 
 // MongoDB collection variable.
 let definitionsCollection: Collection<any>;
 
-if (useMongo) {
+if (getUseMongo()) {
   const mongoUri = Deno.env.get("MONGO_URI");
   const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
@@ -29,7 +29,7 @@ if (useMongo) {
  * Retrieves all definitions as an object keyed by the definition name.
  */
 export const getDefinitions = async (): Promise<Record<string, Definition>> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // In Mongo, we assume documents have a `name` field along with `format` and `description`.
     const docs = await definitionsCollection.find({}).toArray();
     const result: Record<string, Definition> = {};
@@ -59,7 +59,7 @@ export const getDefinitions = async (): Promise<Record<string, Definition>> => {
 export const getDefinition = async (
   name: string
 ): Promise<Definition | null> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const doc = await definitionsCollection.findOne({ name });
     return doc
       ? { format: doc.format, description: doc.description || "" }
@@ -78,7 +78,7 @@ export const addDefinition = async (
   name: string,
   definition: Definition
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const existing = await definitionsCollection.findOne({ name });
     if (existing) {
       throw new Error(`Definition with name '${name}' already exists`);
@@ -105,7 +105,7 @@ export const updateDefinition = async (
   name: string,
   definition: Definition
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await definitionsCollection.updateOne(
       { name },
       {
@@ -136,7 +136,7 @@ export const updateDefinition = async (
  * Throws an error if the definition does not exist.
  */
 export const deleteDefinition = async (name: string): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await definitionsCollection.deleteOne({ name });
     if (!result) {
       throw new Error(`Definition with name '${name}' not found`);
@@ -160,7 +160,7 @@ export const deleteDefinition = async (name: string): Promise<void> => {
 export const readDefinitions = async (): Promise<
   Record<string, Definition>
 > => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const docs = await definitionsCollection.find({}).toArray();
     const result: Record<string, Definition> = {};
     for (const doc of docs) {
@@ -196,7 +196,7 @@ export const readDefinitions = async (): Promise<
 export const writeDefinitions = async (
   definitions: Record<string, Definition>
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // Remove all existing documents from the collection.
     await definitionsCollection.deleteMany({});
     // Convert the definitions object to an array of documents, ensuring each document has a "name" field.

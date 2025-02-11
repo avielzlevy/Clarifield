@@ -7,13 +7,13 @@ import {
 } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 
 // Check the environment variable to determine storage
-const useMongo = Deno.env.get("USE_MONGO") === "true";
+const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 const DATA_FILE = "./data/entities.json";
 
 // For MongoDB storage, we set up a collection.
 let entitiesCollection: Collection<Entity>;
 
-if (useMongo) {
+if (getUseMongo()) {
   const mongoUri = Deno.env.get("MONGO_URI");
   const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
@@ -30,7 +30,7 @@ if (useMongo) {
  * Returns all entities as a map keyed by the entity’s label.
  */
 export const getEntities = async (): Promise<Record<string, Entity>> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const docs = await entitiesCollection.find({}).toArray();
     const result: Record<string, Entity> = {};
     for (const doc of docs) {
@@ -54,7 +54,7 @@ export const getEntities = async (): Promise<Record<string, Entity>> => {
  * Adds a new entity. Throws an error if an entity with the same label exists.
  */
 export const addEntity = async (entity: Entity): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const existing = await entitiesCollection.findOne({ label: entity.label });
     if (existing) {
       throw new Error(`Entity with label '${entity.label}' already exists`);
@@ -78,7 +78,7 @@ export const updateEntity = async (
   name: string,
   entity: Entity
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await entitiesCollection.updateOne(
       { label: name },
       { $set: { label: entity.label, fields: entity.fields } }
@@ -105,7 +105,7 @@ export const updateEntity = async (
  * Deletes an entity by its label.
  */
 export const deleteEntity = async (name: string): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await entitiesCollection.deleteOne({ label: name });
     if (!result) {
       throw new Error(`Entity with label '${name}' not found`);
@@ -127,7 +127,7 @@ export const deleteEntity = async (name: string): Promise<void> => {
  */
 
 export const readEntities = async (): Promise<Record<string, Entity>> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const docs = await entitiesCollection.find({}).toArray();
     const result: Record<string, Entity> = {};
     for (const doc of docs) {
@@ -161,7 +161,7 @@ export const readEntities = async (): Promise<Record<string, Entity>> => {
 export const writeEntities = async (
   entities: Record<string, Entity>
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // Remove all existing documents from the collection.
     await entitiesCollection.deleteMany({});
     // Insert the new entities (if any).

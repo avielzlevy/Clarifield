@@ -3,10 +3,10 @@ import { Format } from "../models/format.ts";
 import { MongoClient } from "https://deno.land/x/mongo@v0.31.1/mod.ts";
 
 // Read environment variable (make sure you run Deno with --allow-env)
-const useMongo = Deno.env.get("USE_MONGO") === "true";
+const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 
 let formatsCollection: any; // will hold the Mongo collection if using Mongo
-if (useMongo) {
+if (getUseMongo()) {
     console.log("Using MongoDB");
   // Set up the MongoDB connection.
   // Make sure you set the MONGO_URI environment variable (e.g., "mongodb://localhost:27017")
@@ -29,7 +29,7 @@ if (useMongo) {
 const DATA_FILE = "./data/formats.json";
 
 export const getFormats = async (): Promise<{ [name: string]: Format }> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // Get all documents from the collection.
     const mongoFormats = await formatsCollection.find({}).toArray();
     const formats: { [name: string]: Format } = {};
@@ -53,7 +53,7 @@ export const getFormats = async (): Promise<{ [name: string]: Format }> => {
 };
 
 export const addFormat = async (name: string, format: Format): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // Check for duplicates.
     const existing = await formatsCollection.findOne({ name });
     if (existing) {
@@ -72,7 +72,7 @@ export const addFormat = async (name: string, format: Format): Promise<void> => 
 };
 
 export const updateFormat = async (name: string, format: Format): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await formatsCollection.updateOne(
       { name },
       { $set: { pattern: format.pattern, description: format.description } }
@@ -92,7 +92,7 @@ export const updateFormat = async (name: string, format: Format): Promise<void> 
 };
 
 export const deleteFormat = async (name: string): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const result = await formatsCollection.deleteOne({ name });
     if (!result.deletedCount) {
       throw new Error(`Format with name '${name}' not found`);

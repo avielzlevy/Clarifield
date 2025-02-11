@@ -6,7 +6,7 @@ import { MongoClient, Collection } from "https://deno.land/x/mongo@v0.31.1/mod.t
 type AnalyticsRecord = { [name: string]: number };
 type AnalyticsMap = { [type: string]: AnalyticsRecord };
 
-const useMongo = Deno.env.get("USE_MONGO") === "true";
+const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 const DATA_FILE = "./data/analytics.json";
 
 // Define the interface for analytic documents stored in MongoDB.
@@ -19,7 +19,7 @@ interface AnalyticDoc {
 // Use a properly typed collection rather than any.
 let analyticsCollection: Collection<AnalyticDoc>;
 
-if (useMongo) {
+if (getUseMongo()) {
   const mongoUri = Deno.env.get("MONGO_URI");
   const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
@@ -60,7 +60,7 @@ export const writeAnalytics = async (
  * Retrieves all analytics data.
  */
 export const getAnalytics = async (): Promise<AnalyticsMap> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const docs = await analyticsCollection.find({}).toArray();
     const result: AnalyticsMap = {};
     for (const doc of docs) {
@@ -85,7 +85,7 @@ export const addAnalytic = async (
   name: string,
   amount: number,
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     await analyticsCollection.updateOne(
       { type, name },
       { $inc: { amount } },

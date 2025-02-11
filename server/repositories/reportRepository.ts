@@ -11,7 +11,7 @@ interface ReportDocument {
 }
 
 // Check environment variable for storage type.
-const useMongo = Deno.env.get("USE_MONGO") === "true";
+const getUseMongo = () => Deno.env.get("USE_MONGO") === "true";
 
 // File path for file-based storage.
 const DATA_FILE = "./data/reports.json";
@@ -19,7 +19,7 @@ const DATA_FILE = "./data/reports.json";
 // Use a properly typed collection for MongoDB.
 let reportsCollection: Collection<ReportDocument>;
 
-if (useMongo) {
+if (getUseMongo()) {
   const mongoUri = Deno.env.get("MONGO_URI");
   const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
@@ -37,7 +37,7 @@ if (useMongo) {
  * { [type: string]: { [name: string]: string[] } }
  */
 export const getReports = async (): Promise<Reports> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const docs = await reportsCollection.find({}).toArray();
     const reports: Reports = {};
     for (const doc of docs) {
@@ -71,7 +71,7 @@ export const addReport = async (
   name: string,
   description: string,
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     const existing = await reportsCollection.findOne({ type, name });
     if (existing) {
       // Use $each to push a single element.
@@ -103,7 +103,7 @@ export const deleteReport = async (
   type: string,
   name: string,
 ): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // deleteOne returns a number (1 if deleted, 0 if not found)
     const result = await reportsCollection.deleteOne({ type, name });
     if (!result) {
@@ -126,7 +126,7 @@ export const deleteReport = async (
  * Clear all reports of a specific type.
  */
 export const clearReportsByType = async (type: string): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     // deleteMany returns a number.
     const deletedCount = await reportsCollection.deleteMany({ type });
     if (deletedCount === 0) {
@@ -146,7 +146,7 @@ export const clearReportsByType = async (type: string): Promise<void> => {
  * Clear all reports.
  */
 export const clearAllReports = async (): Promise<void> => {
-  if (useMongo) {
+  if (getUseMongo()) {
     await reportsCollection.deleteMany({});
   } else {
     await Deno.writeTextFile(DATA_FILE, "{}");
