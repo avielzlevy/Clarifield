@@ -2,3 +2,4 @@
 !/data/staticFormats.ts
 /logs/*
 /node_modules/*
+/.env

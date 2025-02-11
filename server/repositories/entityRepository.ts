@@ -15,12 +15,13 @@ let entitiesCollection: Collection<Entity>;
 
 if (useMongo) {
   const mongoUri = Deno.env.get("MONGO_URI");
+  const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
-    throw new Error("MONGO_URI must be set when USE_MONGO is true.");
+    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
   }
   const client = new MongoClient();
   await client.connect(mongoUri);
-  const db = client.database("myDatabase"); // adjust the database name as needed
+  const db = client.database(mongoDb); // adjust the database name as needed
   // Use a collection named "entities"
   entitiesCollection = db.collection<Entity>("entities");
 }

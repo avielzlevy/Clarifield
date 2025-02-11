@@ -11,8 +11,9 @@ if (useMongo) {
   // Set up the MongoDB connection.
   // Make sure you set the MONGO_URI environment variable (e.g., "mongodb://localhost:27017")
   const mongoUri = Deno.env.get("MONGO_URI");
+  const mongoDb = Deno.env.get("MONGO_DB");
   if (!mongoUri) {
-    throw new Error("MONGO_URI  must be set in the environment when USE_MONGO is true.");
+    throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
   }
 
   const client = new MongoClient();
@@ -20,7 +21,7 @@ if (useMongo) {
 
   // Connect to a specific database and collection.
   // Adjust the names as needed.
-  const db = client.database('myDatabase');
+  const db = client.database(mongoDb);
   formatsCollection = db.collection<Format>("formats");
 }
 

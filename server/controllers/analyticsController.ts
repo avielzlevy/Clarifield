@@ -1,7 +1,7 @@
 // controllers/analyticsController.ts
 
 import { Context } from "../deps.ts";
-import * as analyticsRepo from "../repositories/analyticsRepository.ts";
+import * as analyticsRepo from "../repositories/analyticRepository.ts";
 
 /**
  * GET /api/analytics

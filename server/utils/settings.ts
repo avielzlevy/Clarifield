@@ -18,7 +18,7 @@ import {
 import {
   readAnalytics,
   writeAnalytics,
-} from "../repositories/analyticsRepository.ts";
+} from "../repositories/analyticRepository.ts";
 
 const DATA_FILE = "./data/settings.json";
 
