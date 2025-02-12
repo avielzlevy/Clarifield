@@ -92,44 +92,38 @@ const Analytics = () => {
   }
 
   return (
-    <Paper elevation={3} sx={{ padding: 2, margin: 2 }}>
-      <Box>
+    <Paper elevation={3} sx={{ padding: 2, margin: 2, height: 'calc(100vh - 115px)', overflow: 'hidden' }}>
+      <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Tabs value={activeTab} onChange={handleChange} centered>
           <Tab label={t("formats")} />
           <Tab label={t("definitions")} />
         </Tabs>
-      </Box>
-      <Box sx={{ marginTop: 2, height: '100%' }}>
-        {activeTab === 0 && (
-          <Bar
-            data={formatsData}
-            options={{
-              indexAxis: "y",
-              responsive: true,
-              scales: { x: { beginAtZero: true } },
-              plugins: {
-                legend: {
-                  display: false
-                }
-              }
-            }}
-          />
-        )}
-        {activeTab === 1 && (
-          <Bar
-            data={definitionsData}
-            options={{
-              indexAxis: "y",
-              responsive: true,
-              scales: { x: { beginAtZero: true } },
-              plugins: {
-                legend: {
-                  display: false
-                }
-              }
-            }}
-          />
-        )}
+        <Box sx={{ flex: 1, overflow: 'auto', marginTop: 2 }}>
+          {activeTab === 0 && (
+            <Bar
+              data={formatsData}
+              options={{
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true } },
+                plugins: { legend: { display: false } },
+              }}
+            />
+          )}
+          {activeTab === 1 && (
+            <Bar
+              data={definitionsData}
+              options={{
+                indexAxis: "y",
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { x: { beginAtZero: true } },
+                plugins: { legend: { display: false } },
+              }}
+            />
+          )}
+        </Box>
       </Box>
     </Paper>
   );

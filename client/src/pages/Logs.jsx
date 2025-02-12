@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import {
   Table, TableBody, TableCell, TableContainer,
+  TablePagination,
   TableHead, TableRow, Paper, Typography, CircularProgress, Box
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -11,8 +12,19 @@ const LogsPage = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const { t } = useTranslation();
   const { logout } = useAuth();
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(+event.target.value);
+    setPage(0);
+  };
   useEffect(() => {
     // Retrieve the authentication token (adjust according to your auth implementation)
     const token = localStorage.getItem('token');
@@ -96,12 +108,9 @@ const LogsPage = () => {
   }
 
   return (
-    <div>
-      <Typography variant="h4" gutterBottom>
-        {t('logs')}
-      </Typography>
+    <>
       <TableContainer component={Paper}>
-        <Table aria-label="logs table">
+        <Table stickyHeader aria-label="logs table">
           <TableHead>
             <TableRow>
               <TableCell>{t('timestamp')}</TableCell>
@@ -113,20 +122,31 @@ const LogsPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {logs.map((log, index) => (
-              <TableRow key={index}>
-                <TableCell>{log.timestamp || ''}</TableCell>
-                <TableCell>{log.ip || ''}</TableCell>
-                <TableCell>{log.method || ''}</TableCell>
-                <TableCell dir='ltr'>{log.url || ''}</TableCell>
-                <TableCell>{log.status || ''}</TableCell>
-                <TableCell>{log.responseTime || ''}</TableCell>
-              </TableRow>
-            ))}
+            {logs
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((log, index) => (
+                <TableRow key={index}>
+                  <TableCell>{log.timestamp || ''}</TableCell>
+                  <TableCell>{log.ip || ''}</TableCell>
+                  <TableCell>{log.method || ''}</TableCell>
+                  <TableCell dir='ltr'>{log.url || ''}</TableCell>
+                  <TableCell>{log.status || ''}</TableCell>
+                  <TableCell>{log.responseTime || ''}</TableCell>
+                </TableRow>
+              ))}
           </TableBody>
         </Table>
       </TableContainer>
-    </div>
+      <TablePagination
+        rowsPerPageOptions={[10, 25, 100]}
+        component="div"
+        count={logs.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+    </>
   );
 };
 

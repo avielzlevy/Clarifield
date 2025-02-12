@@ -180,7 +180,7 @@ function Entities() {
                     <CircularProgress />
                 </Box>
             ) : (
-                <Box sx={{ position: 'relative', height: '89.5vh', width: '100%' }}>
+                <Box sx={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%' }}>
                     <Box
                         sx={{
                             height: '100%',

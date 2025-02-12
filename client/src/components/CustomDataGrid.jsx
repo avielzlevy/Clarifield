@@ -297,7 +297,7 @@ function CustomDataGrid(props) {
         localeText={locale}
         isCellEditable={() => false}
         sx={{
-          height: `${viewportSize.height * 0.75}px`, // Adjust height dynamically based on viewport height
+          height: 'calc(100vh - 200px)', // Adjust height dynamically based on viewport height
           width: '100%',
           '& .MuiDataGrid-cell': {
             outline: 'none', // Optional: removes cell focus outline

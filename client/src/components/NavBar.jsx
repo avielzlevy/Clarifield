@@ -57,7 +57,8 @@ function PageContent() {
         logout({ mode: 'bad_token' });
       });
   return (
-    <Box component="main">
+    // <Box component="main" sx={{overflow:'hidden'}}>
+    <>
       {page === 'home' ?
         auth === true ? <AdminHome /> : <ViewerHome />
         : page === 'entities' ? (
@@ -77,7 +78,8 @@ function PageContent() {
         ) : page === 'logs' ? (
           <Logs />
         ) : (<div>Page Not Found</div>)}
-    </Box>
+    </>
+    // </Box>
   );
 }
 
