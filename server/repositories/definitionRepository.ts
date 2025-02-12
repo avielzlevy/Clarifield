@@ -15,18 +15,19 @@ let definitionsCollection: Collection<any>;
 
 const initMongo = async () => {
   if (getUseMongo()) {
-    const mongoUri = Deno.env.get("MONGO_URI");
+    const mongoHost = Deno.env.get("MONGO_HOST");
     const mongoDb = Deno.env.get("MONGO_DB");
     const mongoUser = Deno.env.get("MONGO_USER");
     const mongoPassword = Deno.env.get("MONGO_PASSWORD");
-    if (!mongoUri|| !mongoDb || !mongoUser || !mongoPassword) {
-      throw new Error("MONGO_URI, MONGO_DB, MONGO_USER, and MONGO_PASSWORD must be set when USE_MONGO is true."); 
+    if (!mongoHost|| !mongoDb || !mongoUser || !mongoPassword) {
+      throw new Error("MONGO_HOST, MONGO_DB, MONGO_USER, and MONGO_PASSWORD must be set when USE_MONGO is true."); 
     }
-    const mongoSrvUri = `mongodb+srv://${mongoUser}:${mongoPassword}@${mongoUri}/${mongoDb}?retryWrites=true&w=majority`;
+    const mongoSrvUri = `mongodb+srv://${mongoUser}:${mongoPassword}@${mongoHost}/Priority?retryWrites=true&w=majority`;
     const client = new MongoClient();
     console.log(`Connecting to MongoDB at ${mongoSrvUri}`);
-    await client.connect(mongoSrvUri);;
+    await client.connect(mongoSrvUri);
     const db = client.database(mongoDb); // Adjust database name as needed.
+    console.log(`Connected to database "${mongoDb}"`);
     definitionsCollection = db.collection("definitions");
   }
 };
