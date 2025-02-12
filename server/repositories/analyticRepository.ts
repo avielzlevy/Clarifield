@@ -23,12 +23,15 @@ const initMongo = async () => {
   if (getUseMongo()) {
     const mongoUri = Deno.env.get("MONGO_URI");
     const mongoDb = Deno.env.get("MONGO_DB");
-    if (!mongoUri) {
-      throw new Error("MONGO_URI and MONGO_DB must be set when USE_MONGO is true.");
+    const mongoUser = Deno.env.get("MONGO_USER");
+    const mongoPassword = Deno.env.get("MONGO_PASSWORD");
+    if (!mongoUri|| !mongoDb || !mongoUser || !mongoPassword) {
+      throw new Error("MONGO_URI, MONGO_DB, MONGO_USER, and MONGO_PASSWORD must be set when USE_MONGO is true."); 
     }
+    const mongoSrvUri = `mongodb+srv://${mongoUser}:${mongoPassword}@${mongoUri}/${mongoDb}?retryWrites=true&w=majority`;
     const client = new MongoClient();
-    console.log(`Connecting to MongoDB at ${mongoUri}`);
-    await client.connect(mongoUri);
+    console.log(`Connecting to MongoDB at ${mongoSrvUri}`);
+    await client.connect(mongoSrvUri);
     const db = client.database(mongoDb); // Adjust database name as needed.
     console.log(`Connected to database "${mongoDb}"`);
     analyticsCollection = db.collection<AnalyticDoc>("analytics");

@@ -13,14 +13,16 @@ const initMongo = async () => {
     // Make sure you set the MONGO_URI environment variable (e.g., "mongodb://localhost:27017")
     const mongoUri = Deno.env.get("MONGO_URI");
     const mongoDb = Deno.env.get("MONGO_DB");
-    if (!mongoUri) {
-      throw new Error(
-        "MONGO_URI and MONGO_DB must be set when USE_MONGO is true."
-      );
+    const mongoUser = Deno.env.get("MONGO_USER");
+    const mongoPassword = Deno.env.get("MONGO_PASSWORD");
+    if (!mongoUri|| !mongoDb || !mongoUser || !mongoPassword) {
+      throw new Error("MONGO_URI, MONGO_DB, MONGO_USER, and MONGO_PASSWORD must be set when USE_MONGO is true."); 
     }
 
+    const mongoSrvUri = `mongodb+srv://${mongoUser}:${mongoPassword}@${mongoUri}/${mongoDb}?retryWrites=true&w=majority`;
     const client = new MongoClient();
-    await client.connect(mongoUri);
+    console.log(`Connecting to MongoDB at ${mongoSrvUri}`);
+    await client.connect(mongoSrvUri);
 
     // Connect to a specific database and collection.
     // Adjust the names as needed.
