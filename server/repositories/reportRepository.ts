@@ -30,7 +30,7 @@ const initMongo = async () => {
     if (!mongoHost|| !mongoDb || !mongoUser || !mongoPassword) {
       throw new Error("MONGO_HOST, MONGO_DB, MONGO_USER, and MONGO_PASSWORD must be set when USE_MONGO is true."); 
     }
-    const mongoSrvUri = `mongodb+srv://${mongoUser}:${mongoPassword}@${mongoHost}/Priority?retryWrites=true&w=majority`;
+    const mongoSrvUri = `mongodb://${mongoUser}:${mongoPassword}@${mongoHost}/Priority?retryWrites=true&w=majority`;
     const client = new MongoClient();
     console.log(`Connecting to MongoDB at ${mongoSrvUri}`);
     await client.connect(mongoSrvUri);
