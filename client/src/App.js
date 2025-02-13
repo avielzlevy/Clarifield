@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider, CssBaseline, GlobalStyles } from '@mui/material';
 import { SnackbarProvider } from 'notistack';
 import { PageProvider } from './contexts/PageContext';
 import { AuthProvider } from './contexts/AuthContext';
@@ -11,6 +11,8 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
+import { Height } from '@mui/icons-material';
+import { SearchProvider } from './contexts/SearchContext';
 
 // Create rtl cache
 const rtlCache = createCache({
@@ -30,13 +32,15 @@ function App() {
 
   return (
 
-      <PageProvider>
-            <AuthProvider>
+    <PageProvider>
+      <AuthProvider>
         <RtlProvider>
-          <RtlConsumerComponent theme={theme} setTheme={setTheme} />
+          <SearchProvider>
+            <RtlConsumerComponent theme={theme} setTheme={setTheme} />
+          </SearchProvider>
         </RtlProvider>
-        </AuthProvider>
-      </PageProvider>
+      </AuthProvider>
+    </PageProvider>
   );
 }
 
@@ -48,6 +52,25 @@ function RtlConsumerComponent({ theme, setTheme }) {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <SnackbarProvider maxSnack={3}>
+          <GlobalStyles
+            styles={{
+
+              "::-webkit-scrollbar": {
+                width: "3px",
+                backgroundColor: "#f5f5f500",
+              },
+              /* Scrollbar track */
+              "::-webkit-scrollbar-track": {
+                // borderRadius: "10px",
+                backgroundColor: "#ffffff00",
+              },
+              /* Scrollbar thumb */
+              "::-webkit-scrollbar-thumb": {
+                borderRadius: "40px",
+                backgroundColor: "#848484cd",
+              },
+            }}
+          />
           <NavBar theme={theme} setTheme={setTheme} language />
         </SnackbarProvider>
       </ThemeProvider>

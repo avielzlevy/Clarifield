@@ -1,5 +1,5 @@
 import { ReactFlow, Controls, Background, applyNodeChanges, useViewport, ReactFlowProvider } from '@xyflow/react';
-import { Box, Dialog, DialogTitle, DialogContent, TextField, CircularProgress, Fab } from '@mui/material';
+import { Box, CircularProgress, Fab } from '@mui/material';
 import '@xyflow/react/dist/style.css';
 import { useTheme } from '@mui/material/styles';
 import { useMemo, useState, useEffect, useCallback, useRef } from 'react';
@@ -8,6 +8,7 @@ import EntityCard from '../components/EntityCard';
 import EntityDialog from './EntityDialog';
 import axios from 'axios';
 import AddIcon from '@mui/icons-material/Add';
+import { useSearch } from '../contexts/SearchContext';
 
 function Entities() {
     const nodeTypes = useMemo(() => ({ entityCard: EntityCard }), []);
@@ -16,10 +17,12 @@ function Entities() {
     const [dialogMode, setDialogMode] = useState(null);
     const [nodes, setNodes] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [searchOpen, setSearchOpen] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
     const [selectedNode, setSelectedNode] = useState(null);
     const { auth } = useAuth();
+    // Use the global search context (we expect it to be a simple string)
+    const { search: globalSearch, setSearch: setGlobalSearch } = useSearch();
+
+    // Use stored viewport center if available
     const [storedCenter] = useState(() => {
         const storedCenter = localStorage.getItem('reactFlowCenter');
         if (storedCenter) {
@@ -40,7 +43,7 @@ function Entities() {
         nodesRef.current = nodes;
     }, [nodes]);
 
-    // Move fetchEntities outside useEffect so we can reuse it
+    // Fetch nodes from your API
     const fetchNodes = async () => {
         try {
             const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
@@ -70,9 +73,10 @@ function Entities() {
                         setSelectedNode(null);
                         setDialogMode(null);
                     },
+                    // Optionally, if you still want nodes to trigger a search when clicked:
                     onEntityClick: (nodeLabel) => {
-                        search(nodeLabel);
-                    }
+                        performSearch(nodeLabel);
+                    },
                 },
             }));
             setNodes(newNodes);
@@ -84,64 +88,28 @@ function Entities() {
         }
     };
 
-    // Initial data fetch
     useEffect(() => {
-        fetchNodes()
+        fetchNodes();
     }, []);
 
-    useEffect(() => {
-        const handleKeyDown = (event) => {
-            if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'f') {
-                event.preventDefault();
-                setSearchOpen(true);
-            }
-        };
-
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
-    const handleSearchClose = () => {
-        setSearchOpen(false);
-        setSearchQuery('');
-    };
-
-    const handleSearchChange = (event) => {
-        setSearchQuery(event.target.value);
-    };
-
-    const handleSearchKeyDown = (event) => {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            search(searchQuery);
-            setSearchOpen(false);
-            setSearchQuery('');
-        }
-    };
-
+    // Save viewport changes (optional)
     useEffect(() => {
         localStorage.setItem('reactFlowCenter', JSON.stringify(viewport));
     }, [viewport]);
 
     const onInit = (instance) => {
-        // console.log('ReactFlow instance initialized:', instance);
         reactFlowInstanceRef.current = instance;
     };
 
-    const search = (searchQuery) => {
-        // console.log('Searching for:', searchQuery);
+    // Rename local search function to avoid conflict with global search.
+    const performSearch = (searchQuery) => {
         const searchTerm = searchQuery.trim().toLowerCase();
         if (!searchTerm) return;
 
         const currentNodes = nodesRef.current;
-        // console.log('Current nodes:', currentNodes);
-
-        const foundNode = currentNodes.find(node =>
+        const foundNode = currentNodes.find((node) =>
             node.data.label.toLowerCase().includes(searchTerm)
         );
-
-        // console.log('Found node:', foundNode);
-        // console.log('React Flow instance:', reactFlowInstanceRef.current);
 
         if (foundNode && reactFlowInstanceRef.current) {
             const newCenter = {
@@ -153,6 +121,20 @@ function Entities() {
             setSelectedNode(foundNode.data);
         }
     };
+
+    // Listen for changes in the global search context and perform a search if needed.
+    useEffect(() => {
+        if (nodes.length > 0 && globalSearch) {
+          const timer = setTimeout(() => {
+            performSearch(globalSearch);
+            setGlobalSearch('');
+          }, 100); // 500ms delay; adjust as needed
+          return () => clearTimeout(timer);
+        }
+      }, [nodes, globalSearch, setGlobalSearch]);
+      
+
+
 
     const onNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -200,63 +182,47 @@ function Entities() {
                             snapToGrid
                             style={{
                                 '--xy-controls-button-background-color-default':
-                                    theme.palette.background.paper !== '#fff' ? theme.palette.custom.light : '#e9e9e9',
+                                    theme.palette.background.paper !== '#fff'
+                                        ? theme.palette.custom.light
+                                        : '#e9e9e9',
                                 '--xy-controls-button-background-color-hover-default':
-                                    theme.palette.background.paper !== '#fff' ? theme.palette.custom.dark : '#bfbcbc',
+                                    theme.palette.background.paper !== '#fff'
+                                        ? theme.palette.custom.dark
+                                        : '#bfbcbc',
                                 '--xy-controls-button-color-default': theme.palette.text.primary,
                                 '--xy-controls-button-color-hover-default': 'inherit',
                                 '--xy-controls-button-border-color-default': '#5c5c5c',
-                                // '--xy-node-color-default':
-                                    // theme.palette.background.paper !== '#fff' ? '#fafafa' : '#393939',
-                                // '--xy-node-border-default': theme.palette.divider,
-                                // '--xy-node-background-color-default':
-                                    // theme.palette.background.paper !== '#fff' ? '#393939' : '#b0b0b0',
                             }}
                         >
                             <Background />
                             <Controls />
                         </ReactFlow>
                     </Box>
-                    {auth === true && <Fab
-                        color="primary"
-                        aria-label="add"
-                        onClick={() => {
-                            setDialogMode('create');
-                            setDialogOpen(true);
-                        }}
-                        sx={{
-                            position: 'absolute',
-                            bottom: 16,
-                            right: 16,
-                            zIndex: 999,
-                        }}
-                    >
-                        <AddIcon />
-                    </Fab>}
+                    {auth === true && (
+                        <Fab
+                            color="primary"
+                            aria-label="add"
+                            onClick={() => {
+                                setDialogMode('create');
+                                setDialogOpen(true);
+                            }}
+                            sx={{
+                                position: 'absolute',
+                                bottom: 16,
+                                right: 16,
+                                zIndex: 999,
+                            }}
+                        >
+                            <AddIcon />
+                        </Fab>
+                    )}
                 </Box>
             )}
-            <Dialog open={searchOpen} onClose={handleSearchClose}>
-                <DialogTitle>Search an Entity</DialogTitle>
-                <DialogContent>
-                    <TextField
-                        dir="ltr"
-                        autoFocus
-                        margin="dense"
-                        label="Search"
-                        type="text"
-                        fullWidth
-                        value={searchQuery}
-                        onChange={handleSearchChange}
-                        onKeyDown={handleSearchKeyDown}
-                        placeholder="Search for an entity..."
-                    />
-                </DialogContent>
-            </Dialog>
             <EntityDialog
                 open={dialogOpen}
                 onClose={() => {
-                    setDialogOpen(false)
-                    setDialogMode(null)
+                    setDialogOpen(false);
+                    setDialogMode(null);
                 }}
                 selectedNode={selectedNode}
                 setSelectedNode={setSelectedNode}

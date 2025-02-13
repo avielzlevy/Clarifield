@@ -19,7 +19,6 @@ import { useRtl } from '../contexts/RtlContext';
 import { sendAnalytics } from '../utils/analytics';
 
 
-
 function Definitions() {
   const [definitions, setDefinitions] = useState([]);
   const [favorites, setFavorites] = useState(() => {

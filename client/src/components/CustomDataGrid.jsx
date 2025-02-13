@@ -10,13 +10,15 @@ import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
+import { useSearch } from '../contexts/SearchContext';
 
 function CustomDataGrid(props) {
   const { rows, columns, handleDeleteRow, handleEditRow, favorites, setFavorites, handleReportRow, onCopy, formats } = props;
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const { auth } = useAuth();
-  const { t, i18n  } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { search,setSearch } = useSearch();
   const [viewportSize, setViewportSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -55,6 +57,14 @@ function CustomDataGrid(props) {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
+  useEffect(() => {
+    if (search) {
+      console.log('Search term:', search);
+      setSearchTerm(search)
+      setSearch('')
+    }
+  }, [search]);
   const [locale, setLocale] = useState(undefined);
   useEffect(() => {
     const loadLocale = async () => {
@@ -90,9 +100,9 @@ function CustomDataGrid(props) {
 
   const handleFavorite = (id) => {
     // console.log(`Favorite ${id}`);
-    sendAnalytics(id,'definition',3)
+    sendAnalytics(id, 'definition', 3)
     const formatUsed = rows.find((row) => row.id === id).format;
-    sendAnalytics(formatUsed,'format',3)
+    sendAnalytics(formatUsed, 'format', 3)
     setFavorites((prev) => {
       const updated = new Set(prev);
       if (updated.has(id)) {
@@ -140,7 +150,7 @@ function CustomDataGrid(props) {
       field: 'checkbox',
       headerName: '',
       sortable: false,
-      width: 60,
+      width: 50,
       disableColumnMenu: true,
       renderCell: (params) => (
         <Checkbox
@@ -152,7 +162,7 @@ function CustomDataGrid(props) {
     },
     ...columns,
   ];
-  if(!favorites)
+  if (!favorites)
     columnsWithCheckbox.shift()
 
   if (auth) {
@@ -279,6 +289,11 @@ function CustomDataGrid(props) {
         columns={columnsWithCheckbox}
         pageSize={10}
         rowsPerPageOptions={[50]}
+        slotProps={{
+          pagination: {
+            overflow: 'hidden',
+          },
+        }}
         getRowId={(row) => row.id}
         disableColumnFilter
         disableColumnSelector
@@ -287,10 +302,10 @@ function CustomDataGrid(props) {
         onCellClick={(params) => {
           if (params.value) {
             navigator.clipboard.writeText(params.value);
-            if(favorites)
-              sendAnalytics(params.row.id,'definition',1)
+            if (favorites)
+              sendAnalytics(params.row.id, 'definition', 1)
             else
-              sendAnalytics(params.row.id,'format',1)
+              sendAnalytics(params.row.id, 'format', 1)
             enqueueSnackbar('Copied to clipboard', { variant: 'success' });
           }
         }}

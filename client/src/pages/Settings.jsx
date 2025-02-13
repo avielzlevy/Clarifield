@@ -72,10 +72,11 @@ const Settings = () => {
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, maxWidth: 400 }}>
                 <FormControl fullWidth>
-                    <InputLabel id="naming-convention-label">
+                    <InputLabel id="naming-convention-label" >
                         {t('naming_conventions')}
                     </InputLabel>
                     <Select
+                        sx={{ mt: 1.3, ml: 1.5 }}
                         labelId="naming-convention-label"
                         id="naming-convention"
                         value={settings.namingConvention}
@@ -89,6 +90,7 @@ const Settings = () => {
                 </FormControl>
 
                 <Button
+                    sx={{ mt: 1.3 }}
                     variant="contained"
                     color="primary"
                     onClick={handleApplyClick}

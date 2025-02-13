@@ -171,7 +171,7 @@ function NavBar(props) {
               {t('app_name')}
             </Typography>
           </Box>
-          <SearchAll />
+          <SearchAll setPage={setPage}/>
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>

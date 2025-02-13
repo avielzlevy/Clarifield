@@ -16,7 +16,7 @@ const darkTheme = createTheme({
       // main: '#9333ea',
     },
     background: {
-      default: '#1f1f1f', // main background
+      default: '#191919', // main background
       paper: '#2c2c2c',   // card surfaces, etc.
     },
     text: {

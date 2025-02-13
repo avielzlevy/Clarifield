@@ -1,13 +1,13 @@
 import React from 'react'
-import {IconButton,ToggleButtonGroup} from '@mui/material';
-import {LightModeOutlined as LightMode,DarkModeOutlined as DarkMode} from '@mui/icons-material';
+import { IconButton, ToggleButtonGroup } from '@mui/material';
+import { LightModeOutlined as LightMode, DarkModeOutlined as DarkMode } from '@mui/icons-material';
 import darkTheme from '../themes/darkTheme';
 import lightTheme from '../themes/lightTheme';
 
 
 
 function ThemeButton(props) {
-    const {theme,setTheme} = props;
+    const { theme, setTheme } = props;
     const changeTheme = (theme) => {
         switch (theme) {
             case 'dark':
@@ -23,8 +23,8 @@ function ThemeButton(props) {
         }
     }
     return (
-        <IconButton disableRipple>
-            {theme.palette.mode === 'dark' ? <LightMode sx={{color:'#FFD242'}} onClick={() => changeTheme('light')}/> : <DarkMode sx={{color:'black'}} onClick={() => changeTheme('dark')}/>}
+        <IconButton disableRipple onClick={() => changeTheme(theme.palette.mode === 'dark' ? 'light' : 'dark')}>
+            {theme.palette.mode === 'dark' ? <LightMode sx={{ color: '#FFD242' }} /> : <DarkMode sx={{ color: 'black' }} />}
         </IconButton>
     )
 }

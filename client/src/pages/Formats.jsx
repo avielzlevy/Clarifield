@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
-  IconButton,
+  Button,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
@@ -13,6 +13,8 @@ import CustomDataGrid from '../components/CustomDataGrid';
 import DeleteDialog from './DeleteDialog';
 import { enqueueSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from '@mui/material/styles';
+import { useRtl } from '../contexts/RtlContext';
 
 function Formats() {
   const [formats, setFormats] = useState([]);
@@ -22,9 +24,11 @@ function Formats() {
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [actionedFormat, setActionedFormat] = useState(null);
   const [affected, setAffected] = useState(null);
-  const { auth,logout } = useAuth();
+  const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
   const { t } = useTranslation();
+  const theme = useTheme();
+  const { reverseWords } = useRtl();
 
   const fetchFormats = async () => {
     try {
@@ -151,18 +155,24 @@ function Formats() {
       padding: '4px',
       width: '100%',
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center'}}>
-        <Typography variant="h5" gutterBottom>
+         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
           {t('formats')}
         </Typography>
-        {auth === true ? <IconButton
-          color="primary"
+        {auth === true ? <Button
+          sx={{
+            backgroundColor: theme.palette.custom.bright,
+            borderRadius: 3,
+            textTransform: 'none',
+          }}
           onClick={handleAddDialogClick}
-          aria-label="Add format"
-          size="small"
+          aria-label="new-definition"
+          // size="small"
+          variant="contained"
+          startIcon={<AddIcon />}
         >
-          <AddIcon />
-        </IconButton> : null}
+          {reverseWords(`${t('new')} ${t('format')}`)}
+        </Button> : null}
       </Box>
       <Box sx={{ height: 500, width: '100%' }}>
         <CustomDataGrid rows={formats} columns={columns} handleDeleteRow={handleDeleteDialogClick} handleEditRow={handleEditDialogClick} handleReportRow={handleReportDialogClick} />
