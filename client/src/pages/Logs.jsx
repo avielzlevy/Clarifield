@@ -1,9 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import dayjs from 'dayjs';
 import {
-  Table, TableBody, TableCell, TableContainer,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
   TablePagination,
-  TableHead, TableRow, Paper, Typography, CircularProgress, Box
+  TableHead,
+  TableRow,
+  Paper,
+  CircularProgress,
+  Box,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
@@ -13,10 +21,21 @@ const LogsPage = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
   const { t } = useTranslation();
   const { logout } = useAuth();
+
+  // Update filter state to support timestamp range filtering.
+  const [filter, setFilter] = useState({
+    timestampBefore: null, // Upper bound (logs before this time)
+    timestampAfter: null,  // Lower bound (logs after this time)
+    ip: '',
+    method: '',
+    url: '',
+    status: '',
+    responseTime: '',
+  });
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -26,8 +45,20 @@ const LogsPage = () => {
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
+
+  // Update filter state when a filter value changes
+  const handleFilterChange = (field, value) => {
+    if (field === 'before') {
+      setFilter((prev) => ({ ...prev, timestampBefore: value }));
+    } else if (field === 'after') {
+      setFilter((prev) => ({ ...prev, timestampAfter: value }));
+    } else {
+      setFilter((prev) => ({ ...prev, [field]: value }));
+    }
+    setPage(0); // reset pagination when filtering
+  };
+
   useEffect(() => {
-    // Retrieve the authentication token (adjust according to your auth implementation)
     const token = localStorage.getItem('token');
 
     const fetchLogs = async () => {
@@ -35,7 +66,7 @@ const LogsPage = () => {
       try {
         const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/logs`, {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
 
@@ -47,7 +78,7 @@ const LogsPage = () => {
         const parsedLogs = parseLogs(logsData);
         setLogs(parsedLogs);
       } catch (err) {
-        if (err.response.status === 401) {
+        if (err.response && err.response.status === 401) {
           logout({ mode: 'bad_token' });
           return;
         }
@@ -58,7 +89,7 @@ const LogsPage = () => {
     };
 
     fetchLogs();
-  }, []);
+  }, [logout]);
 
   // Function to parse raw logs into structured data
   const parseLogs = (logsText) => {
@@ -83,7 +114,27 @@ const LogsPage = () => {
     });
   };
 
-  if (loading === true) {
+  // Compute filtered logs based on the filter state.
+  // For timestamp, we check if the log's timestamp is before the "before" date
+  // and after the "after" date.
+  const filteredLogs = useMemo(() => {
+    return logs.filter((log) => {
+      if (filter.timestampBefore && dayjs(log.timestamp).isAfter(dayjs(filter.timestampBefore))) {
+        return false;
+      }
+      if (filter.timestampAfter && dayjs(log.timestamp).isBefore(dayjs(filter.timestampAfter))) {
+        return false;
+      }
+      if (filter.ip && log.ip !== filter.ip) return false;
+      if (filter.method && log.method !== filter.method) return false;
+      if (filter.url && log.url !== filter.url) return false;
+      if (filter.status && log.status !== filter.status) return false;
+      if (filter.responseTime && log.responseTime !== filter.responseTime) return false;
+      return true;
+    });
+  }, [logs, filter]);
+
+  if (loading) {
     return (
       <Box
         sx={{
@@ -92,16 +143,17 @@ const LogsPage = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light blur overlay
-          backdropFilter: 'blur(5px)', // Apply blur
-          zIndex: 9999, // Ensure it's above everything
+          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          backdropFilter: 'blur(5px)',
+          zIndex: 9999,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
         }}
       >
         <CircularProgress />
-      </Box>)
+      </Box>
+    );
   }
 
   if (error) {
@@ -115,34 +167,71 @@ const LogsPage = () => {
           <TableHead>
             <TableRow>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['timestamp'])} lab el={t('timestamp')} />}
+                {/* Timestamp range filter */}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.timestamp)}
+                    label={t('timestamp')}
+                    onFilterChange={(value, field) => handleFilterChange(field, value)}
+                  />
+                )}
               </TableCell>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['ip'])} label={t('ip_address')} />}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.ip)}
+                    label={t('ip_address')}
+                    onFilterChange={(value) => handleFilterChange('ip', value)}
+                  />
+                )}
               </TableCell>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['method'])} label={t('method')} />}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.method)}
+                    label={t('method')}
+                    onFilterChange={(value) => handleFilterChange('method', value)}
+                  />
+                )}
               </TableCell>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['url'])} label={t('url')} />}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.url)}
+                    label={t('url')}
+                    onFilterChange={(value) => handleFilterChange('url', value)}
+                  />
+                )}
               </TableCell>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['status'])} label={t('status')} />}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.status)}
+                    label={t('status')}
+                    onFilterChange={(value) => handleFilterChange('status', value)}
+                  />
+                )}
               </TableCell>
               <TableCell>
-                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['responseTime'])} label={t('response_time')} />}
+                {Array.isArray(logs) && (
+                  <LogFilter
+                    logs={logs.map((log) => log.responseTime)}
+                    label={t('response_time')}
+                    onFilterChange={(value) => handleFilterChange('responseTime', value)}
+                  />
+                )}
               </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {logs
+            {filteredLogs
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((log, index) => (
                 <TableRow key={index}>
                   <TableCell>{log.timestamp || ''}</TableCell>
                   <TableCell>{log.ip || ''}</TableCell>
                   <TableCell>{log.method || ''}</TableCell>
-                  <TableCell dir='ltr'>{log.url || ''}</TableCell>
+                  <TableCell dir="ltr">{log.url || ''}</TableCell>
                   <TableCell>{log.status || ''}</TableCell>
                   <TableCell>{log.responseTime || ''}</TableCell>
                 </TableRow>
@@ -153,7 +242,7 @@ const LogsPage = () => {
       <TablePagination
         rowsPerPageOptions={[25, 50, 100]}
         component="div"
-        count={logs.length}
+        count={filteredLogs.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
