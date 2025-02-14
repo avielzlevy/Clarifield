@@ -11,7 +11,8 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
-import { Height } from '@mui/icons-material';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { SearchProvider } from './contexts/SearchContext';
 
 // Create rtl cache
@@ -36,7 +37,9 @@ function App() {
       <AuthProvider>
         <RtlProvider>
           <SearchProvider>
-            <RtlConsumerComponent theme={theme} setTheme={setTheme} />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <RtlConsumerComponent theme={theme} setTheme={setTheme} />
+            </LocalizationProvider>
           </SearchProvider>
         </RtlProvider>
       </AuthProvider>

@@ -9,6 +9,7 @@ const darkTheme = createTheme({
       bright: '#9333ea',
       light: '#3f3f46',
       dark: '#d7cde0',
+      editor:'#1e1e1e',
     },
     primary: {
       // Same purple accent for brand

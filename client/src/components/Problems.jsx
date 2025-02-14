@@ -27,13 +27,13 @@ const Problems = () => {
                 axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`),
                 axios.get(`${process.env.REACT_APP_API_URL}/api/formats`),
             ]);
-    
+
             const definitionsData = definitionsRes.data;
             const formatsData = formatsRes.data;
-    
+
             // Step 1: Build a mapping from format names to definitions that use them
             const formatToDefinitionsMap = {};
-    
+
             Object.entries(definitionsData).forEach(([defName, defData]) => {
                 const formatName = defData.format;
                 if (!formatToDefinitionsMap[formatName]) {
@@ -41,19 +41,19 @@ const Problems = () => {
                 }
                 formatToDefinitionsMap[formatName].push(defName);
             });
-    
+
             // Step 2: Find formats without patterns
             const formatsWithoutPattern = Object.keys(formatToDefinitionsMap).filter((formatName) => {
                 const formatData = formatsData[formatName];
                 return !formatData || !formatData.pattern;
             });
-    
+
             // Step 3: Prepare the ProblemsArray
             const ProblemsArray = formatsWithoutPattern.map((formatName) => ({
                 format: formatName,
                 definitions: formatToDefinitionsMap[formatName],
             }));
-    
+
             setProblems(ProblemsArray);
             setLoadingProblems(false);
         } catch (error) {
@@ -61,8 +61,8 @@ const Problems = () => {
             setLoadingProblems(false);
         }
     };
-    
-    
+
+
 
     useEffect(() => {
         fetchDefinitions();
@@ -109,7 +109,7 @@ const Problems = () => {
                             label={problem.definitions.join(", ")}
                             variant="outlined"
                             size="small"
-                            sx={{ backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9", fontWeight: "bold", maxWidth: '25vw' }}
+                            sx={{ backgroundColor: theme.palette.background.default, fontWeight: "bold", maxWidth: '25vw' }}
                         />
                     </Box>
                 </Card>
@@ -119,13 +119,19 @@ const Problems = () => {
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <Typography variant="h6">{t('problems')}</Typography>
-            <Divider sx={{ marginY: 1 }} />
+            <Box sx={{
+                display: "flex",
+                justifyContent: 'center',
+            }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>{t('problems')}</Typography>
+            </Box>
             <Box
                 sx={{
                     flex: 1,
                     overflow: "auto",
                     padding: 2,
+                    backgroundColor: theme.palette.background.default,
+                    borderRadius: 2,
                 }}
             >
                 {renderProblems(problems)}

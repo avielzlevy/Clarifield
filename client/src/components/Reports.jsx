@@ -67,7 +67,7 @@ const Reports = ({ reports, loadingReports }) => {
                                 label={desc}
                                 variant="outlined"
                                 size="small"
-                                sx={{ backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9", fontWeight: "bold",maxWidth:'25vw' }}
+                                sx={{ backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9", fontWeight: "bold", maxWidth: '25vw' }}
                             />
                         ))}
                     </Box>
@@ -78,29 +78,41 @@ const Reports = ({ reports, loadingReports }) => {
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <Typography variant="h6">{t('reports')}</Typography>
-            <Divider sx={{ marginY: 1 }} />
-            <Tabs
-                value={selectedTab}
-                onChange={handleTabChange}
-                variant="fullWidth"
-                indicatorColor="primary"
-                sx={{ marginBottom: 2 }}
-            >
-                {tabs.map((tab, index) => (
-                    <Tab key={index} label={t(tab.label)} />
-                ))}
-            </Tabs>
-            <Box
-                sx={{
-                    flex: 1,
-                    overflow: "auto",
-                    padding: 2,
-                }}
-            >
-                {renderReports(tabs[selectedTab].data)}
+            <Box sx={{
+                display: "flex",
+                justifyContent: 'center',
+            }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>{t('reports')}</Typography>
             </Box>
-        </Box>
+            <Box sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "92.5%",
+                backgroundColor: theme.palette.background.default,
+                borderRadius: 2,
+            }}>
+                <Tabs
+                    value={selectedTab}
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                    indicatorColor="primary"
+                    sx={{ marginBottom: 2 }}
+                >
+                    {tabs.map((tab, index) => (
+                        <Tab key={index} label={t(tab.label)} />
+                    ))}
+                </Tabs>
+                <Box
+                    sx={{
+                        flex: 1,
+                        overflow: "auto",
+                        padding: 2,
+                    }}
+                >
+                    {renderReports(tabs[selectedTab].data)}
+                </Box>
+            </Box>
+        </Box >
     );
 };
 

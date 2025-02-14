@@ -59,18 +59,22 @@ const QuickAccess = ({ onDefinitionClick }) => {
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 2 }}>
-                {t("quick_access")}
-            </Typography>
-            <Divider sx={{ marginBottom: 2 }} />
-
+            <Box sx={{
+                display: "flex",
+                justifyContent: 'center',
+            }}>
+                <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>
+                    {t("quick_access")}
+                </Typography>
+            </Box>
             <Box
                 sx={{
                     flex: 1,
                     overflow: "auto",
                     padding: 2,
-                    backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9",
+                    backgroundColor: theme.palette.background.default,
                     borderRadius: 2,
+                    height: "92.5%",
                 }}
             >
                 <List>
@@ -92,7 +96,7 @@ const QuickAccess = ({ onDefinitionClick }) => {
                                         transform: "scale(1.01)",
                                         boxShadow: theme.shadows[2],
                                     },
-                                    backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9",
+                                    backgroundColor: theme.palette.background.paper,
                                     display: "flex",
                                     alignItems: "center",
                                     justifyContent: "space-between",

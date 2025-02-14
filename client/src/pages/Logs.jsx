@@ -7,13 +7,14 @@ import {
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
+import LogFilter from '../components/LogFilter';
 
 const LogsPage = () => {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const { t } = useTranslation();
   const { logout } = useAuth();
 
@@ -109,16 +110,28 @@ const LogsPage = () => {
 
   return (
     <>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} sx={{ maxHeight: '80vh' }}>
         <Table stickyHeader aria-label="logs table">
           <TableHead>
             <TableRow>
-              <TableCell>{t('timestamp')}</TableCell>
-              <TableCell>{t('ip_address')}</TableCell>
-              <TableCell>{t('method')}</TableCell>
-              <TableCell>{t('url')}</TableCell>
-              <TableCell>{t('status')}</TableCell>
-              <TableCell>{t('response_time')}</TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['timestamp'])} lab el={t('timestamp')} />}
+              </TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['ip'])} label={t('ip_address')} />}
+              </TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['method'])} label={t('method')} />}
+              </TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['url'])} label={t('url')} />}
+              </TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['status'])} label={t('status')} />}
+              </TableCell>
+              <TableCell>
+                {logs && logs instanceof Array && <LogFilter logs={logs.map((log) => log['responseTime'])} label={t('response_time')} />}
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -138,7 +151,7 @@ const LogsPage = () => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[10, 25, 100]}
+        rowsPerPageOptions={[25, 50, 100]}
         component="div"
         count={logs.length}
         rowsPerPage={rowsPerPage}

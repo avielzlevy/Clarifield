@@ -76,10 +76,11 @@ function Validation() {
             />
             </Box>
             {/* <Divider orientation="vertical" flexItem /> */}
-            <Paper sx={{
+            <Box sx={{
                 width: '50%',
                 padding: '10px',
-                overflow: 'auto'
+                overflow: 'auto',
+                backgroundColor: theme.palette.custom.editor,
             }}>
                 <Typography variant="h6" gutterBottom>
                     {t('validation_results')}
@@ -119,7 +120,7 @@ function Validation() {
                         ))}
                     </Typography>
                 </Box>
-            </Paper>
+            </Box>
         </Box>
     )
 }

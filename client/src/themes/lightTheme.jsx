@@ -8,6 +8,7 @@ const lightTheme = createTheme({
       bright: '#9333ea',
       light: '#f3e8ff',
       dark: '#d7cde0',
+      editor:'#fffffe',
     },
     primary: {
       // Purple accent used for buttons, active states

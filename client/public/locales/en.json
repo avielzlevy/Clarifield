@@ -48,9 +48,10 @@
     "method" : "Method",
     "url" : "URL",
     "status" : "Status",
-    "response_time" : "Response Time",
+    "response_time" : "Duration",
     "analytics":"Analytics",
     "quick_access":"Quick Access",
     "addons":"Addons",
-    "addons_empty":"No addons"
+    "addons_empty":"No addons",
+    "filter":"Filter"
 }

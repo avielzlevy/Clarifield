@@ -12,11 +12,11 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from 'react-i18next';
 
-const ChangeLog = ({ changeLog,loadingChangeLog }) => {
+const ChangeLog = ({ changeLog, loadingChangeLog }) => {
     const [selectedTab, setSelectedTab] = useState(0);
     const theme = useTheme();
     const { t } = useTranslation();
-    if(loadingChangeLog){
+    if (loadingChangeLog) {
         return (
             <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
                 <Typography variant="h6">{t('change_log')}</Typography>
@@ -41,70 +41,68 @@ const ChangeLog = ({ changeLog,loadingChangeLog }) => {
             const formattedTimestamp = new Date(timestamp).toLocaleString();
 
             return (
-                <Box key={index} sx={{ marginBottom: 2 }}>
-                    <Card elevation={3}>
-                        <CardContent>
-                            <Typography variant="subtitle1" color="primary">
-                                {`${t(changeType)} ${t(type.slice(0, -1))}: ${name}`}
-                            </Typography>
-                            <Typography
-                                variant="caption"
-                                color="textSecondary"
-                                sx={{ display: "block", marginBottom: 1 }}
-                            >
-                                {`${t('timestamp')}: ${formattedTimestamp}`}
-                            </Typography>
-                            {before && (
-                                <Box sx={{ marginBottom: 1 }}>
-                                    <Typography
-                                        variant="body2"
-                                        color="error"
-                                        fontWeight="bold"
-                                    >
-                                        {t('before')}:
-                                    </Typography>
-                                    <Box
-                                        component="pre"
-                                        sx={{
-                                            backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9",
-                                            padding: 1,
-                                            borderRadius: 5,
-                                            whiteSpace: "pre-wrap",
-                                            wordWrap: "break-word",
-                                            fontSize: "0.875rem",
-                                        }}
-                                    >
-                                        {JSON.stringify(before, null, 2)}
-                                    </Box>
+                <Card elevation={3} key={index} sx={{ marginBottom: 2 }}>
+                    <CardContent>
+                        <Typography variant="subtitle1" color="primary">
+                            {`${t(changeType)} ${t(type.slice(0, -1))}: ${name}`}
+                        </Typography>
+                        <Typography
+                            variant="caption"
+                            color="textSecondary"
+                            sx={{ display: "block", marginBottom: 1}}
+                        >
+                            {`${t('timestamp')}: ${formattedTimestamp}`}
+                        </Typography>
+                        {before && (
+                            <Box sx={{ marginBottom: 1 }}>
+                                <Typography
+                                    variant="body2"
+                                    color="error"
+                                    fontWeight="bold"
+                                >
+                                    {t('before')}:
+                                </Typography>
+                                <Box
+                                    component="pre"
+                                    sx={{
+                                        backgroundColor: theme.palette.background.default,
+                                        padding: 1,
+                                        borderRadius: 5,
+                                        whiteSpace: "pre-wrap",
+                                        wordWrap: "break-word",
+                                        fontSize: "0.875rem",
+                                    }}
+                                >
+                                    {JSON.stringify(before, null, 2)}
                                 </Box>
-                            )}
-                            {after && (
-                                <Box>
-                                    <Typography
-                                        variant="body2"
-                                        color="success.main"
-                                        fontWeight="bold"
-                                    >
-                                        {t('after')}:
-                                    </Typography>
-                                    <Box
-                                        component="pre"
-                                        sx={{
-                                            padding: 1,
-                                            backgroundColor: theme.palette.background.paper !== "#fff" ? theme.palette.background.paper : "#e9e9e9",
-                                            borderRadius: 5,
-                                            whiteSpace: "pre-wrap",
-                                            wordWrap: "break-word",
-                                            fontSize: "0.875rem",
-                                        }}
-                                    >
-                                        {JSON.stringify(after, null, 2)}
-                                    </Box>
+                            </Box>
+                        )}
+                        {after && (
+                            <Box>
+                                <Typography
+                                    variant="body2"
+                                    color="success.main"
+                                    fontWeight="bold"
+                                >
+                                    {t('after')}:
+                                </Typography>
+                                <Box
+                                    component="pre"
+                                    sx={{
+                                        padding: 1,
+                                        backgroundColor: theme.palette.background.default,
+                                        borderRadius: 5,
+                                        whiteSpace: "pre-wrap",
+                                        wordWrap: "break-word",
+                                        fontSize: "0.875rem",
+                                    }}
+                                >
+                                    {JSON.stringify(after, null, 2)}
                                 </Box>
-                            )}
-                        </CardContent>
-                    </Card>
-                </Box>
+                            </Box>
+                        )}
+                    </CardContent>
+                </Card>
             );
         });
     };
@@ -116,33 +114,46 @@ const ChangeLog = ({ changeLog,loadingChangeLog }) => {
 
     return (
         <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-            <Typography variant="h6">{t('change_log')}</Typography>
-            <Divider sx={{ marginY: 1 }} />
-            <Tabs
-                value={selectedTab}
-                onChange={handleTabChange}
-                variant="fullWidth"
-                indicatorColor="primary"
-                sx={{ marginBottom: 2 }}
-            >
-                {tabs.map((tab, index) => (
-                    <Tab key={index} label={t(tab.label)} />
-                ))}
-            </Tabs>
-            <Box
-                sx={{
-                    flex: 1,
-                    overflow: "auto",
-                    padding: 2,
-                }}
-            >
-                {tabs[selectedTab].data.length === 0 ? (
-                    <Typography>
-                        {t('change_log_empty')}
-                    </Typography>
-                ) : (
-                    renderChangeLog(tabs[selectedTab].data)
-                )}
+            <Box sx={{
+                display: "flex",
+                justifyContent: 'center',
+            }}>
+            <Typography variant="h6" sx={{ fontWeight: "bold", marginBottom: 1 }}>{t('change_log')}</Typography>
+            </Box>
+            <Box sx={{
+                display: "flex",
+                flexDirection: "column",
+                height: "92.5%",
+                backgroundColor: theme.palette.background.default,
+                borderRadius: 2,
+            }}>
+                <Tabs
+                    value={selectedTab}
+                    onChange={handleTabChange}
+                    variant="fullWidth"
+                    indicatorColor="primary"
+                    // sx={{ backgroundColor: theme.palette.background.default }}
+                >
+                    {tabs.map((tab, index) => (
+                        <Tab key={index} label={t(tab.label)} />
+                    ))}
+                </Tabs>
+                <Box
+                    sx={{
+                        flex: 1,
+                        overflow: "auto",
+                        padding: 2,
+                        // backgroundColor: theme.palette.background.default,
+                    }}
+                >
+                    {tabs[selectedTab].data.length === 0 ? (
+                        <Typography>
+                            {t('change_log_empty')}
+                        </Typography>
+                    ) : (
+                        renderChangeLog(tabs[selectedTab].data)
+                    )}
+                </Box>
             </Box>
         </Box>
     );

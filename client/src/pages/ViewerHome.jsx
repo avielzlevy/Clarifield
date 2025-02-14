@@ -61,19 +61,24 @@ const ViewerHomepage = () => {
 
 
   return (
-    <Box sx={{ padding: 1, display: "flex", gap: 2, height: "89.5vh" }}>
+    <Box sx={{ display: "flex", gap: 2, height: "89.5vh" }}>
       {/* Section 1: Empty */}
-      <Paper sx={{ flex: 1, padding: 1 }}>
+      <Paper
+        sx={{
+          flex: 1,
+          paddingLeft: 2,
+          paddingRight: 2,
+          paddingBottom: 2
+        }}>
         <Addons files={addons} />
       </Paper>
       {/* Section 2: Empty */}
       <Paper
         sx={{
           flex: 1,
-          padding: 2,
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          paddingLeft: 2,
+          paddingRight: 2,
+          paddingBottom: 2
         }}>
         <QuickAccess onDefinitionClick={() => { }} />
       </Paper>
@@ -82,10 +87,9 @@ const ViewerHomepage = () => {
       <Paper
         sx={{
           flex: 1,
-          padding: 2,
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
+          paddingLeft: 2,
+          paddingRight: 2,
+          paddingBottom: 2
         }}
       >
         <ChangeLog changeLog={changeLog} loadingChangeLog={loadingChangeLog} />

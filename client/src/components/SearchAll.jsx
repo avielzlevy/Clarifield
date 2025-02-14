@@ -134,6 +134,7 @@ import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { useSearch } from '../contexts/SearchContext';
+import { useTranslation } from 'react-i18next';
 
 export default function SearchAll({ setPage }) {
   const theme = useTheme();
@@ -141,6 +142,8 @@ export default function SearchAll({ setPage }) {
   const [inputValue, setInputValue] = useState('');
   const [value, setValue] = useState(null);
   const { setSearch } = useSearch();
+  const { t } = useTranslation();
+
 
   useEffect(() => {
     const fetchSearchables = async () => {
@@ -203,7 +206,7 @@ export default function SearchAll({ setPage }) {
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder="Search..."
+          placeholder={t('search')}
           slotProps={{
             input: {
               ...params.InputProps,

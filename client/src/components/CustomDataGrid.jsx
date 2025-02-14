@@ -18,7 +18,7 @@ function CustomDataGrid(props) {
   const [searchTerm, setSearchTerm] = useState('');
   const { auth } = useAuth();
   const { t, i18n } = useTranslation();
-  const { search,setSearch } = useSearch();
+  const { search, setSearch } = useSearch();
   const [viewportSize, setViewportSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
@@ -247,7 +247,7 @@ function CustomDataGrid(props) {
         }}
       >
         <TextField
-          label={t('search')}
+          label={t('filter')}
           value={searchTerm}
           onChange={handleSearchChange}
           variant="outlined"
