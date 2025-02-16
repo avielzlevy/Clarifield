@@ -3,6 +3,7 @@
 import { Context, RouterContext } from "../deps.ts";
 import { Entity } from "../models/entities.ts";
 import * as entityRepo from "../repositories/entityRepository.ts";
+import * as definitionRepo from "../repositories/definitionRepository.ts";
 
 /**
  * GET /api/entities
@@ -35,7 +36,8 @@ export const addEntity = async (ctx: Context) => {
       };
       return;
     }
-
+    const definitionsMap = await definitionRepo.getDefinitions();
+    const entitiesMap = await entityRepo.getEntities();
     // Validate each field.
     for (const field of fields) {
       if (!field.label || !field.type) {
@@ -49,11 +51,7 @@ export const addEntity = async (ctx: Context) => {
         case "definition": {
           // Read the definitions file.
           try {
-            const definitionsData = await Deno.readTextFile(
-              "./data/definitions.json"
-            );
-            const definitions = JSON.parse(definitionsData);
-            if (!definitions[field.label]) {
+            if (!definitionsMap[field.label]) {
               ctx.response.status = 400;
               ctx.response.body = {
                 message: `Invalid field data. '${field.label}' must be an existing definition.`,
@@ -69,7 +67,7 @@ export const addEntity = async (ctx: Context) => {
         }
         case "entity": {
           // Validate by checking the stored entities via the repository.
-          const entitiesMap = await entityRepo.getEntities();
+
           if (!entitiesMap[field.label]) {
             ctx.response.status = 400;
             ctx.response.body = {
