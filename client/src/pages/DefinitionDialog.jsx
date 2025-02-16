@@ -140,6 +140,7 @@ function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
           error={!!namingConventionError}
           helperText={namingConventionError}
           onChange={handleNameChange}
+          disabled={mode === 'edit'}
         />
         <Autocomplete
           options={formats}
