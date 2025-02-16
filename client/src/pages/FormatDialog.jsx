@@ -15,7 +15,7 @@ import ChangeWarning from '../components/ChangeWarning';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 
-function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch }) {
+function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch,setRefreshSearchables }) {
   const [format, setFormat] = useState({ name: '', pattern: '', description: '' });
   const [patternError, setPatternError] = useState('');
   const { logout } = useAuth();
@@ -50,6 +50,7 @@ function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch }) 
       refetch();
       setFormat({ name: '', pattern: '', description: '' });
       onClose();
+      setRefreshSearchables((prev) => prev + 1);
     } catch (error) {
       if (error.response.status === 401) {
         logout({ mode: 'bad_token' });

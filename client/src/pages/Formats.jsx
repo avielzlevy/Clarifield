@@ -16,7 +16,7 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { useRtl } from '../contexts/RtlContext';
 
-function Formats() {
+function Formats({setRefreshSearchables}) {
   const [formats, setFormats] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
@@ -62,6 +62,7 @@ function Formats() {
       enqueueSnackbar('Format deleted successfully', { variant: 'success' });
       handleDeleteDialogClose();
       setActionedFormat(null);
+      setRefreshSearchables((prev) => prev+1)
     } catch (error) {
       if (error.response.status === 401) {
         logout({ mode: 'bad_token' });
@@ -176,7 +177,7 @@ function Formats() {
       </Box>
       <Box sx={{ height: 500, width: '100%' }}>
         <CustomDataGrid rows={formats} columns={columns} handleDeleteRow={handleDeleteDialogClick} handleEditRow={handleEditDialogClick} handleReportRow={handleReportDialogClick} />
-        <FormatDialog mode={dialogMode} open={dialogOpen} onClose={handleAddDialogClose} editedFormat={actionedFormat} affected={affected} refetch={fetchFormats} />
+        <FormatDialog mode={dialogMode} open={dialogOpen} onClose={handleAddDialogClose} editedFormat={actionedFormat} affected={affected} refetch={fetchFormats} setRefreshSearchables={setRefreshSearchables} />
         <DeleteDialog open={deleteDialogOpen} onClose={handleDeleteDialogClose} deletedItem={actionedFormat} onDelete={deleteFormat} affected={affected} />
         <ReportDialog open={reportDialogOpen} onClose={handleReportDialogClose} reportedItem={actionedFormat} />
       </Box>

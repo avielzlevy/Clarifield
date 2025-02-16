@@ -17,7 +17,7 @@ import DeleteEntityForm from '../components/DeleteEntityForm';
 import { sendAnalytics } from '../utils/analytics';
 
 function EntityDialog(props) {
-  const { open, onClose, selectedNode, setSelectedNode, mode, fetchNodes } = props;
+  const { open, onClose, selectedNode, setSelectedNode, mode, fetchNodes,setRefreshSearchables } = props;
   const [checkedFields, setCheckedFields] = useState([]);
   const [affectedItems, setAffectedItems] = useState(null);
   const [definitions, setDefinitions] = useState({});
@@ -191,7 +191,7 @@ function EntityDialog(props) {
         setSureDelete(false);
       }
     }
-
+    setRefreshSearchables((prev) => prev+1);
     onClose();
   };
 

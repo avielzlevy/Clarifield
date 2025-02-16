@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import {
   AppBar,
   Toolbar,
@@ -44,7 +44,7 @@ import Logs from '../pages/Logs';
 import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
-function PageContent() {
+function PageContent({setRefreshSearchables}) {
   const { page } = usePage();
   const { logout, login, auth } = useAuth();
   const token = localStorage.getItem('token');
@@ -62,13 +62,13 @@ function PageContent() {
       {page === 'home' ?
         auth === true ? <AdminHome /> : <ViewerHome />
         : page === 'entities' ? (
-          <Entities />
+          <Entities setRefreshSearchables={setRefreshSearchables}/>
         ) : page === 'definitions' ? (
-          <Definitions />
+          <Definitions setRefreshSearchables={setRefreshSearchables}/>
         ) : page === 'validation' ? (
           <Validation />
         ) : page === 'formats' ? (
-          <Formats />
+          <Formats setRefreshSearchables={setRefreshSearchables}/>
         ) : page === 'signin' ? (
           <SignIn />
         ) : page === 'settings' ? (
@@ -94,6 +94,7 @@ function NavBar(props) {
   const username = localStorage.getItem('username') || 'Viewer';
   const { t } = useTranslation();
   const { rtl, rtlLoading } = useRtl();
+  const [refreshSearchables, setRefreshSearchables] = useState(0);
 
   const handleChangeUser = () => {
     if (token) {
@@ -171,7 +172,7 @@ function NavBar(props) {
               {t('app_name')}
             </Typography>
           </Box>
-          <SearchAll setPage={setPage}/>
+          <SearchAll setPage={setPage} refreshSearchables={refreshSearchables}/>
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
@@ -250,7 +251,7 @@ function NavBar(props) {
         sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}
       >
         <Toolbar />
-        <PageContent />
+        <PageContent setRefreshSearchables={setRefreshSearchables}/>
       </Box>
     </Box >
   );

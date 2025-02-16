@@ -19,7 +19,7 @@ import { useRtl } from '../contexts/RtlContext';
 import { sendAnalytics } from '../utils/analytics';
 
 
-function Definitions() {
+function Definitions({setRefreshSearchables}) {
   const [definitions, setDefinitions] = useState([]);
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('favorites');
@@ -85,6 +85,7 @@ function Definitions() {
       enqueueSnackbar('Definition deleted successfully', { variant: 'success' });
       setDeleteDialogOpen(false);
       setActionedDefinition(null);
+      setRefreshSearchables((prev) => prev + 1);
     } catch (error) {
       console.error('Error deleting definition:', error);
       enqueueSnackbar('Error deleting definition', { variant: 'error' });
@@ -438,7 +439,7 @@ function Definitions() {
           onCopy={handleCopy}
           formats={formats}
         />
-        <DefinitionDialog mode={dialogMode} open={DialogOpen} onClose={handleAddDialogClose} editedDefinition={actionedDefinition} affected={affected} refetch={fetchDefinitions} />
+        <DefinitionDialog mode={dialogMode} open={DialogOpen} onClose={handleAddDialogClose} editedDefinition={actionedDefinition} affected={affected} refetch={fetchDefinitions} setRefreshSearchables={setRefreshSearchables}/>
         <DeleteDialog open={deleteDialogOpen} onClose={handleDeleteDialogClose} deletedItem={actionedDefinition} onDelete={deleteDefinition} />
         <ReportDialog open={reportDialogOpen} onClose={handleReportDialogClose} reportedItem={actionedDefinition} />
       </Box>

@@ -13,7 +13,7 @@ import axios from 'axios';
 import { enqueueSnackbar } from 'notistack'; // Import useSnackbar
 import { useAuth } from '../contexts/AuthContext'; // Import logout
 
-function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
+function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch,setRefreshSearchables }) {
   const [definition, setDefinition] = useState({ name: '', format: '', description: '' });
   const [formats, setFormats] = useState([]);
   const [namingConvention, setNamingConvention] = useState('');
@@ -98,6 +98,7 @@ function DefinitionDialog({ mode, open, onClose, editedDefinition, refetch }) {
       refetch();
       setDefinition({ name: '', format: '', description: '' });
       onClose()
+      setRefreshSearchables((prev) => prev+1)
     } catch (error) {
       if (error.response.status === 401) {
         logout({ mode: 'bad_token' });

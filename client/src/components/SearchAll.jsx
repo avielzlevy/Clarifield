@@ -17,7 +17,7 @@ import {
   DataObject,
 } from '@mui/icons-material';
 
-export default function SearchAll({ setPage }) {
+export default function SearchAll({ setPage,refreshSearchables }) {
   const theme = useTheme();
   const [searchables, setSearchables] = useState([]);
   const [inputValue, setInputValue] = useState('');
@@ -27,28 +27,28 @@ export default function SearchAll({ setPage }) {
   const { setSearch } = useSearch();
   const { t } = useTranslation();
 
-  useEffect(() => {
-    const fetchSearchables = async () => {
-      try {
-        const responseEntities = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
-        const entities = responseEntities.data;
-        const responseDefinitions = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
-        const definitions = responseDefinitions.data;
-        const responseFormats = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
-        const formats = responseFormats.data;
-        const combinedSearchables = [
-          ...Object.values(entities).map((entity) => ({ type: 'Entity', name: entity.label })),
-          ...Object.keys(definitions).map((definition) => ({ type: 'Definition', name: definition })),
-          ...Object.keys(formats).map((format) => ({ type: 'Format', name: format })),
-        ];
-        setSearchables(combinedSearchables);
-      } catch (error) {
-        console.error('Error fetching searchables:', error);
-      }
-    };
+  const fetchSearchables = async () => {
+    try {
+      const responseEntities = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
+      const entities = responseEntities.data;
+      const responseDefinitions = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
+      const definitions = responseDefinitions.data;
+      const responseFormats = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
+      const formats = responseFormats.data;
+      const combinedSearchables = [
+        ...Object.values(entities).map((entity) => ({ type: 'Entity', name: entity.label })),
+        ...Object.keys(definitions).map((definition) => ({ type: 'Definition', name: definition })),
+        ...Object.keys(formats).map((format) => ({ type: 'Format', name: format })),
+      ];
+      setSearchables(combinedSearchables);
+    } catch (error) {
+      console.error('Error fetching searchables:', error);
+    }
+  };
 
+  useEffect(() => {
     fetchSearchables();
-  }, []);
+  }, [refreshSearchables]);
 
   const handleSelection = (event, newOption) => {
     if (!newOption) return;
