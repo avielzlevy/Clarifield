@@ -1,8 +1,6 @@
 import React from 'react';
 import { Box, Typography, FormControlLabel, Checkbox } from '@mui/material';
-import ChangeWarning from '../components/ChangeWarning';
-
-function DeleteEntityForm({ node, affected,sureDelete,setSureDelete}) {
+const DeleteEntityForm = ({ node, sureDelete, setSureDelete }) => {
   return (
     <Box
       sx={{
@@ -13,23 +11,21 @@ function DeleteEntityForm({ node, affected,sureDelete,setSureDelete}) {
         minWidth: 250,
       }}
     >
-      {/* Description */}
       <Typography variant="body1">
         Are you sure you want to delete the entity "{node.label}"? This action cannot be undone.
       </Typography>
 
-      {/* Confirmation Checkbox */}
       <FormControlLabel
         control={
           <Checkbox
             checked={sureDelete}
-            onChange={() => setSureDelete(!sureDelete)}
+            onChange={() => setSureDelete((prev) => !prev)}
           />
         }
         label="I confirm I want to delete this entity"
       />
     </Box>
   );
-}
+};
 
 export default DeleteEntityForm;

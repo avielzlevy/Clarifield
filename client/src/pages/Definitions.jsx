@@ -357,6 +357,7 @@ function Definitions({setRefreshSearchables}) {
   const handleAddDialogClose = () => {
     setDialogMode(null);
     setAffected(null);
+    setActionedDefinition(null);
     setDialogOpen(false);
   };
 

@@ -1,10 +1,9 @@
-// src/components/SignIn.js
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Container, TextField, Button, Typography, Box } from '@mui/material';
 import axios from 'axios';
 import { usePage } from '../contexts/PageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useSnackbar } from 'notistack'; // Correct import for useSnackbar
+import { useSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 
 function SignIn() {
@@ -12,29 +11,40 @@ function SignIn() {
   const { setPage } = usePage();
   const { login } = useAuth();
   const { t } = useTranslation();
-  const { enqueueSnackbar } = useSnackbar(); // Access enqueueSnackbar via useSnackbar
+  const { enqueueSnackbar } = useSnackbar();
 
-  const handleSignIn = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/signin`, credentials);
-      localStorage.setItem('username', response.data.username);
-      login(response.data.token);
-      enqueueSnackbar(t('signed_in'), { variant: 'success' });
-      const previousPage = localStorage.getItem('previousPage');
-      if (previousPage) {
-        setPage(previousPage);
-        localStorage.removeItem('previousPage');
-      } else {
-        setPage('home');
+  // Single handler for input changes
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setCredentials((prev) => ({ ...prev, [name]: value }));
+  }, []);
+
+  // Sign-in handler with API call and navigation logic
+  const handleSignIn = useCallback(
+    async (e) => {
+      e.preventDefault();
+      try {
+        const { data } = await axios.post(
+          `${process.env.REACT_APP_API_URL}/api/signin`,
+          credentials
+        );
+        localStorage.setItem('username', data.username);
+        login(data.token);
+        enqueueSnackbar(t('signed_in'), { variant: 'success' });
+
+        const previousPage = localStorage.getItem('previousPage');
+        setPage(previousPage || 'home');
+        if (previousPage) {
+          localStorage.removeItem('previousPage');
+        }
+      } catch (error) {
+        console.error('Authentication failed', error);
+        const message = error.response?.data?.message || 'Authentication failed';
+        enqueueSnackbar(t('sign_in_failed', { message }), { variant: 'error' });
       }
-    } catch (error) {
-      console.error('Authentication failed', error);
-      // Extract a more specific error message if available
-      const message = error.response?.data?.message || 'Authentication failed';
-      enqueueSnackbar(t('sign_in_failed', { message }), { variant: 'error' });
-    }
-  };
+    },
+    [credentials, login, enqueueSnackbar, t, setPage]
+  );
 
   return (
     <Container sx={{ mt: 8 }}>
@@ -45,28 +55,30 @@ function SignIn() {
         autoComplete="off"
         sx={{
           display: 'flex',
-          flexDirection: 'column', // Arrange items vertically
-          alignItems: 'center',    // Center items horizontally
-          gap: 2,                  // Space between elements
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 2,
         }}
       >
         <Typography variant="h4" gutterBottom>
           {t('sign_in')}
         </Typography>
         <TextField
+          name="username"
           label={t('user_name')}
           fullWidth
           required
           value={credentials.username}
-          onChange={(e) => setCredentials({ ...credentials, username: e.target.value })}
+          onChange={handleChange}
         />
         <TextField
+          name="password"
           label={t('password')}
           type="password"
           fullWidth
           required
           value={credentials.password}
-          onChange={(e) => setCredentials({ ...credentials, password: e.target.value })}
+          onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit" fullWidth>
           {t('sign_in')}

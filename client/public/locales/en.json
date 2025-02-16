@@ -53,5 +53,8 @@
     "quick_access":"Quick Access",
     "addons":"Addons",
     "addons_empty":"No addons",
-    "filter":"Filter"
+    "filter":"Filter",
+    "format_dialog_instructions":"Please fill out the details below to ",
+    "format_pattern_must_have_boundaries":"format.{'\n'}The pattern must be a valid regular expression enclosed with ^ and $",
+    "pattern_boundaries_error":"Pattern must start with ^ and end with $"
 }

@@ -1,188 +1,209 @@
-import React, { useEffect, useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-} from '@mui/material';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Box, Typography, Button } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
 import FormatDialog from './FormatDialog';
 import ReportDialog from './ReportDialog';
-import { useAuth } from '../contexts/AuthContext';
 import CustomDataGrid from '../components/CustomDataGrid';
 import DeleteDialog from './DeleteDialog';
 import { enqueueSnackbar } from 'notistack';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { useRtl } from '../contexts/RtlContext';
+import { useAuth } from '../contexts/AuthContext';
 
-function Formats({setRefreshSearchables}) {
+const Formats = ({ setRefreshSearchables }) => {
   const [formats, setFormats] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [actionedFormat, setActionedFormat] = useState(null);
+  const [selectedFormat, setSelectedFormat] = useState(null);
   const [affected, setAffected] = useState(null);
+
   const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
   const { t } = useTranslation();
   const theme = useTheme();
   const { reverseWords } = useRtl();
 
-  const fetchFormats = async () => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
-      const formatsData = response.data;
+  // Columns for the data grid
+  const columns = [
+    { field: 'name', headerName: t('name'), flex: 1 },
+    {
+      field: 'pattern',
+      headerName: t('pattern'),
+      flex: 2,
+      renderCell: (params) => (
+        <Typography variant="body2" sx={{ mt: '3%' }} dir="ltr">
+          {params.value}
+        </Typography>
+      ),
+    },
+    { field: 'description', headerName: t('description'), flex: 2 },
+  ];
 
-      // Convert formats object to array
-      const formatsArray = Object.entries(formatsData).map(([name, formatData]) => ({
-        id: name, // Use the name as the unique identifier
+  // Fetch formats from the API.
+  const fetchFormats = useCallback(async () => {
+    try {
+      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
+      // Convert formats object to array.
+      const formatsArray = Object.entries(data).map(([name, formatData]) => ({
+        id: name,
         name,
         pattern: formatData.pattern,
         description: formatData.description,
       }));
-
       setFormats(formatsArray);
     } catch (error) {
       console.error('Error fetching formats:', error);
     }
-  };
-
-  useEffect(() => {
-    fetchFormats();
   }, []);
 
-  const deleteFormat = async (deletedFormat) => {
+  // Fetch affected items for a given format.
+  const fetchAffectedItems = useCallback(async (format) => {
     try {
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/formats/${deletedFormat.name}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setFormats((prevFormats) => prevFormats.filter((format) => format.name !== deletedFormat.name));
-      enqueueSnackbar('Format deleted successfully', { variant: 'success' });
-      handleDeleteDialogClose();
-      setActionedFormat(null);
-      setRefreshSearchables((prev) => prev+1)
+      const { data } = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/affected?format=${format.name}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setAffected(data);
     } catch (error) {
-      if (error.response.status === 401) {
+      if (error.response?.status === 401) {
         logout({ mode: 'bad_token' });
         return;
-      }
-      console.error('Error deleting format:', error);
-      enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
-      handleDeleteDialogClose();
-    }
-  };
-
-  const getAffected = async (format) => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/affected?format=${format.name}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const affected = response.data;
-      setAffected(affected);
-    } catch (error) {
-      if (error.response.status === 401) {
-        logout({ mode: 'bad_token' });
-        return;
-      }
-      else if (error.response.status === 404) {
+      } else if (error.response?.status === 404) {
         setAffected(null);
       } else {
         console.error('Error fetching affected:', error);
         enqueueSnackbar('Error fetching affected', { variant: 'error' });
       }
     }
-  }
+  }, [token, logout]);
 
-  const handleAddDialogClick = () => {
+  useEffect(() => {
+    fetchFormats();
+  }, [fetchFormats]);
+
+  // Handlers for opening dialogs.
+  const openAddDialog = useCallback(() => {
     setDialogMode('add');
     setDialogOpen(true);
-  };
+    setAffected(null);
+    setSelectedFormat(null);
+  }, []);
 
-  const handleEditDialogClick = (format) => {
+  const openEditDialog = useCallback((format) => {
     setDialogMode('edit');
-    setActionedFormat(format);
-    getAffected(format);
+    setSelectedFormat(format);
+    fetchAffectedItems(format);
     setDialogOpen(true);
-  }
-  const handleDeleteDialogClick = (format) => {
-    setActionedFormat(format);
-    getAffected(format);
-    setDeleteDialogOpen(true);
-  }
+  }, [fetchAffectedItems]);
 
-  const handleAddDialogClose = () => {
+  const openDeleteDialog = useCallback((format) => {
+    setSelectedFormat(format);
+    fetchAffectedItems(format);
+    setDeleteDialogOpen(true);
+  }, [fetchAffectedItems]);
+
+  const openReportDialog = useCallback((format) => {
+    setSelectedFormat(format);
+    setReportDialogOpen(true);
+  }, []);
+
+  // Handlers for closing dialogs.
+  const closeAddDialog = useCallback(() => {
     setDialogMode(null);
     setAffected(null);
     setDialogOpen(false);
-  }
+  }, []);
 
-  const handleDeleteDialogClose = () => {
+  const closeDeleteDialog = useCallback(() => {
     setAffected(null);
     setDeleteDialogOpen(false);
-  }
+  }, []);
 
-  const handleReportDialogClick = (format) => {
-    setActionedFormat(format);
-    setReportDialogOpen(true);
-  }
-
-  const handleReportDialogClose = () => {
-    setActionedFormat(null);
+  const closeReportDialog = useCallback(() => {
+    setSelectedFormat(null);
     setReportDialogOpen(false);
-  }
+  }, []);
 
-  const columns = [
-    { field: 'name', headerName: t('name'), flex: 1 },
-    {
-      field: 'pattern', headerName: t('pattern'), flex: 2,
-      renderCell: (params) => (
-        <Typography variant="body2" sx={{
-          marginTop: '3%',
-          // display:'flex',
-          // alignItems:'center',
-          // justifyContent:'center',
-        }} dir='ltr'>
-          {params.value}
-        </Typography>
-      )
-    },
-    { field: 'description', headerName: t('description'), flex: 2 },
-  ];
+  // Delete a format.
+  const deleteFormat = useCallback(async (deletedFormat) => {
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/formats/${deletedFormat.name}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFormats((prev) => prev.filter((fmt) => fmt.name !== deletedFormat.name));
+      enqueueSnackbar('Format deleted successfully', { variant: 'success' });
+      closeDeleteDialog();
+      setSelectedFormat(null);
+      setRefreshSearchables((prev) => prev + 1);
+    } catch (error) {
+      if (error.response?.status === 401) {
+        logout({ mode: 'bad_token' });
+        return;
+      }
+      console.error('Error deleting format:', error);
+      enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
+      closeDeleteDialog();
+    }
+  }, [token, logout, setRefreshSearchables, closeDeleteDialog]);
 
   return (
-    <Box sx={{
-      padding: '4px',
-      width: '100%',
-    }}>
-         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <Box sx={{ p: 1, width: '100%' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
           {t('formats')}
         </Typography>
-        {auth === true ? <Button
-          sx={{
-            backgroundColor: theme.palette.custom.bright,
-            borderRadius: 3,
-            textTransform: 'none',
-          }}
-          onClick={handleAddDialogClick}
-          aria-label="new-definition"
-          // size="small"
-          variant="contained"
-          startIcon={<AddIcon />}
-        >
-          {reverseWords(`${t('new')} ${t('format')}`)}
-        </Button> : null}
+        {auth && (
+          <Button
+            sx={{
+              backgroundColor: theme.palette.custom.bright,
+              borderRadius: 3,
+              textTransform: 'none',
+            }}
+            onClick={openAddDialog}
+            aria-label="new-format"
+            variant="contained"
+            startIcon={<AddIcon />}
+          >
+            {reverseWords(`${t('new')} ${t('format')}`)}
+          </Button>
+        )}
       </Box>
       <Box sx={{ height: 500, width: '100%' }}>
-        <CustomDataGrid rows={formats} columns={columns} handleDeleteRow={handleDeleteDialogClick} handleEditRow={handleEditDialogClick} handleReportRow={handleReportDialogClick} />
-        <FormatDialog mode={dialogMode} open={dialogOpen} onClose={handleAddDialogClose} editedFormat={actionedFormat} affected={affected} refetch={fetchFormats} setRefreshSearchables={setRefreshSearchables} />
-        <DeleteDialog open={deleteDialogOpen} onClose={handleDeleteDialogClose} deletedItem={actionedFormat} onDelete={deleteFormat} affected={affected} />
-        <ReportDialog open={reportDialogOpen} onClose={handleReportDialogClose} reportedItem={actionedFormat} />
+        <CustomDataGrid
+          rows={formats}
+          columns={columns}
+          handleDeleteRow={openDeleteDialog}
+          handleEditRow={openEditDialog}
+          handleReportRow={openReportDialog}
+        />
+        <FormatDialog
+          mode={dialogMode}
+          open={dialogOpen}
+          onClose={closeAddDialog}
+          editedFormat={selectedFormat}
+          affected={affected}
+          refetch={fetchFormats}
+          setRefreshSearchables={setRefreshSearchables}
+        />
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onClose={closeDeleteDialog}
+          deletedItem={selectedFormat}
+          onDelete={deleteFormat}
+          affected={affected}
+        />
+        <ReportDialog
+          open={reportDialogOpen}
+          onClose={closeReportDialog}
+          reportedItem={selectedFormat}
+        />
       </Box>
     </Box>
   );
-}
+};
 
 export default Formats;

@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -44,50 +44,74 @@ import Logs from '../pages/Logs';
 import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
-function PageContent({setRefreshSearchables}) {
+
+//
+// PageContent Component
+//
+const PageContent = ({ setRefreshSearchables }) => {
   const { page } = usePage();
   const { logout, login, auth } = useAuth();
   const token = localStorage.getItem('token');
-  if (token)
-    axios.get(`${process.env.REACT_APP_API_URL}/api/token/verify`, { headers: { Authorization: `Bearer ${token}` } })
-      .then(() => {
-        login(token);
-      })
-      .catch(() => {
-        logout({ mode: 'bad_token' });
-      });
-  return (
-    // <Box component="main" sx={{overflow:'hidden'}}>
-    <>
-      {page === 'home' ?
-        auth === true ? <AdminHome /> : <ViewerHome />
-        : page === 'entities' ? (
-          <Entities setRefreshSearchables={setRefreshSearchables}/>
-        ) : page === 'definitions' ? (
-          <Definitions setRefreshSearchables={setRefreshSearchables}/>
-        ) : page === 'validation' ? (
-          <Validation />
-        ) : page === 'formats' ? (
-          <Formats setRefreshSearchables={setRefreshSearchables}/>
-        ) : page === 'signin' ? (
-          <SignIn />
-        ) : page === 'settings' ? (
-          <Settings />
-        ) : page === 'analytics' ? (
-          <Analytics />
-        ) : page === 'logs' ? (
-          <Logs />
-        ) : (<div>Page Not Found</div>)}
-    </>
-    // </Box>
-  );
-}
 
+  // Verify token on mount or when token changes.
+  useEffect(() => {
+    if (token) {
+      axios
+        .get(`${process.env.REACT_APP_API_URL}/api/token/verify`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then(() => {
+          login(token);
+        })
+        .catch(() => {
+          logout({ mode: 'bad_token' });
+        });
+    }
+  }, [token, login, logout]);
 
+  // Determine which component to render based on the page.
+  let ComponentToRender;
+  switch (page) {
+    case 'home':
+      ComponentToRender = auth ? AdminHome : ViewerHome;
+      break;
+    case 'entities':
+      ComponentToRender = Entities;
+      break;
+    case 'definitions':
+      ComponentToRender = Definitions;
+      break;
+    case 'validation':
+      ComponentToRender = Validation;
+      break;
+    case 'formats':
+      ComponentToRender = Formats;
+      break;
+    case 'signin':
+      ComponentToRender = SignIn;
+      break;
+    case 'settings':
+      ComponentToRender = Settings;
+      break;
+    case 'analytics':
+      ComponentToRender = Analytics;
+      break;
+    case 'logs':
+      ComponentToRender = Logs;
+      break;
+    default:
+      ComponentToRender = () => <div>Page Not Found</div>;
+  }
+
+  return <ComponentToRender setRefreshSearchables={setRefreshSearchables} />;
+};
+
+//
+// NavBar Component
+//
 const drawerWidth = 240;
 
-function NavBar(props) {
-  const { theme, setTheme } = props;
+function NavBar({ theme, setTheme }) {
   const { page, setPage } = usePage();
   const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
@@ -96,9 +120,13 @@ function NavBar(props) {
   const { rtl, rtlLoading } = useRtl();
   const [refreshSearchables, setRefreshSearchables] = useState(0);
 
-  const handleChangeUser = () => {
+  // Handle switching user or logging out.
+  const handleChangeUser = useCallback(() => {
     if (token) {
-      axios.get(`${process.env.REACT_APP_API_URL}/api/token/verify`, { headers: { Authorization: `Bearer ${token}` } })
+      axios
+        .get(`${process.env.REACT_APP_API_URL}/api/token/verify`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then(() => {
           logout({ mode: 'logout' });
         })
@@ -111,25 +139,27 @@ function NavBar(props) {
       localStorage.setItem('previousPage', page);
       setPage('signin');
     }
-  };
+  }, [token, page, setPage, logout]);
 
-  const drawerItems = [
-    { text: 'entities', icon: <DataObject />, route: 'entities' },
-    { text: 'definitions', icon: <ImportContacts />, route: 'definitions' },
-    { text: 'formats', icon: <TextFields />, route: 'formats' },
-    { text: 'validation', icon: <DeviceHub />, route: 'validation' },
-  ];
-  if (auth === true) {
-    drawerItems.push({ text: 'settings', icon: <SettingIcon />, route: 'settings' });
-    drawerItems.push({ text: 'analytics', icon: <AnalyticsIcon />, route: 'analytics' });
-    drawerItems.push({ text: 'logs', icon: <LogsIcon />, route: 'logs' });
-  }
+  // Memoize the drawer items so they don't get re-created on every render.
+  const drawerItems = useMemo(() => {
+    const items = [
+      { text: 'entities', icon: <DataObject />, route: 'entities' },
+      { text: 'definitions', icon: <ImportContacts />, route: 'definitions' },
+      { text: 'formats', icon: <TextFields />, route: 'formats' },
+      { text: 'validation', icon: <DeviceHub />, route: 'validation' },
+    ];
+    if (auth) {
+      items.push({ text: 'settings', icon: <SettingIcon />, route: 'settings' });
+      items.push({ text: 'analytics', icon: <AnalyticsIcon />, route: 'analytics' });
+      items.push({ text: 'logs', icon: <LogsIcon />, route: 'logs' });
+    }
+    return items;
+  }, [auth]);
 
   return (
-    <Box dir={rtl ? 'rtl' : 'ltr'} sx={{
-      display: 'flex',
-    }}>
-      {rtlLoading === true && (
+    <Box dir={rtl ? 'rtl' : 'ltr'} sx={{ display: 'flex' }}>
+      {rtlLoading && (
         <Box
           sx={{
             position: 'fixed',
@@ -137,9 +167,9 @@ function NavBar(props) {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light blur overlay
-            backdropFilter: 'blur(5px)', // Apply blur
-            zIndex: 9999, // Ensure it's above everything
+            backgroundColor: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(5px)',
+            zIndex: 9999,
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
@@ -150,40 +180,32 @@ function NavBar(props) {
       )}
       <AppBar
         position="fixed"
-        // sx={{ width: `calc(100% - ${drawerWidth}px)`, ml: `${drawerWidth}px` }}
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
         elevation={0}
       >
-        <Toolbar sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-        }}>
+        <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', ml: 10 }}>
-            <DashboardIcon sx={{ color: theme.palette.custom.bright }}
-            />
-            <Typography variant="h6" noWrap component="div" sx={{
-              '&:hover': {
-                cursor: 'pointer',
-              },
-              fontWeight: 'bold',
-            }}
+            <DashboardIcon sx={{ color: theme.palette.custom.bright }} />
+            <Typography
+              variant="h6"
+              noWrap
+              component="div"
+              sx={{
+                '&:hover': { cursor: 'pointer' },
+                fontWeight: 'bold',
+              }}
               onClick={() => setPage('home')}
             >
               {t('app_name')}
             </Typography>
           </Box>
-          <SearchAll setPage={setPage} refreshSearchables={refreshSearchables}/>
+          <SearchAll setPage={setPage} refreshSearchables={refreshSearchables} />
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
                 {auth ? <EnginnerIcon /> : <PersonIcon />}
               </IconButton>
             </Tooltip>
-            {/* {auth === true ? <IconButton color="inherit" onClick={handleSignOut} >
-            <Avatar>
-              <ExitToApp />
-            </Avatar>
-          </IconButton> : null} */}
             <LangDropdown />
             <ThemeButton theme={theme} setTheme={setTheme} />
           </Box>
@@ -193,67 +215,75 @@ function NavBar(props) {
         sx={{
           width: drawerWidth,
           flexShrink: 0,
-          '& .MuiDrawer-paper': {
-            width: drawerWidth,
-            boxSizing: 'border-box',
-          },
+          '& .MuiDrawer-paper': { width: drawerWidth, boxSizing: 'border-box' },
         }}
         variant="permanent"
-        anchor="left">
-        <Box sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: 64,
-        }}>
-        </Box>
+        anchor="left"
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 64 }} />
         <Divider />
-        <List sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          gap: 0.2,
-        }}>
-          {drawerItems.map((item, index) => (
-            <ListItemButton key={index} disableRipple onClick={() => setPage(item.route)}
+        <List
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: 0.2,
+          }}
+        >
+          {drawerItems.map((item) => (
+            <ListItemButton
+              key={item.route}
+              disableRipple
+              onClick={() => setPage(item.route)}
               sx={{
-                '&:hover': {
-                  bgcolor: theme.palette.custom.light,
-                  cursor: 'pointer',
-                },
-                color: theme.palette.mode === 'light' ?
-                  page === item.route ? theme.palette.custom.bright : undefined
-                  : page === item.route ? theme.palette.custom.dark : undefined,
-                bgcolor: theme.palette.mode === 'light' ?
-                  page === item.route ? theme.palette.custom.light : undefined
-                  : page === item.route ? theme.palette.custom.bright : undefined,
+                '&:hover': { bgcolor: theme.palette.custom.light, cursor: 'pointer' },
+                color:
+                  theme.palette.mode === 'light'
+                    ? page === item.route
+                      ? theme.palette.custom.bright
+                      : undefined
+                    : page === item.route
+                    ? theme.palette.custom.dark
+                    : undefined,
+                bgcolor:
+                  theme.palette.mode === 'light'
+                    ? page === item.route
+                      ? theme.palette.custom.light
+                      : undefined
+                    : page === item.route
+                    ? theme.palette.custom.bright
+                    : undefined,
                 borderRadius: '20px',
                 width: '90%',
                 justifyContent: 'center',
                 alignItems: 'center',
-
-              }}>
-
-              <ListItemIcon sx={{
-                color: theme.palette.mode === 'light' ?
-                  page === item.route ? theme.palette.custom.bright : undefined
-                  : page === item.route ? theme.palette.custom.db : undefined,
-                // ml: '10%'
-              }}>{item.icon}</ListItemIcon>
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  color:
+                    theme.palette.mode === 'light'
+                      ? page === item.route
+                        ? theme.palette.custom.bright
+                        : undefined
+                      : page === item.route
+                      ? theme.palette.custom.db
+                      : undefined,
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
               <ListItemText primary={t(item.text)} />
-            </ListItemButton >
+            </ListItemButton>
           ))}
         </List>
       </Drawer>
-      <Box
-        component="main"
-        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}
-      >
+      <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}>
         <Toolbar />
-        <PageContent setRefreshSearchables={setRefreshSearchables}/>
+        <PageContent setRefreshSearchables={setRefreshSearchables} />
       </Box>
-    </Box >
+    </Box>
   );
 }
 

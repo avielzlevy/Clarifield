@@ -1,18 +1,22 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 
-// Create context
-const SearchContext = createContext();
-
-// Custom hook for using the PageContext
-export const useSearch = () => {
-  return useContext(SearchContext);
+// Default context value for improved intellisense and fallback behavior
+const defaultSearchContextValue = {
+  search: false,
+  setSearch: () => {},
 };
 
-// Context Provider component
+const SearchContext = createContext(defaultSearchContextValue);
+
+export const useSearch = () => useContext(SearchContext);
+
 export const SearchProvider = ({ children }) => {
   const [search, setSearch] = useState(false);
+
+  const value = useMemo(() => ({ search, setSearch }), [search]);
+
   return (
-    <SearchContext.Provider value={{ search, setSearch }}>
+    <SearchContext.Provider value={value}>
       {children}
     </SearchContext.Provider>
   );

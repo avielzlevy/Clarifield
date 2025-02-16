@@ -11,11 +11,8 @@ import { CacheProvider } from '@emotion/react';
 import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 import { SearchProvider } from './contexts/SearchContext';
 
-// Create rtl cache
 const rtlCache = createCache({
   key: 'muirtl',
   stylisPlugins: [prefixer, rtlPlugin],
@@ -25,59 +22,64 @@ const ltrCache = createCache({
   key: 'mui',
 });
 
-function App() {
-  const [theme, setTheme] = useState(() => {
-    const darkmode = localStorage.getItem('darkMode');
-    return darkmode === 'true' ? darkTheme : lightTheme;
-  });
+const globalScrollbarStyles = (
+  <GlobalStyles
+    styles={{
+      "::-webkit-scrollbar": {
+        width: "3px",
+        backgroundColor: "transparent",
+      },
+      "::-webkit-scrollbar-track": {
+        backgroundColor: "transparent",
+      },
+      "::-webkit-scrollbar-thumb": {
+        borderRadius: "40px",
+        backgroundColor: "#848484cd",
+      },
+    }}
+  />
+);
 
-  return (
+const Providers = ({ children }) => (
+  <PageProvider>
+    <AuthProvider>
+      <RtlProvider>
+        <SearchProvider>
+            {children}
+        </SearchProvider>
+      </RtlProvider>
+    </AuthProvider>
+  </PageProvider>
+);
 
-    <PageProvider>
-      <AuthProvider>
-        <RtlProvider>
-          <SearchProvider>
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <RtlConsumerComponent theme={theme} setTheme={setTheme} />
-            </LocalizationProvider>
-          </SearchProvider>
-        </RtlProvider>
-      </AuthProvider>
-    </PageProvider>
-  );
-}
-
-function RtlConsumerComponent({ theme, setTheme }) {
+function AppContent({ theme, setTheme }) {
   const { rtl } = useRtl();
+  const cache = rtl ? rtlCache : ltrCache;
 
   return (
-    <CacheProvider value={rtl ? rtlCache : ltrCache}>
+    <CacheProvider value={cache}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <SnackbarProvider maxSnack={3}>
-          <GlobalStyles
-            styles={{
-
-              "::-webkit-scrollbar": {
-                width: "3px",
-                backgroundColor: "#f5f5f500",
-              },
-              /* Scrollbar track */
-              "::-webkit-scrollbar-track": {
-                // borderRadius: "10px",
-                backgroundColor: "#ffffff00",
-              },
-              /* Scrollbar thumb */
-              "::-webkit-scrollbar-thumb": {
-                borderRadius: "40px",
-                backgroundColor: "#848484cd",
-              },
-            }}
-          />
+          {globalScrollbarStyles}
           <NavBar theme={theme} setTheme={setTheme} language />
         </SnackbarProvider>
       </ThemeProvider>
     </CacheProvider>
+  );
+}
+
+function App() {
+  // TODO: maybe extract this logic into a custom hook
+  const [theme, setTheme] = useState(() => {
+    const darkMode = localStorage.getItem('darkMode');
+    return darkMode === 'true' ? darkTheme : lightTheme;
+  });
+
+  return (
+    <Providers>
+      <AppContent theme={theme} setTheme={setTheme} />
+    </Providers>
   );
 }
 

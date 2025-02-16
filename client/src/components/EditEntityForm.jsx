@@ -5,13 +5,14 @@ import {
   Box,
   IconButton,
   Button,
+  Typography,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
+import DataObjectIcon from '@mui/icons-material/DataObject';
+import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
 
-function EditEntityForm(props) {
-  const { node, setNode, definitions, entities } = props;
-
+function EditEntityForm({ node, setNode, definitions, entities }) {
   // Build grouped options from definitions and entities.
   const defOptions = Object.keys(definitions).map((key) => ({
     label: key,
@@ -21,19 +22,23 @@ function EditEntityForm(props) {
     label: key,
     group: 'Entities',
   }));
-  const options = [...defOptions, ...entityOptions];
+  const options = [...entityOptions,...defOptions];
 
-  // Update a field's value and its type based on whether it comes from definitions or entities.
+  // Map group names to icon components.
+  const groupIconMap = {
+    Definitions: <ImportContactsOutlinedIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
+    Entities: <DataObjectIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
+  };
+
+  // Update a field's value and its type based on the selected option.
   const handleFieldChange = (index, newValue) => {
     let label = '';
     let group = null;
 
     if (typeof newValue === 'object' && newValue !== null) {
-      // newValue is one of our grouped option objects.
       label = newValue.label;
       group = newValue.group;
     } else if (typeof newValue === 'string') {
-      // newValue is a freeSolo string.
       label = newValue;
       if (definitions && definitions.hasOwnProperty(newValue)) {
         group = 'Definitions';
@@ -68,49 +73,45 @@ function EditEntityForm(props) {
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-        mt: 2,
-        minWidth: 250,
-      }}
-    >
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2, minWidth: 250 }}>
       {node &&
         node.fields.map((field, index) => (
-          <Box
-            key={index}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 2,
-            }}
-          >
+          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Autocomplete
               freeSolo
               options={options}
-              // Group options by their 'group' property.
-              groupBy={(option) => (option.group ? option.group : '')}
-              // If the option is a string, use it directly; otherwise use its label.
+              groupBy={(option) => option.group || ''}
               getOptionLabel={(option) =>
                 typeof option === 'string' ? option : option.label
               }
               value={field.label}
-              onChange={(event, newValue) =>
-                handleFieldChange(index, newValue)
-              }
-              onInputChange={(event, newInputValue) =>
-                handleFieldChange(index, newInputValue)
-              }
+              onChange={(event, newValue) => handleFieldChange(index, newValue)}
+              onInputChange={(event, newInputValue) => handleFieldChange(index, newInputValue)}
               renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={`Field ${index + 1}`}
-                  variant="outlined"
-                  fullWidth
-                />
+                <TextField {...params} label={`Field ${index + 1}`} variant="outlined" fullWidth />
               )}
+              // Render group headers with icons.
+              renderGroup={(params) => {
+                const { key, group, children, ...rest } = params;
+                return (
+                  <div key={key} {...rest}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        p: 1,
+                        bgcolor: 'action.hover',
+                      }}
+                    >
+                      {groupIconMap[group] || null}
+                      <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
+                        {group}
+                      </Typography>
+                    </Box>
+                    {children}
+                  </div>
+                );
+              }}
               sx={{ flex: 1 }}
             />
             {node.fields.length > 1 && (
@@ -120,7 +121,6 @@ function EditEntityForm(props) {
             )}
           </Box>
         ))}
-
       <Button variant="outlined" startIcon={<AddIcon />} onClick={addField}>
         Add Field
       </Button>

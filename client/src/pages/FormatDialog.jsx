@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -7,95 +7,137 @@ import {
   TextField,
   DialogActions,
   Button,
-} from '@mui/material';
-import axios from 'axios';
-import { enqueueSnackbar } from 'notistack';
-import { useEffect } from 'react';
-import ChangeWarning from '../components/ChangeWarning';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
+} from "@mui/material";
+import axios from "axios";
+import { enqueueSnackbar } from "notistack";
+import ChangeWarning from "../components/ChangeWarning";
+import { useTranslation } from "react-i18next";
+import { useAuth } from "../contexts/AuthContext";
 
-function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch,setRefreshSearchables }) {
-  const [format, setFormat] = useState({ name: '', pattern: '', description: '' });
-  const [patternError, setPatternError] = useState('');
+const FormatDialog = ({
+  mode,
+  open,
+  onClose,
+  editedFormat,
+  affected,
+  refetch,
+  setRefreshSearchables,
+}) => {
+  const [format, setFormat] = useState({ name: "", pattern: "", description: "" });
+  const [patternError, setPatternError] = useState("");
   const { logout } = useAuth();
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   const { t } = useTranslation();
 
+  // Reset format to default
+  const resetFormat = useCallback(() => {
+    setFormat({ name: "", pattern: "", description: "" });
+  }, []);
 
-
+  // Update form when editedFormat changes
   useEffect(() => {
     if (editedFormat) {
       setFormat(editedFormat);
+    } else {
+      resetFormat();
     }
-  }, [editedFormat,token])
-  const handleSubmit = async () => {
-    // Regex validation: ensure pattern starts with ^ and ends with $
+  }, [editedFormat, resetFormat]);
+
+  // Validate that the pattern starts with ^ and ends with $, and is a valid regex.
+  const validatePattern = useCallback(() => {
+    if (!format.pattern.startsWith("^") || !format.pattern.endsWith("$")) {
+      setPatternError(t("pattern_boundaries_error"));
+      return false;
+    }
     try {
-      if(!format.pattern.startsWith('^') || !format.pattern.endsWith('$')){
-        setPatternError(t('pattern_boundaries_error'));
-        return;
-      }
-      const regexPattern = new RegExp(format.pattern);
-      regexPattern.test('');
+      new RegExp(format.pattern);
     } catch (e) {
-      setPatternError(t('pattern_invalid_error'));
-      return;
+      setPatternError(t("pattern_invalid_error"));
+      return false;
     }
+    return true;
+  }, [format.pattern, t]);
+
+  const handleSubmit = useCallback(async () => {
+    if (!validatePattern()) return;
 
     try {
-      await axios[mode === 'add' ? 'post' : 'put'](`${process.env.REACT_APP_API_URL}/api/formats${mode === 'add' ? '' : `/${format.name}`}`, format, {
+      const url = `${process.env.REACT_APP_API_URL}/api/formats${
+        mode === "add" ? "" : `/${format.name}`
+      }`;
+      const method = mode === "add" ? "post" : "put";
+      await axios[method](url, format, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      refetch();
-      setFormat({ name: '', pattern: '', description: '' });
+      await refetch();
+      resetFormat();
       onClose();
       setRefreshSearchables((prev) => prev + 1);
+      enqueueSnackbar(
+        `Format ${mode === "add" ? "added" : "edited"} successfully!`,
+        { variant: "success" }
+      );
     } catch (error) {
-      if (error.response.status === 401) {
-        logout({ mode: 'bad_token' });
+      if (error.response?.status === 401) {
+        logout({ mode: "bad_token" });
         return;
+      } else if (error.response?.status === 409) {
+        enqueueSnackbar(t("format_exists_error"), { variant: "error" });
+      } else {
+        console.error(
+          `Error ${mode === "add" ? "adding" : "editing"} format:`,
+          error
+        );
+        enqueueSnackbar(
+          `Error ${mode === "add" ? "adding" : "editing"} format`,
+          { variant: "error" }
+        );
       }
-      else if (error.response.status === 409) {
-        enqueueSnackbar(t('format_exists_error'), { variant: 'error' });
-        setFormat({ name: '', pattern: '', description: '' });
-      }
-      else {
-        console.error(`Error ${mode === 'add' ? 'adding' : 'editing'} format:`, error);
-        enqueueSnackbar(`Error ${mode === 'add' ? 'adding' : 'editing'} format`, { variant: 'error' });
-        setFormat({ name: '', pattern: '', description: '' });
-      }
+      resetFormat();
     }
-  };
+  }, [
+    format,
+    mode,
+    token,
+    refetch,
+    onClose,
+    setRefreshSearchables,
+    validatePattern,
+    logout,
+    resetFormat,
+    t,
+  ]);
 
-  const handleCancel = () => {
-    setFormat({ name: '', pattern: '', description: '' });
+  const handleCancel = useCallback(() => {
+    resetFormat();
     onClose();
-  }
+  }, [onClose, resetFormat]);
 
-  const handlePatternChange = (e) => {
-    setFormat({ ...format, pattern: e.target.value });
-    setPatternError(''); // Clear error on change
-  };
+  const handlePatternChange = useCallback((e) => {
+    setFormat((prev) => ({ ...prev, pattern: e.target.value }));
+    setPatternError("");
+  }, []);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
-        {mode === 'add' ? 'Add Format' : 'Edit Format'}
-        {affected && <ChangeWarning items={affected} level={'warning'} />}
+        {mode === "add" ? "Add Format" : "Edit Format"}
+        {affected && <ChangeWarning items={affected} level="warning" />}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Please fill out the details below to {mode === 'add' ? 'add a new' : 'edit the'
-          } format.{'\n'}The pattern must be a valid regular expression enclosed with ^ and $.
+          Please fill out the details below to {mode === "add" ? "add a new" : "edit the"} format.{"\n"}
+          The pattern must be a valid regular expression enclosed with ^ and $.
         </DialogContentText>
         <TextField
           label="Name"
-          disabled={mode === 'edit'}
+          disabled={mode === "edit"}
           fullWidth
           margin="normal"
           value={format.name}
-          onChange={(e) => setFormat({ ...format, name: e.target.value })}
+          onChange={(e) =>
+            setFormat((prev) => ({ ...prev, name: e.target.value }))
+          }
         />
         <TextField
           label="Pattern"
@@ -111,7 +153,9 @@ function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch,set
           fullWidth
           margin="normal"
           value={format.description}
-          onChange={(e) => setFormat({ ...format, description: e.target.value })}
+          onChange={(e) =>
+            setFormat((prev) => ({ ...prev, description: e.target.value }))
+          }
         />
       </DialogContent>
       <DialogActions>
@@ -124,6 +168,6 @@ function FormatDialog({ mode, open, onClose, editedFormat, affected, refetch,set
       </DialogActions>
     </Dialog>
   );
-}
+};
 
 export default FormatDialog;

@@ -221,6 +221,7 @@ export const updateEntity = async (
 /**
  * DELETE /api/entity/:name
  */
+//TODO: delete entity in all entities that have it as a field
 export const deleteEntity = async (
   ctx: RouterContext<"/api/entity/:name", { name: string }>
 ) => {

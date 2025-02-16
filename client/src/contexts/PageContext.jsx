@@ -1,26 +1,34 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
-// Create context
-const PageContext = createContext();
-
-// Custom hook for using the PageContext
-export const usePage = () => {
-  return useContext(PageContext);
+// Default context value for improved intellisense and fallback behavior
+const defaultContextValue = {
+  page: 'home',
+  setPage: () => {},
+  authRedirect: () => {},
 };
 
-// Context Provider component
+const PageContext = createContext(defaultContextValue);
+
+export const usePage = () => useContext(PageContext);
+
 export const PageProvider = ({ children }) => {
   const [page, setPage] = useState('home');
-  //automaticly redirect to the home page if nonauthenticated user is on a page that requires authentication
-  const authRedirect = () => {
+
+  // Memoized redirect function that checks for protected pages
+  const authRedirect = useCallback(() => {
     const authedPages = ['settings', 'analytics', 'logs'];
     if (!localStorage.getItem('token') && authedPages.includes(page)) {
       setPage('home');
     }
-  };
-  authRedirect()
+  }, [page]);
+
+  // Run the redirect check as a side-effect when 'page' changes
+  useEffect(() => {
+    authRedirect();
+  }, [authRedirect]);
+
   return (
-    <PageContext.Provider value={{ page, setPage,authRedirect }}>
+    <PageContext.Provider value={{ page, setPage, authRedirect }}>
       {children}
     </PageContext.Provider>
   );

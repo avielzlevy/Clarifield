@@ -1,34 +1,47 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import { usePage } from './PageContext';
 import { enqueueSnackbar } from 'notistack';
-// Create context
-const AuthContext = createContext();
 
-// Custom hook for using the PageContext
-export const useAuth = () => {
-  return useContext(AuthContext);
+// Default context value for better intellisense and fallback behavior
+const defaultAuthContextValue = {
+  auth: false,
+  login: () => {},
+  logout: () => {},
 };
 
-// Context Provider component
+const AuthContext = createContext(defaultAuthContextValue);
+
+export const useAuth = () => useContext(AuthContext);
+
 export const AuthProvider = ({ children }) => {
   const { authRedirect } = usePage();
   const [auth, setAuth] = useState(false);
-  const logout = ({ mode = 'logout' }) => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('username');
-    setAuth(false);
-    if (mode === 'bad_token')
-      enqueueSnackbar('Session expired', { variant: 'info' });
-    else if (mode === 'logout')
-      enqueueSnackbar('Logged out', { variant: 'info' });
-    authRedirect();
-  };
-  const login = (token, username) => {
+
+  const login = useCallback((token, username) => {
     localStorage.setItem('token', token);
-    if (username)
+    if (username) {
       localStorage.setItem('username', username);
+    }
     setAuth(true);
-  };
+  }, []);
+
+  const logout = useCallback(
+    ({ mode = 'logout' } = {}) => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      setAuth(false);
+
+      if (mode === 'bad_token') {
+        enqueueSnackbar('Session expired', { variant: 'info' });
+      } else if (mode === 'logout') {
+        enqueueSnackbar('Logged out', { variant: 'info' });
+      }
+
+      authRedirect();
+    },
+    [authRedirect]
+  );
+
   return (
     <AuthContext.Provider value={{ auth, login, logout }}>
       {children}

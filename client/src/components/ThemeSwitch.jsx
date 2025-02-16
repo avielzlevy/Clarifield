@@ -1,67 +1,63 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { IconButton } from '@mui/material';
-import { LightModeOutlined as LightMode, DarkModeOutlined as DarkMode } from '@mui/icons-material';
+import {
+  LightModeOutlined as LightMode,
+  DarkModeOutlined as DarkMode,
+} from '@mui/icons-material';
 import darkTheme from '../themes/darkTheme';
 import lightTheme from '../themes/lightTheme';
 
-function ThemeButton(props) {
-  const { theme, setTheme } = props;
+const FADE_DURATION = 1000; // Duration for fade out/in transitions in ms
+const FADE_DELAY = 100; // Delay before applying the theme change in ms
+
+function ThemeButton({ theme, setTheme }) {
   const [fade, setFade] = useState(false);
   const [overlayStyle, setOverlayStyle] = useState({});
 
-  const changeTheme = (newTheme) => {
-    // Only apply fade if we're going from dark to light
-    if (theme.palette.mode === 'dark' && newTheme === 'light') {
-      setOverlayStyle({
-        backgroundColor: theme.palette.background.default,
-        opacity: 1,
-        transition: 'opacity 1000ms ease-in',
-      });
-      setFade(true);
+  // Helper to update the theme and persist preference to localStorage.
+  const applyThemeChange = useCallback(
+    (newTheme) => {
+      const newThemeObject = newTheme === 'dark' ? darkTheme : lightTheme;
+      setTheme(newThemeObject);
+      localStorage.setItem('darkMode', newTheme === 'dark' ? 'true' : 'false');
+    },
+    [setTheme]
+  );
 
-      // Allow the overlay to be visible before switching themes
-      setTimeout(() => {
-        switch (newTheme) {
-          case 'dark':
-            setTheme(darkTheme);
-            localStorage.setItem('darkMode', 'true');
-            break;
-          case 'light':
-            setTheme(lightTheme);
-            localStorage.setItem('darkMode', 'false');
-            break;
-          default:
-            break;
-        }
-        // Fade out the overlay
-        setOverlayStyle((prev) => ({ ...prev, opacity: 0 }));
+  // Handles theme change with a fade effect when transitioning from dark to light.
+  const changeTheme = useCallback(
+    (newTheme) => {
+      if (theme.palette.mode === 'dark' && newTheme === 'light') {
+        // Set up the overlay with initial styles.
+        setOverlayStyle({
+          backgroundColor: theme.palette.background.default,
+          opacity: 1,
+          transition: `opacity ${FADE_DURATION}ms ease-in`,
+        });
+        setFade(true);
 
-        // Remove overlay after the fade-out transition completes
+        // Delay updating the theme to show the overlay.
         setTimeout(() => {
-          setFade(false);
-        }, 1000);
-      }, 100);
-    } else {
-      // Simply change the theme if not going from dark to light
-      switch (newTheme) {
-        case 'dark':
-          setTheme(darkTheme);
-          localStorage.setItem('darkMode', 'true');
-          break;
-        case 'light':
-          setTheme(lightTheme);
-          localStorage.setItem('darkMode', 'false');
-          break;
-        default:
-          break;
+          applyThemeChange(newTheme);
+          // Fade out the overlay.
+          setOverlayStyle((prev) => ({ ...prev, opacity: 0 }));
+          // Remove the overlay after the fade-out completes.
+          setTimeout(() => {
+            setFade(false);
+          }, FADE_DURATION);
+        }, FADE_DELAY);
+      } else {
+        // Directly update the theme without fade.
+        applyThemeChange(newTheme);
       }
-    }
-  };
+    },
+    [theme.palette.mode, theme.palette.background.default, applyThemeChange]
+  );
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     const nextTheme = theme.palette.mode === 'dark' ? 'light' : 'dark';
     changeTheme(nextTheme);
-  };
+  }, [theme.palette.mode, changeTheme]);
 
   return (
     <div style={{ position: 'relative' }}>
@@ -80,10 +76,9 @@ function ThemeButton(props) {
             left: 0,
             right: 0,
             bottom: 0,
-            opacity: 0.2,
-            ...overlayStyle,
             pointerEvents: 'none',
             zIndex: 1300,
+            ...overlayStyle,
           }}
         />
       )}

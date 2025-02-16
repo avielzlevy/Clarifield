@@ -1,26 +1,29 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
-// Create context
-const RtlContext = createContext();
-
-// Custom hook for using the PageContext
-export const useRtl = () => {
-  return useContext(RtlContext);
+// Default context value for better intellisense and fallback behavior
+const defaultContextValue = {
+  rtl: false,
+  setRtl: () => {},
+  rtlLoading: false,
+  setRtlLoading: () => {},
+  reverseWords: (str) => str,
 };
 
-// Context Provider component
+const RtlContext = createContext(defaultContextValue);
+
+export const useRtl = () => useContext(RtlContext);
+
 export const RtlProvider = ({ children }) => {
   const [rtl, setRtl] = useState(false);
   const [rtlLoading, setRtlLoading] = useState(false);
-  const reverseWords = (str) => {
-    if (rtl) 
-      return str.split(' ').reverse().join(' ');
-    return str;
-  };
 
-  return (
-    <RtlContext.Provider value={{ rtl, setRtl, rtlLoading, setRtlLoading, reverseWords }}>
-      {children}
-    </RtlContext.Provider>
+  // Memoize reverseWords so it only updates when 'rtl' changes.
+  const reverseWords = useCallback(
+    (str) => (rtl ? str.split(' ').reverse().join(' ') : str),
+    [rtl]
   );
+
+  const value = { rtl, setRtl, rtlLoading, setRtlLoading, reverseWords };
+
+  return <RtlContext.Provider value={value}>{children}</RtlContext.Provider>;
 };
