@@ -137,7 +137,16 @@ function LangDropdown() {
                         mb: '4px',
                     }}
                 >
-                    {selectedLang.flag}
+                    <ReactCountryFlag
+                        countryCode={countryMapping[selectedLang.code]}
+                        svg
+                        style={{
+                            borderRadius: '7px',
+                            width: '1.05em',
+                            height: '1.05em',
+                        }}
+                        title={selectedLang.code}
+                    />
                 </Button>
             </Tooltip>
         </Box>
