@@ -63,6 +63,7 @@ const ChangeLog = ({ changeLog, loadingChangeLog }) => {
                                     {t('before')}:
                                 </Typography>
                                 <Box
+                                    dir='ltr'
                                     component="pre"
                                     sx={{
                                         backgroundColor: theme.palette.background.default,
@@ -87,6 +88,7 @@ const ChangeLog = ({ changeLog, loadingChangeLog }) => {
                                     {t('after')}:
                                 </Typography>
                                 <Box
+                                    dir='ltr'
                                     component="pre"
                                     sx={{
                                         padding: 1,

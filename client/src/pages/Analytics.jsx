@@ -10,7 +10,7 @@ import {
   Legend,
 } from "chart.js";
 import { getAnalytics } from "../utils/analytics";
-import { Box, Tabs, Tab, Typography, Paper, CircularProgress } from "@mui/material";
+import { Box, Tabs, Tab, Paper, CircularProgress } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);

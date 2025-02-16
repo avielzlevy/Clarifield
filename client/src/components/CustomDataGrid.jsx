@@ -291,7 +291,7 @@ function CustomDataGrid(props) {
         rowsPerPageOptions={[50]}
         slotProps={{
           pagination: {
-            overflow: 'hidden',
+            direction: 'rtl',
           },
         }}
         getRowId={(row) => row.id}

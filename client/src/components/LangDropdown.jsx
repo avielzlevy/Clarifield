@@ -3,6 +3,16 @@ import { Button, Tooltip, Box } from '@mui/material';
 import { useTheme, styled } from '@mui/material/styles';
 import i18next from 'i18next';
 import { useRtl } from '../contexts/RtlContext';
+import ReactCountryFlag from "react-country-flag";
+
+const countryMapping = {
+    en: 'US', // or 'GB' depending on which English flag you want
+    he: 'IL',
+    ar: 'SA', // you might also consider 'AE' for UAE or another Arabic-speaking country
+    es: 'ES',
+    fr: 'FR',
+    de: 'DE',
+  };
 
 const languages = [
     { code: 'en', flag: '🇺🇸' },
@@ -32,6 +42,7 @@ const LanguageItem = styled(Box)(({ theme, selected }) => ({
     borderRadius: '20%',
     fontSize: '1.5rem',
     cursor: 'pointer',
+    fontFamily: '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif',
     border: selected ? `2px solid ${theme.palette.primary.main}` : `2px solid transparent`,
     transition: 'border-color 0.3s',
     '&:hover': {
@@ -93,7 +104,16 @@ function LangDropdown() {
                                 selected={lang.code === selectedLang.code}
                                 onClick={() => handleLanguageSelect(lang)}
                             >
-                                {lang.flag}
+                                <ReactCountryFlag
+                                    countryCode={countryMapping[lang.code]}
+                                    svg
+                                    style={{
+                                        borderRadius: '7px',
+                                        width: '1.05em',
+                                        height: '1.05em',
+                                    }}
+                                    title={lang.code}
+                                />
                             </LanguageItem>
                         ))}
                     </LanguageGrid>
