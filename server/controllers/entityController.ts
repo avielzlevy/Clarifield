@@ -142,7 +142,8 @@ export const updateEntity = async (
       };
       return;
     }
-
+    const definitionsMap = await definitionRepo.getDefinitions();
+    const entitiesMap = await entityRepo.getEntities();
     // Validate each field.
     for (const field of fields) {
       if (!field.label || !field.type) {
@@ -155,11 +156,7 @@ export const updateEntity = async (
       switch (field.type) {
         case "definition": {
           try {
-            const definitionsData = await Deno.readTextFile(
-              "./data/definitions.json"
-            );
-            const definitions = JSON.parse(definitionsData);
-            if (!definitions[field.label]) {
+            if (!definitionsMap[field.label]) {
               ctx.response.status = 400;
               ctx.response.body = {
                 message: `Invalid field data. '${field.label}' must be an existing definition.`,
@@ -174,7 +171,6 @@ export const updateEntity = async (
           break;
         }
         case "entity": {
-          const entitiesMap = await entityRepo.getEntities();
           if (!entitiesMap[field.label]) {
             ctx.response.status = 400;
             ctx.response.body = {

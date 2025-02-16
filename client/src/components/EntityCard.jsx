@@ -90,6 +90,7 @@ function EntityCard(node) {
                         gap: 0.3,
                         marginLeft: '10px',
                         marginRight: '10px',
+                        minWidth: '5.25vw',
                     }}
                     component="nav"
                     aria-labelledby="subheader"

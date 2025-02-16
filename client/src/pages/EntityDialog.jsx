@@ -155,6 +155,7 @@ function EntityDialog(props) {
         });
         fetchNodes();
         enqueueSnackbar('Entity created successfully!', { variant: 'success' });
+        setNewEntity({ label: '', fields: [] });
       } catch (e) {
         // console.log(e);
         if (e.response.status === 400) {
