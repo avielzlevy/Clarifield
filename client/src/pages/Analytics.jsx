@@ -92,7 +92,7 @@ const Analytics = () => {
   }
 
   return (
-    <Paper elevation={3} sx={{ padding: 2, margin: 2, height: 'calc(100vh - 115px)', overflow: 'hidden' }}>
+    <Paper elevation={3} sx={{ padding: 2, height: 'calc(100vh - 90px)', overflow: 'hidden' }}>
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Tabs value={activeTab} onChange={handleChange} centered>
           <Tab label={t("formats")} />
