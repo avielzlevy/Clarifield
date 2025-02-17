@@ -218,6 +218,7 @@ function EntityDialog({
     logout,
     setRefreshSearchables,
     onClose,
+    newEntity,
   ]);
 
   return (
