@@ -35,7 +35,7 @@ const router = new Router();
 
 router
   .post("/api/signin", auditLogger, signIn)
-  .get("/api/token/verify", auditLogger, authMiddleware, verifyToken)
+  .get("/api/token/verify", authMiddleware, verifyToken)
   .get("/api/formats", getFormats)
   .post("/api/formats", auditLogger, authMiddleware, addFormat)
   .put("/api/formats/:name", auditLogger, authMiddleware, updateFormat)
