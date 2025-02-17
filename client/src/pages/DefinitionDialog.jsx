@@ -12,6 +12,7 @@ import { Autocomplete } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import { useAuth } from "../contexts/AuthContext";
+import ChangeWarning from "../components/ChangeWarning";
 
 const DefinitionDialog = ({
   mode,
@@ -20,6 +21,7 @@ const DefinitionDialog = ({
   editedDefinition,
   refetch,
   setRefreshSearchables,
+  affected
 }) => {
   const [definition, setDefinition] = useState({
     name: "",
@@ -30,6 +32,7 @@ const DefinitionDialog = ({
   const [namingConvention, setNamingConvention] = useState("");
   const [namingConventionError, setNamingConventionError] = useState("");
   const { logout } = useAuth();
+  const token = localStorage.getItem("token");
 
   const fetchFormats = useCallback(async () => {
     try {
@@ -111,7 +114,6 @@ const DefinitionDialog = ({
   const handleSubmit = useCallback(async () => {
     if (!validateNamingConvention()) return;
     try {
-      const token = localStorage.getItem("token");
       const url = `${process.env.REACT_APP_API_URL}/api/definitions${
         mode === "add" ? "" : `/${definition.name}`
       }`;
@@ -154,11 +156,11 @@ const DefinitionDialog = ({
     setNamingConventionError("");
   };
 
-  //TODO: add warning change near the title if refrenced by an entity or a definition
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         {mode === "add" ? "Add Definition" : "Edit Definition"}
+        { affected && <ChangeWarning items={affected} level="warning" />}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>

@@ -128,12 +128,21 @@ export const deleteEntity = async (name: string): Promise<void> => {
     if (!result) {
       throw new Error(`Entity with label '${name}' not found`);
     }
+    //delete all references to this entity in other entities
+    const entities = await getEntities();
+    for (const entity of Object.values(entities)) {
+      entity.fields = entity.fields.filter((field) => field.type !== name);
+    }
+    await writeEntities(entities);
   } else {
     const entities = await getEntities();
     if (!entities[name]) {
       throw new Error(`Entity with label '${name}' not found`);
     }
     delete entities[name];
+    for (const entity of Object.values(entities)) {
+      entity.fields = entity.fields.filter((field) => field.type !== name);
+    }
     await Deno.writeTextFile(DATA_FILE, JSON.stringify(entities, null, 2));
   }
 };
