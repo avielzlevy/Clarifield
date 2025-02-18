@@ -113,7 +113,7 @@ export const deleteFormat = async (name: string): Promise<void> => {
     }
     const result = await formatsCollection.deleteOne({ name });
     console.log(result);
-    if (!result.deletedCount) {
+    if (!result) {
       throw new Error(`Format with name '${name}' not found`);
     }
   } else {

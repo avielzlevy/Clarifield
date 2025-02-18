@@ -1,11 +1,11 @@
 import { Format } from "../models/format.ts";
 
 const staticFormats: { [key: string]: Format } = {
-  Date: {
+  "Date": {
     pattern: "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$",
     description: "Date in the format YYYY-MM-DD",
   },
-  Time: {
+  "Time": {
     pattern: "^(0\\d|1\\d|2[0-3]):([0-5]\\d):([0-5]\\d)$",
     description: "Time in the format HH:mm:ss",
   },
@@ -15,12 +15,12 @@ const staticFormats: { [key: string]: Format } = {
     description:
       "Date & Time in the format YYYY-MM-DD HH:mm:ss or YYYY-MM-DDTHH:mm:ss",
   },
-  Email: {
+  "Email": {
     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
     description: "Email address",
   },
   "Phone Number": {
-    pattern: "^\\+?[0-9]{1,3}-?[0-9]{3,}$",
+    pattern: "^\d{2,4}-\d{4,8}$",
     description: "Phone number",
   },
   "ZIP Code": {
