@@ -22,7 +22,7 @@ function EditEntityForm({ node, setNode, definitions, entities }) {
     label: key,
     group: 'Entities',
   }));
-  const options = [...entityOptions,...defOptions];
+  const options = [...entityOptions, ...defOptions];
 
   // Map group names to icon components.
   const groupIconMap = {
@@ -75,52 +75,63 @@ function EditEntityForm({ node, setNode, definitions, entities }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2, minWidth: 250 }}>
       {node &&
-        node.fields.map((field, index) => (
-          <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Autocomplete
-              freeSolo
-              options={options}
-              groupBy={(option) => option.group || ''}
-              getOptionLabel={(option) =>
-                typeof option === 'string' ? option : option.label
-              }
-              value={field.label}
-              onChange={(event, newValue) => handleFieldChange(index, newValue)}
-              onInputChange={(event, newInputValue) => handleFieldChange(index, newInputValue)}
-              renderInput={(params) => (
-                <TextField {...params} label={`Field ${index + 1}`} variant="outlined" fullWidth />
+        node.fields.map((field, index) => {
+          // Exclude options already selected in other fields.
+          const selectedLabelsExceptCurrent = node.fields
+            .filter((_, i) => i !== index)
+            .map((f) => f.label);
+          const filteredOptions = options.filter(
+            (option) => !selectedLabelsExceptCurrent.includes(option.label)
+          );
+          return (
+            <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Autocomplete
+                freeSolo
+                options={filteredOptions}
+                groupBy={(option) => option.group || ''}
+                getOptionLabel={(option) =>
+                  typeof option === 'string' ? option : option.label
+                }
+                value={field.label}
+                onChange={(event, newValue) => handleFieldChange(index, newValue)}
+                onInputChange={(event, newInputValue) =>
+                  handleFieldChange(index, newInputValue)
+                }
+                renderInput={(params) => (
+                  <TextField {...params} label={`Field ${index + 1}`} variant="outlined" fullWidth />
+                )}
+                // Render group headers with icons.
+                renderGroup={(params) => {
+                  const { key, group, children, ...rest } = params;
+                  return (
+                    <div key={key} {...rest}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          p: 1,
+                          bgcolor: 'action.hover',
+                        }}
+                      >
+                        {groupIconMap[group] || null}
+                        <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
+                          {group}
+                        </Typography>
+                      </Box>
+                      {children}
+                    </div>
+                  );
+                }}
+                sx={{ flex: 1 }}
+              />
+              {node.fields.length > 1 && (
+                <IconButton onClick={() => removeField(index)}>
+                  <DeleteIcon />
+                </IconButton>
               )}
-              // Render group headers with icons.
-              renderGroup={(params) => {
-                const { key, group, children, ...rest } = params;
-                return (
-                  <div key={key} {...rest}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        p: 1,
-                        bgcolor: 'action.hover',
-                      }}
-                    >
-                      {groupIconMap[group] || null}
-                      <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
-                        {group}
-                      </Typography>
-                    </Box>
-                    {children}
-                  </div>
-                );
-              }}
-              sx={{ flex: 1 }}
-            />
-            {node.fields.length > 1 && (
-              <IconButton onClick={() => removeField(index)}>
-                <DeleteIcon />
-              </IconButton>
-            )}
-          </Box>
-        ))}
+            </Box>
+          );
+        })}
       <Button variant="outlined" startIcon={<AddIcon />} onClick={addField}>
         Add Field
       </Button>

@@ -12,16 +12,17 @@ import { Autocomplete } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import { useAuth } from "../contexts/AuthContext";
+import { useSearch } from "../contexts/SearchContext";
 import ChangeWarning from "../components/ChangeWarning";
+import { useAffectedItems } from "../contexts/useAffectedItems";
+import { useDefinitions } from "../contexts/useDefinitions";
 
 const DefinitionDialog = ({
   mode,
   open,
   onClose,
   editedDefinition,
-  refetch,
-  setRefreshSearchables,
-  affected
+  type,
 }) => {
   const [definition, setDefinition] = useState({
     name: "",
@@ -32,6 +33,9 @@ const DefinitionDialog = ({
   const [namingConvention, setNamingConvention] = useState("");
   const [namingConventionError, setNamingConventionError] = useState("");
   const { logout } = useAuth();
+  const { setRefreshSearchables } = useSearch();
+  const { fetchDefinitions } = useDefinitions();
+  const { affected, fetchAffectedItems } = useAffectedItems();
   const token = localStorage.getItem("token");
 
   const fetchFormats = useCallback(async () => {
@@ -42,7 +46,8 @@ const DefinitionDialog = ({
       const formatNames = Object.keys(data).sort();
       setFormats(formatNames);
     } catch (error) {
-      console.error("Error fetching formats:", error);
+      console.error("Error fetching formats")
+      console.debug(error)
     }
   }, []);
 
@@ -59,7 +64,8 @@ const DefinitionDialog = ({
         logout({ mode: "bad_token" });
         return;
       }
-      console.error("Error fetching naming convention:", error);
+      console.error("Error fetching naming convention:");
+      console.debug(error);
       enqueueSnackbar("Error fetching naming convention", { variant: "error" });
     }
   }, [logout]);
@@ -70,10 +76,11 @@ const DefinitionDialog = ({
     fetchNamingConvention();
     if (editedDefinition) {
       setDefinition(editedDefinition);
+      fetchAffectedItems({ name: editedDefinition.name, type});
     } else {
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [editedDefinition, fetchFormats, fetchNamingConvention]);
+  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems,type]);
 
   // Validate the naming convention.
   const validateNamingConvention = useCallback(() => {
@@ -114,14 +121,13 @@ const DefinitionDialog = ({
   const handleSubmit = useCallback(async () => {
     if (!validateNamingConvention()) return;
     try {
-      const url = `${process.env.REACT_APP_API_URL}/api/definitions${
-        mode === "add" ? "" : `/${definition.name}`
-      }`;
+      const url = `${process.env.REACT_APP_API_URL}/api/definitions${mode === "add" ? "" : `/${definition.name}`
+        }`;
       const method = mode === "add" ? "post" : "put";
       await axios[method](url, definition, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      refetch();
+      fetchDefinitions();
       setDefinition({ name: "", format: "", description: "" });
       onClose();
       setRefreshSearchables((prev) => prev + 1);
@@ -144,7 +150,7 @@ const DefinitionDialog = ({
       }
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [definition, mode, refetch, onClose, setRefreshSearchables, validateNamingConvention, logout]);
+  }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token]);
 
   const handleCancel = () => {
     setDefinition({ name: "", format: "", description: "" });
@@ -160,7 +166,7 @@ const DefinitionDialog = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         {mode === "add" ? "Add Definition" : "Edit Definition"}
-        { affected && <ChangeWarning items={affected} level="warning" />}
+        {affected && <ChangeWarning items={affected} level="warning" />}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>

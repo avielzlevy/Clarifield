@@ -73,7 +73,8 @@ const Analytics = () => {
           setDefinitionsData({ labels: [], datasets: [] });
         }
       } catch (error) {
-        console.error("Error fetching analytics:", error);
+        console.error("Error fetching analytics");
+        console.debug(error);
       } finally {
         setLoading(false);
       }

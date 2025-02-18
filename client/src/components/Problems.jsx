@@ -58,7 +58,8 @@ const Problems = () => {
       setProblems(ProblemsArray);
       setLoadingProblems(false);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching definitions:');
+      console.debug(error)
       setLoadingProblems(false);
     }
   };

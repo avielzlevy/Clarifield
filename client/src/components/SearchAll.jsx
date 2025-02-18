@@ -17,9 +17,9 @@ import {
   DataObject,
 } from '@mui/icons-material';
 
-export default function SearchAll({ setPage, refreshSearchables }) {
+export default function SearchAll({ setPage}) {
   const theme = useTheme();
-  const { setSearch } = useSearch();
+  const { setSearch,refreshSearchables } = useSearch();
   const { t } = useTranslation();
 
   const [searchables, setSearchables] = useState([]);
@@ -56,7 +56,8 @@ export default function SearchAll({ setPage, refreshSearchables }) {
 
       setSearchables(combinedSearchables);
     } catch (error) {
-      console.error('Error fetching searchables:', error);
+      console.error('Error fetching searchables:')
+      console.debug(error)
     }
   }, []);
 
@@ -109,6 +110,7 @@ export default function SearchAll({ setPage, refreshSearchables }) {
       getOptionLabel={(option) =>
         typeof option === 'string' ? option : option.name || ''
       }
+      
       sx={{ width: 500 }}
       inputValue={inputValue}
       onInputChange={(event, newInputValue) => setInputValue(newInputValue)}
@@ -144,7 +146,7 @@ export default function SearchAll({ setPage, refreshSearchables }) {
               ),
               type: 'search',
               size: 'small',
-              sx: { borderRadius: '20px', marginRight: '10px' },
+              sx: { borderRadius: '20px', marginRight: '10px',height: '40px'},
             },
           }}
         />

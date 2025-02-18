@@ -30,6 +30,7 @@ import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useSearch } from '../contexts/SearchContext';
 import axios from 'axios';
 import Entities from '../pages/Entities';
 import Definitions from '../pages/Definitions';
@@ -44,11 +45,15 @@ import Logs from '../pages/Logs';
 import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
+import { FormatsProvider } from '../contexts/useFormats';
+import { DefinitionsProvider } from '../contexts/useDefinitions';
+import { EntitiesProvider } from '../contexts/useEntities';
+import { AffectedItemsProvider } from '../contexts/useAffectedItems';
 
 //
 // PageContent Component
 //
-const PageContent = ({ setRefreshSearchables }) => {
+const PageContent = () => {
   const { page } = usePage();
   const { logout, login, auth } = useAuth();
   const token = localStorage.getItem('token');
@@ -103,7 +108,7 @@ const PageContent = ({ setRefreshSearchables }) => {
       ComponentToRender = () => <div>Page Not Found</div>;
   }
 
-  return <ComponentToRender setRefreshSearchables={setRefreshSearchables} />;
+  return <ComponentToRender/>;
 };
 
 //
@@ -118,7 +123,6 @@ function NavBar({ theme, setTheme }) {
   const username = localStorage.getItem('username') || 'Viewer';
   const { t } = useTranslation();
   const { rtl, rtlLoading } = useRtl();
-  const [refreshSearchables, setRefreshSearchables] = useState(0);
 
   // Handle switching user or logging out.
   const handleChangeUser = useCallback(() => {
@@ -199,7 +203,7 @@ function NavBar({ theme, setTheme }) {
               {t('app_name')}
             </Typography>
           </Box>
-          <SearchAll setPage={setPage} refreshSearchables={refreshSearchables} />
+          <SearchAll setPage={setPage}/>
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
@@ -281,7 +285,15 @@ function NavBar({ theme, setTheme }) {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}>
         <Toolbar />
-        <PageContent setRefreshSearchables={setRefreshSearchables} />
+        <FormatsProvider>
+        <DefinitionsProvider>
+        <EntitiesProvider>
+        <AffectedItemsProvider>
+        <PageContent/>
+        </AffectedItemsProvider>
+        </EntitiesProvider>
+        </DefinitionsProvider>
+        </FormatsProvider>
       </Box>
     </Box>
   );

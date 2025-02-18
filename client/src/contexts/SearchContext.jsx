@@ -12,8 +12,8 @@ export const useSearch = () => useContext(SearchContext);
 
 export const SearchProvider = ({ children }) => {
   const [search, setSearch] = useState(false);
-
-  const value = useMemo(() => ({ search, setSearch }), [search]);
+  const [refreshSearchables, setRefreshSearchables] = useState(0);
+  const value = useMemo(() => ({ search, setSearch,refreshSearchables,setRefreshSearchables }), [search,refreshSearchables]);
 
   return (
     <SearchContext.Provider value={value}>

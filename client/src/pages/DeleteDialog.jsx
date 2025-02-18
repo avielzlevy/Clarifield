@@ -13,18 +13,21 @@ import {
 } from '@mui/material';
 import ChangeWarning from '../components/ChangeWarning';
 import { enqueueSnackbar } from 'notistack';
+import { useAffectedItems } from '../contexts/useAffectedItems';
 
-const DeleteDialog = ({ open, onClose, deletedItem, onDelete, affected }) => {
+const DeleteDialog = ({ open, onClose, deletedItem, onDelete,type }) => {
+  const { affected, fetchAffectedItems } = useAffectedItems();
   // If there are affected items, require confirmation; otherwise default to true.
-  const [sure, setSure] = useState(!affected);
+  const [sure, setSure] = useState(affected);
 
   // Reset the confirmation state whenever the dialog opens or affected items change.
   useEffect(() => {
-    setSure(!affected);
-  }, [open, affected]);
+    if (deletedItem)
+      fetchAffectedItems({ name: deletedItem.name, type });
+  }, [deletedItem, fetchAffectedItems,type]);
 
   const handleDelete = () => {
-    if (sure) {
+    if (sure||!affected) {
       onDelete(deletedItem);
     } else {
       enqueueSnackbar('Please confirm that you are sure', { variant: 'error' });

@@ -13,22 +13,24 @@ import { enqueueSnackbar } from "notistack";
 import ChangeWarning from "../components/ChangeWarning";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../contexts/AuthContext";
+import { useSearch } from "../contexts/SearchContext";
+import { useAffectedItems } from "../contexts/useAffectedItems";
+import { useFormats } from "../contexts/useFormats";
 
 const FormatDialog = ({
   mode,
   open,
   onClose,
   editedFormat,
-  affected,
-  refetch,
-  setRefreshSearchables,
 }) => {
   const [format, setFormat] = useState({ name: "", pattern: "", description: "" });
   const [patternError, setPatternError] = useState("");
   const { logout } = useAuth();
+  const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem("token");
   const { t } = useTranslation();
-
+  const { affected, fetchAffectedItems } = useAffectedItems();
+  const { fetchFormats } = useFormats();
   // Reset format to default
   const resetFormat = useCallback(() => {
     setFormat({ name: "", pattern: "", description: "" });
@@ -38,10 +40,11 @@ const FormatDialog = ({
   useEffect(() => {
     if (editedFormat) {
       setFormat(editedFormat);
+      fetchAffectedItems({ name: editedFormat.name, type: 'format' });
     } else {
       resetFormat();
     }
-  }, [editedFormat, resetFormat]);
+  }, [editedFormat, resetFormat, fetchAffectedItems]);
 
   // Validate that the pattern starts with ^ and ends with $, and is a valid regex.
   const validatePattern = useCallback(() => {
@@ -62,14 +65,13 @@ const FormatDialog = ({
     if (!validatePattern()) return;
 
     try {
-      const url = `${process.env.REACT_APP_API_URL}/api/formats${
-        mode === "add" ? "" : `/${format.name}`
-      }`;
+      const url = `${process.env.REACT_APP_API_URL}/api/formats${mode === "add" ? "" : `/${format.name}`
+        }`;
       const method = mode === "add" ? "post" : "put";
       await axios[method](url, format, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      await refetch();
+      await fetchFormats();
       resetFormat();
       onClose();
       setRefreshSearchables((prev) => prev + 1);
@@ -99,8 +101,8 @@ const FormatDialog = ({
     format,
     mode,
     token,
-    refetch,
     onClose,
+    fetchFormats,
     setRefreshSearchables,
     validatePattern,
     logout,

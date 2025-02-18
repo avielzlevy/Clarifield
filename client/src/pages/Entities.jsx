@@ -17,7 +17,7 @@ import axios from 'axios';
 import AddIcon from '@mui/icons-material/Add';
 import { useSearch } from '../contexts/SearchContext';
 
-function Entities({ setRefreshSearchables }) {
+function Entities() {
     const nodeTypes = useMemo(() => ({ entityCard: EntityCard }), []);
     const theme = useTheme();
     const { auth } = useAuth();
@@ -234,7 +234,6 @@ function Entities({ setRefreshSearchables }) {
                 nodes={nodes}
                 setNodes={setNodes}
                 fetchNodes={fetchNodes}
-                setRefreshSearchables={setRefreshSearchables}
             />
         </>
     );

@@ -5,6 +5,9 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Box,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import EditEntityForm from '../components/EditEntityForm';
 import CopyEntityForm from '../components/CopyEntityForm';
@@ -15,6 +18,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { sendAnalytics } from '../utils/analytics';
+import { useSearch } from '../contexts/SearchContext';
 
 function EntityDialog({
   open,
@@ -23,7 +27,6 @@ function EntityDialog({
   setSelectedNode,
   mode,
   fetchNodes,
-  setRefreshSearchables,
 }) {
   const [checkedFields, setCheckedFields] = useState([]);
   const [affectedItems, setAffectedItems] = useState(null);
@@ -31,7 +34,10 @@ function EntityDialog({
   const [entities, setEntities] = useState({});
   const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
   const [sureDelete, setSureDelete] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const { logout } = useAuth();
+  const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem('token');
 
   // Fetch definitions from the API.
@@ -221,6 +227,19 @@ function EntityDialog({
     newEntity,
   ]);
 
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+    setMenuOpen(true);
+  }
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    setMenuOpen(false);
+  }
+
+  const handleCopyClick = (type) => {
+  }
+
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
@@ -270,7 +289,7 @@ function EntityDialog({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
-        <Button
+        {mode !== 'copy' ? <Button
           onClick={handleAction}
           variant="contained"
           color="primary"
@@ -280,15 +299,29 @@ function EntityDialog({
           }
         >
           {mode === 'edit'
-            ? 'Edit'
-            : mode === 'copy'
-            ? 'Copy'
+            ? 'Save'
             : mode === 'create'
             ? 'Create'
             : mode === 'delete'
             ? 'Delete'
             : null}
-        </Button>
+        </Button> : 
+         <Box>
+         <Button variant="contained" color="primary" onClick={handleMenuOpen}>
+           Copy
+         </Button>
+         <Menu
+           anchorEl={anchorEl}
+           open={menuOpen}
+           onClose={handleMenuClose}
+           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+         >
+           <MenuItem onClick={() => handleCopyClick('table')}>Copy as Table</MenuItem>
+           <MenuItem onClick={() => handleCopyClick('object')}>Copy as Object</MenuItem>
+           <MenuItem onClick={() => handleCopyClick('example')}>Copy as Example</MenuItem>
+         </Menu>
+       </Box>}
       </DialogActions>
     </Dialog>
   );

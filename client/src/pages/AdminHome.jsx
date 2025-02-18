@@ -30,7 +30,8 @@ const AdminHomepage = () => {
         );
         setReports(data);
       } catch (error) {
-        console.error("Error fetching reports:", error);
+        console.error("Error fetching reports")
+        console.debug(error)
         enqueueSnackbar("Error fetching reports", { variant: "error" });
       } finally {
         setLoadingReports(false);
@@ -49,7 +50,8 @@ const AdminHomepage = () => {
         );
         setChangeLog(data);
       } catch (error) {
-        console.error("Error fetching change log:", error);
+        console.error("Error fetching change log")
+        console.debug(error)
         enqueueSnackbar("Error fetching change log", { variant: "error" });
       } finally {
         setLoadingChangeLog(false);
