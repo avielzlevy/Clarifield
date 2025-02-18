@@ -28,6 +28,13 @@ function Entities() {
     const [loading, setLoading] = useState(true);
     const [selectedNode, setSelectedNode] = useState(null);
 
+    useEffect(() => {
+        if (!auth) {
+            setDialogOpen(false);
+            setDialogMode(null);
+        }
+    }, [auth]);
+
     // Parse stored viewport center, with a fallback.
     const storedCenter = useMemo(() => {
         try {
