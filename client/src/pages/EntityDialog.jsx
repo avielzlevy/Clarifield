@@ -243,17 +243,33 @@ function generateHtmlTable(entityLabel, data) {
   // Determine headers dynamically from the first row
   const headers = Object.keys(data[0]);
 
-  let html = `<h3>${entityLabel}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
+  // Use inline CSS for a modern table style
+  let html = `
+    <h3 style="font-family: Arial, sans-serif; color: #333;">${entityLabel}</h3>
+    <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; color: #333;">
+      <thead>
+        <tr>
+  `;
+  
   // Reverse headers order if desired (or keep as is)
-  headers.reverse().forEach((header) => {
-    html += `<th>${header}</th>`;
+  headers.slice().reverse().forEach((header) => {
+    html += `<th style="border: 1px solid #ccc; padding: 8px; background-color: #f2f2f2; text-align: right;">${header}</th>`;
   });
-  html += '</tr></thead><tbody>';
-
-  data.forEach((row) => {
-    html += '<tr>';
-    headers.forEach((header) => {
+  
+  html += `
+        </tr>
+      </thead>
+      <tbody>
+  `;
+  
+  data.forEach((row, rowIndex) => {
+    // Optional: add alternating row colors for readability
+    const rowStyle = rowIndex % 2 === 0 ? 'background-color: #fff;' : 'background-color: #fafafa;';
+    html += `<tr style="${rowStyle}">`;
+    
+    headers.slice().reverse().forEach((header) => {
       let cellData = row[header];
+      
       if (Array.isArray(cellData)) {
         // For arrays, join the string representations of each field.
         cellData = cellData
@@ -270,15 +286,25 @@ function generateHtmlTable(entityLabel, data) {
         // For definition objects
         cellData = `${cellData.type}: ${cellData.format || ''}`;
       }
-      cellData = cellData !== null && cellData !== undefined ? cellData === 'entity' ? 'object' : cellData : '';
-      html += `<td>${cellData}</td>`;
+      
+      cellData = (cellData !== null && cellData !== undefined)
+        ? (cellData === 'entity' ? 'object' : cellData)
+        : '';
+      
+      html += `<td style="border: 1px solid #ccc; padding: 8px;">${cellData}</td>`;
     });
+    
     html += '</tr>';
   });
-
-  html += '</tbody></table>';
+  
+  html += `
+      </tbody>
+    </table>
+  `;
+  
   return html;
 }
+
 
 // Helper: Recursively generate tables for any entity fields found
 function generateNestedEntityTables(data) {
