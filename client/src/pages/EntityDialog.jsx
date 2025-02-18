@@ -235,6 +235,84 @@ function processField(field) {
   }
 }
 
+// Helper: Generates an HTML table for an array of processed fields.
+// Assumes every field in data has a similar shape.
+function generateHtmlTable(entityLabel, data) {
+  if (!data || data.length === 0) return '';
+
+  // Determine headers dynamically from the first row
+  const headers = Object.keys(data[0]);
+
+  let html = `<h3>${entityLabel}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
+  // Reverse headers order if desired (or keep as is)
+  headers.reverse().forEach((header) => {
+    html += `<th>${header}</th>`;
+  });
+  html += '</tr></thead><tbody>';
+
+  data.forEach((row) => {
+    html += '<tr>';
+    headers.forEach((header) => {
+      let cellData = row[header];
+      if (Array.isArray(cellData)) {
+        // For arrays, join the string representations of each field.
+        cellData = cellData
+          .map((field) => {
+            if (field.type === 'entity') {
+              // Mark nested entity with its name; its full table will be appended later.
+              return `[Entity: ${field.name}]`;
+            } else {
+              return `${field.name}: ${field.format || ''}`;
+            }
+          })
+          .join(', ');
+      } else if (typeof cellData === 'object' && cellData !== null) {
+        // For definition objects
+        cellData = `${cellData.type}: ${cellData.format || ''}`;
+      }
+      cellData = cellData !== null && cellData !== undefined ? cellData === 'entity' ? 'object' : cellData : '';
+      html += `<td>${cellData}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  html += '</tbody></table>';
+  return html;
+}
+
+// Helper: Recursively generate tables for any entity fields found
+function generateNestedEntityTables(data) {
+  let nestedTablesHtml = '';
+
+  data.forEach((field) => {
+    if (field.type === 'entity' && field.fields && field.fields.length > 0) {
+      // Generate table for the nested entity.
+      nestedTablesHtml += generateHtmlTable(field.name, field.fields);
+      // Recursively check for deeper nested entities
+      nestedTablesHtml += generateNestedEntityTables(field.fields);
+    }
+  });
+
+  return nestedTablesHtml;
+}
+
+function convertFieldsToObject(fields) {
+  return fields.reduce((acc, field) => {
+    if (field.type === 'entity') {
+      // For entity fields, recursively convert their nested fields
+      acc[field.name] = convertFieldsToObject(field.fields);
+    } else {
+      // For definition fields, assign the object as is.
+      acc[field.name] = {
+        type: field.type,
+        format: field.format,
+        description: field.description,
+      };
+    }
+    return acc;
+  }, {});
+}
+
 const handleCopyClick = async ({ entity, selectedData, type }) => {
   console.log(selectedData, type);
 
@@ -249,18 +327,8 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
   }
 
   if (type === 'object') {
-    // Create a nested object for the entity
-    const entityData = {
-      [entity.label]: data.reduce((acc, curr) => {
-        // For nested entities, the field value is an object containing further fields
-        acc[curr.name] = curr.type === 'entity' ? curr.fields : {
-          type: curr.type,
-          format: curr.format,
-          description: curr.description,
-        };
-        return acc;
-      }, {}),
-    };
+    // ... (existing code unchanged for object type)
+    const entityData = convertFieldsToObject(data);
 
     const clipBoardData = JSON.stringify(entityData, null, 2);
     const clipboardItem = new ClipboardItem({
@@ -270,41 +338,13 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
     enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
   } else if (type === 'table') {
     try {
-      // Extract headers (for a flat table, you may need to handle nested entities separately)
-      const headers = Object.keys(data[0]);
-
-      // Build the HTML table
-      let htmlTable = `<h3>${entity.label}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
-      headers.reverse().forEach((header) => {
-        htmlTable += `<th>${header}</th>`;
-      });
-      htmlTable += '</tr></thead><tbody>';
-
-      data.forEach((row) => {
-        htmlTable += '<tr>';
-        headers.forEach((header) => {
-          let cellData = row[header];
-          // If the cell is an array (nested fields), you might want to join them or format them differently:
-          if (Array.isArray(cellData)) {
-            cellData = cellData
-              .map((field) =>
-                field.type === 'entity'
-                  ? `[Entity: ${field.name}]`
-                  : field.name + ': ' + field.format
-              )
-              .join(', ');
-          } else if (typeof cellData === 'object') {
-            // for a nested definition object, format accordingly
-            cellData = `${cellData.type}: ${cellData.format}`;
-          }
-          cellData = cellData !== null && cellData !== undefined ? cellData : '';
-          htmlTable += `<td>${cellData}</td>`;
-        });
-        htmlTable += '</tr>';
-      });
-      htmlTable += '</tbody></table>';
+      // Generate main table HTML for the top-level entity
+      let htmlTable = generateHtmlTable(entity.label, data);
+      // Now, for any entity fields, append their own tables below.
+      htmlTable += generateNestedEntityTables(data);
 
       const blobHtml = new Blob([htmlTable], { type: 'text/html' });
+      // Also create a plain text version by stripping HTML tags
       const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, '')], { type: 'text/plain' });
 
       const clipboardItems = [
@@ -321,8 +361,8 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
       enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
     }
   } else if (type === 'example') {
+    // ... (existing code unchanged for example type)
     const sampleData = generateSampleObject(data);
-    // Wrap the sample data with the main entity's label
     const clipboardRawData = {
       [entity.label]: sampleData,
     };
