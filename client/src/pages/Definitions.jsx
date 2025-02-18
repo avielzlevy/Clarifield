@@ -21,7 +21,6 @@ import { sendAnalytics } from '../utils/analytics';
 import { determineRegexType, generateSampleObject } from '../utils/clipboardUtils';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useFormats } from '../contexts/useFormats';
-import { useAffectedItems } from '../contexts/useAffectedItems';
 function Definitions() {
   const { definitions, fetchDefinitions } = useDefinitions();
   const { formats } = useFormats();
@@ -30,8 +29,7 @@ function Definitions() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [actionedDefinition, setActionedDefinition] = useState(null);
-  const { affected, fetchAffectedItems, clearAffected } = useAffectedItems();
-  const { auth, logout } = useAuth();
+  const { auth } = useAuth();
   const { setRefreshSearchables } = useSearch();
   const [favorites, setFavorites] = useState(() => {
     const saved = localStorage.getItem('favorites');
@@ -85,7 +83,6 @@ function Definitions() {
   };
 
   const handleDeleteDialogClose = () => {
-    clearAffected()
     setDeleteDialogOpen(false);
   };
 

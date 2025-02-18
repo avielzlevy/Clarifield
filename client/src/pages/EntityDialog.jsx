@@ -19,6 +19,11 @@ import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
+import { useDefinitions } from '../contexts/useDefinitions';
+import { useEntities } from '../contexts/useEntities';
+import { useFormats } from '../contexts/useFormats';
+import { useAffectedItems } from '../contexts/useAffectedItems';
+import { generateSampleObject, determineRegexType } from '../utils/clipboardUtils';
 
 function EntityDialog({
   open,
@@ -29,9 +34,10 @@ function EntityDialog({
   fetchNodes,
 }) {
   const [checkedFields, setCheckedFields] = useState([]);
-  const [affectedItems, setAffectedItems] = useState(null);
-  const [definitions, setDefinitions] = useState({});
-  const [entities, setEntities] = useState({});
+  const { affected, fetchAffectedItems } = useAffectedItems();
+  const { definitions, fetchDefinitions } = useDefinitions();
+  const { formats } = useFormats();
+  const { entities, fetchEntities } = useEntities();
   const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
   const [sureDelete, setSureDelete] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -40,72 +46,19 @@ function EntityDialog({
   const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem('token');
 
-  // Fetch definitions from the API.
-  const fetchDefinitions = useCallback(async () => {
-    try {
-      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
-      setDefinitions(data);
-    } catch (error) {
-      console.error('Error fetching definitions:', error);
-    }
-  }, []);
-
-  // Fetch entities from the API.
-  const fetchEntities = useCallback(async () => {
-    try {
-      const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
-      setEntities(data);
-    } catch (error) {
-      console.error('Error fetching entities:', error);
-    }
-  }, []);
-
   useEffect(() => {
     fetchDefinitions();
     fetchEntities();
   }, [fetchDefinitions, fetchEntities]);
 
   // Get affected items for a given node.
-  const getAffectedEntities = useCallback(async () => {
-    if (!selectedNode) return;
-    const source = selectedNode.label.toLowerCase();
-    let affectedDefinitions = {};
-    let affectedEntities = {};
 
-    try {
-      const resDef = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/affected?definition=${source}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (resDef.status === 200) affectedDefinitions = resDef.data;
-    } catch (e) {
-      if (e.response?.status === 401) {
-        logout({ mode: 'bad_token' });
-        return;
-      }
-    }
-    try {
-      const resEnt = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/affected?entity=${source}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      if (resEnt.status === 200) affectedEntities = resEnt.data;
-    } catch (e) {
-      if (e.response?.status === 401) {
-        logout({ mode: 'bad_token' });
-        return;
-      }
-    }
-
-    const affectedAll = { ...affectedDefinitions, ...affectedEntities };
-    setAffectedItems(Object.keys(affectedAll).length > 0 ? affectedAll : null);
-  }, [selectedNode, token, logout]);
 
   useEffect(() => {
     if (selectedNode && (mode === 'edit' || mode === 'delete')) {
-      getAffectedEntities();
+      fetchAffectedItems({ name: selectedNode.label, type: 'entity' });
     }
-  }, [selectedNode, mode, getAffectedEntities]);
+  }, [selectedNode, mode, fetchAffectedItems]);
 
   // Handle the dialog action based on the current mode.
   const handleAction = useCallback(async () => {
@@ -237,7 +190,95 @@ function EntityDialog({
     setMenuOpen(false);
   }
 
-  const handleCopyClick = (type) => {
+  const handleCopyClick = async ({entity,selectedData, type}) => {
+    console.log(selectedData, type);
+    const data = selectedData.map((def) => {
+      const formatPattern = formats[definitions[def.label].format]?.pattern || 'Pattern not found';
+      const description = definitions[def.label].description || 'No description available';
+      const regexType = determineRegexType(formatPattern);
+      sendAnalytics(def.label, 'definition', 1)
+      sendAnalytics(formatPattern, 'format', 1)
+      return {
+        name: def.label,
+        type: regexType,
+        format: formatPattern,
+        description: description,
+      };
+    });
+    if (!data || data.length === 0) {
+      enqueueSnackbar('No data available to export.', { variant: 'warning' });
+      return;
+    }
+    if (type === 'object') {
+      const entityData = {
+        [entity.label]: data.reduce((acc, curr) => {
+          acc[curr.name] = {
+            type: curr.type,
+            format: curr.format,
+            description: curr.description,
+          };
+          return acc;
+        }, {}),
+      }
+      const clipBoardData = JSON.stringify(entityData, null, 2);
+      //this needs to be string at the end
+      const clipboardItem = new ClipboardItem({ 'text/plain': new Blob([clipBoardData], { type: 'text/plain' }) });
+      await navigator.clipboard.write([clipboardItem]);
+      enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
+    }
+    else if (type === 'table') {
+      try {
+        // Extract headers
+        const headers = Object.keys(data[0]);
+
+        // Start constructing the HTML table
+        let htmlTable = `<h3>${entity.label}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
+
+        // Add table headers
+        // // TODO: Add support for rtl
+        headers.reverse().forEach(header => {
+          htmlTable += `<th>${header}</th>`;
+        });
+        htmlTable += '</tr></thead><tbody>';
+
+        // Add table rows
+        data.forEach(row => {
+          htmlTable += '<tr>';
+          headers.forEach(header => {
+            const cellData = row[header] !== null && row[header] !== undefined ? row[header] : '';
+            htmlTable += `<td>${cellData}</td>`;
+          });
+          htmlTable += '</tr>';
+        });
+        htmlTable += '</tbody></table>';
+
+        // Prepare clipboard items
+        const blobHtml = new Blob([htmlTable], { type: 'text/html' });
+        const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, "")], { type: 'text/plain' }); // Plain text fallback
+
+        const clipboardItems = [
+          new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText,
+          }),
+        ];
+
+        // Write to clipboard
+        await navigator.clipboard.write(clipboardItems);
+
+        enqueueSnackbar('Table copied to clipboard!', { variant: 'success' });
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+        enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
+      }
+    }
+    else if (type === 'example') {
+      const sampleData = generateSampleObject(data);
+      const clipBoardData = JSON.stringify(sampleData, null, 2);
+      const clipboardItem = new ClipboardItem({ 'text/plain': new Blob([clipBoardData], { type: 'text/plain' }) });
+      await navigator.clipboard.write([clipboardItem]);
+      enqueueSnackbar('Sample data copied to clipboard!', { variant: 'success' });
+    }
   }
 
   return (
@@ -246,26 +287,24 @@ function EntityDialog({
         {mode === 'edit'
           ? 'Edit'
           : mode === 'copy'
-          ? 'Copy'
-          : mode === 'create'
-          ? 'Create'
-          : mode === 'delete'
-          ? 'Delete'
-          : null}{' '}
+            ? 'Copy'
+            : mode === 'create'
+              ? 'Create'
+              : mode === 'delete'
+                ? 'Delete'
+                : null}{' '}
         Entity
         {mode === 'edit'
-          ? affectedItems && <ChangeWarning items={affectedItems} level="warning" />
+          ? affected && <ChangeWarning items={affected} level="warning" />
           : mode === 'delete'
-          ? affectedItems && <ChangeWarning items={affectedItems} level="error" />
-          : null}
+            ? affected && <ChangeWarning items={affected} level="error" />
+            : null}
       </DialogTitle>
       <DialogContent>
         {mode === 'edit' ? (
           <EditEntityForm
             node={selectedNode}
             setNode={setSelectedNode}
-            definitions={definitions}
-            entities={entities}
           />
         ) : mode === 'copy' ? (
           <CopyEntityForm node={selectedNode} onCheckChange={setCheckedFields} />
@@ -301,27 +340,27 @@ function EntityDialog({
           {mode === 'edit'
             ? 'Save'
             : mode === 'create'
-            ? 'Create'
-            : mode === 'delete'
-            ? 'Delete'
-            : null}
-        </Button> : 
-         <Box>
-         <Button variant="contained" color="primary" onClick={handleMenuOpen}>
-           Copy
-         </Button>
-         <Menu
-           anchorEl={anchorEl}
-           open={menuOpen}
-           onClose={handleMenuClose}
-           anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-           transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-         >
-           <MenuItem onClick={() => handleCopyClick('table')}>Copy as Table</MenuItem>
-           <MenuItem onClick={() => handleCopyClick('object')}>Copy as Object</MenuItem>
-           <MenuItem onClick={() => handleCopyClick('example')}>Copy as Example</MenuItem>
-         </Menu>
-       </Box>}
+              ? 'Create'
+              : mode === 'delete'
+                ? 'Delete'
+                : null}
+        </Button> :
+          <Box>
+            <Button variant="contained" color="primary" onClick={handleMenuOpen} disabled={checkedFields.length === 0}>
+              Copy
+            </Button>
+            <Menu
+              anchorEl={anchorEl}
+              open={menuOpen}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'table'})}>Copy as Table</MenuItem>
+              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'object'})}>Copy as Object</MenuItem>
+              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'example'})}>Copy as Example</MenuItem>
+            </Menu>
+          </Box>}
       </DialogActions>
     </Dialog>
   );

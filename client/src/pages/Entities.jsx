@@ -21,8 +21,7 @@ function Entities() {
     const nodeTypes = useMemo(() => ({ entityCard: EntityCard }), []);
     const theme = useTheme();
     const { auth } = useAuth();
-    const { search: globalSearch, setSearch: setGlobalSearch } = useSearch();
-
+    const { search, setSearch } = useSearch();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [dialogMode, setDialogMode] = useState(null);
     const [nodes, setNodes] = useState([]);
@@ -130,14 +129,14 @@ function Entities() {
 
     // Listen for global search changes.
     useEffect(() => {
-        if (nodes.length > 0 && globalSearch) {
+        if (nodes.length > 0 && search) {
             const timer = setTimeout(() => {
-                performSearch(globalSearch);
-                setGlobalSearch('');
+                performSearch(search);
+                setSearch('');
             }, 100);
             return () => clearTimeout(timer);
         }
-    }, [nodes, globalSearch, setGlobalSearch, performSearch]);
+    }, [nodes, search, setSearch, performSearch]);
 
     const onNodesChange = useCallback(
         (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),

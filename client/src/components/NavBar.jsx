@@ -30,7 +30,6 @@ import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useSearch } from '../contexts/SearchContext';
 import axios from 'axios';
 import Entities from '../pages/Entities';
 import Definitions from '../pages/Definitions';

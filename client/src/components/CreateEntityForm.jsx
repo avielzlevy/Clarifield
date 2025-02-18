@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect,useMemo } from 'react';
 import {
   Paper,
   TextField,
@@ -13,8 +13,10 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
 import DataObjectIcon from '@mui/icons-material/DataObject';
+import { useDefinitions } from '../contexts/useDefinitions';
+import { useEntities } from '../contexts/useEntities';
 
-const CreateEntityForm = ({ definitions = {}, entities = {}, newEntity, setNewEntity }) => {
+const CreateEntityForm = ({newEntity, setNewEntity }) => {
   // Ensure there's at least one field on mount.
   useEffect(() => {
     if (!newEntity.fields || newEntity.fields.length === 0) {
@@ -23,15 +25,19 @@ const CreateEntityForm = ({ definitions = {}, entities = {}, newEntity, setNewEn
   }, [newEntity, setNewEntity]);
 
   // Build options from definitions and entities with group labels.
-  const defOptions = Object.keys(definitions).map((key) => ({
-    label: key,
-    group: 'Definitions',
-  }));
-  const entityOptions = Object.keys(entities).map((key) => ({
-    label: key,
-    group: 'Entities',
-  }));
-  const options = [...defOptions, ...entityOptions];
+  const {definitions} = useDefinitions();
+  const {entities} = useEntities();
+  const options = useMemo(() => {
+    const defOptions = Object.keys(definitions).map((key) => ({
+      label: key,
+      group: 'Definitions',
+    }));
+    const entityOptions = Object.keys(entities).map((key) => ({
+      label: key,
+      group: 'Entities',
+    }));
+    return [...entityOptions, ...defOptions];
+  }, [definitions, entities]);
 
   // Map group names to icon components.
   const groupIconMap = {

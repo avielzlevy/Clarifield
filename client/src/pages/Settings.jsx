@@ -11,25 +11,26 @@ const Settings = () => {
     const { t } = useTranslation();
 
 
-    const fetchSettings = async () => {
-        try {
-            const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/settings`, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            setSettings(response.data);
-            // console.log({ data: response.data });
-        } catch (error) {
-            if (error.response.status === 401) {
-                logout({ mode: 'bad_token' });
-                return;
-            }
-            console.error('Error fetching settings:', error);
-            enqueueSnackbar(t('settings_fetch_failed'), { variant: 'error' });
-        }
-    }
+
     useEffect(() => {
+        const fetchSettings = async () => {
+            try {
+                const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/settings`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                setSettings(response.data);
+                // console.log({ data: response.data });
+            } catch (error) {
+                if (error.response.status === 401) {
+                    logout({ mode: 'bad_token' });
+                    return;
+                }
+                console.error('Error fetching settings:', error);
+                enqueueSnackbar(t('settings_fetch_failed'), { variant: 'error' });
+            }
+        }
         fetchSettings();
-    }, []);
+    }, [logout, token, t]);
 
     const handleNamingConventionChange = (event) => {
         setSettings((prevSettings) => ({

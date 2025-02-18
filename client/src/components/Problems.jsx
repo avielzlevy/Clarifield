@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -11,72 +11,38 @@ import {
 import { useTheme } from "@mui/material/styles";
 import axios from "axios";
 import { useTranslation } from "react-i18next";
+import { useDefinitions } from "../contexts/useDefinitions";
+import { useFormats } from "../contexts/useFormats";
 
 const Problems = () => {
   const theme = useTheme();
   // Set initial state to an empty array instead of an object
-  const [problems, setProblems] = useState([]);
-  const [loadingProblems, setLoadingProblems] = useState(true);
+  const {definitions} = useDefinitions();
+  const {formats} = useFormats();
   const { t } = useTranslation();
-
-  const fetchDefinitions = async () => {
-    try {
-      // Fetch definitions and formats
-      const [definitionsRes, formatsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`),
-        axios.get(`${process.env.REACT_APP_API_URL}/api/formats`),
-      ]);
-
-      const definitionsData = definitionsRes.data;
-      const formatsData = formatsRes.data;
-
-      // Step 1: Build a mapping from format names to definitions that use them
-      const formatToDefinitionsMap = {};
-
-      Object.entries(definitionsData).forEach(([defName, defData]) => {
-        const formatName = defData.format;
-        if (!formatToDefinitionsMap[formatName]) {
-          formatToDefinitionsMap[formatName] = [];
-        }
-        formatToDefinitionsMap[formatName].push(defName);
-      });
-
-      // Step 2: Find formats without patterns
-      const formatsWithoutPattern = Object.keys(formatToDefinitionsMap).filter(
-        (formatName) => {
-          const formatData = formatsData[formatName];
-          return !formatData || !formatData.pattern;
-        }
-      );
-
-      // Step 3: Prepare the ProblemsArray
-      const ProblemsArray = formatsWithoutPattern.map((formatName) => ({
-        format: formatName,
-        definitions: formatToDefinitionsMap[formatName],
-      }));
-
-      setProblems(ProblemsArray);
-      setLoadingProblems(false);
-    } catch (error) {
-      console.error('Error fetching definitions:');
-      console.debug(error)
-      setLoadingProblems(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDefinitions();
-  }, []);
-
-  if (loadingProblems) {
-    return (
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Typography variant="h6">{t('problems')}</Typography>
-        <Divider sx={{ marginY: 1 }} />
-        <CircularProgress />
-      </Box>
+  const problems = useMemo(() => {
+    // Step 1: Build a mapping from format names to definitions that use them
+    const formatToDefinitionsMap = {};
+    Object.entries(definitions).forEach(([defName, defData]) => {
+      const formatName = defData.format;
+      if (!formatToDefinitionsMap[formatName]) {
+        formatToDefinitionsMap[formatName] = [];
+      }
+      formatToDefinitionsMap[formatName].push(defName);
+    });
+    // Step 2: Find formats without patterns
+    const formatsWithoutPattern = Object.keys(formatToDefinitionsMap).filter(
+      (formatName) => {
+        const formatData = formats[formatName];
+        return !formatData || !formatData.pattern;
+      }
     );
-  }
+    // Step 3: Prepare the ProblemsArray
+    return formatsWithoutPattern.map((formatName) => ({
+      format: formatName,
+      definitions: formatToDefinitionsMap[formatName],
+    }));
+  }, [definitions, formats]);
 
   const renderProblems = (problems) => {
     return problems.length === 0 ? (

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -16,20 +16,21 @@ import { useSearch } from "../contexts/SearchContext";
 import ChangeWarning from "../components/ChangeWarning";
 import { useAffectedItems } from "../contexts/useAffectedItems";
 import { useDefinitions } from "../contexts/useDefinitions";
+import { useFormats } from "../contexts/useFormats";
 
 const DefinitionDialog = ({
   mode,
   open,
   onClose,
   editedDefinition,
-  type,
 }) => {
   const [definition, setDefinition] = useState({
     name: "",
     format: "",
     description: "",
   });
-  const [formats, setFormats] = useState([]);
+  const { formats, fetchFormats } = useFormats();
+  const options = useMemo(() => Object.keys(formats), [formats]);
   const [namingConvention, setNamingConvention] = useState("");
   const [namingConventionError, setNamingConventionError] = useState("");
   const { logout } = useAuth();
@@ -37,19 +38,6 @@ const DefinitionDialog = ({
   const { fetchDefinitions } = useDefinitions();
   const { affected, fetchAffectedItems } = useAffectedItems();
   const token = localStorage.getItem("token");
-
-  const fetchFormats = useCallback(async () => {
-    try {
-      const { data } = await axios.get(
-        `${process.env.REACT_APP_API_URL}/api/formats`
-      );
-      const formatNames = Object.keys(data).sort();
-      setFormats(formatNames);
-    } catch (error) {
-      console.error("Error fetching formats")
-      console.debug(error)
-    }
-  }, []);
 
   const fetchNamingConvention = useCallback(async () => {
     const token = localStorage.getItem("token");
@@ -76,11 +64,11 @@ const DefinitionDialog = ({
     fetchNamingConvention();
     if (editedDefinition) {
       setDefinition(editedDefinition);
-      fetchAffectedItems({ name: editedDefinition.name, type});
+      fetchAffectedItems({ name: editedDefinition.name, type: 'definition' });
     } else {
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems,type]);
+  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems]);
 
   // Validate the naming convention.
   const validateNamingConvention = useCallback(() => {
@@ -183,7 +171,7 @@ const DefinitionDialog = ({
           disabled={mode === "edit"}
         />
         <Autocomplete
-          options={formats}
+          options={options}
           getOptionLabel={(option) => option}
           value={definition.format}
           onChange={(e, newValue) =>

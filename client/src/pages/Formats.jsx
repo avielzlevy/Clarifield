@@ -13,16 +13,14 @@ import { useRtl } from '../contexts/RtlContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearch } from '../contexts/SearchContext';
 import { useFormats } from '../contexts/useFormats';
-import { useAffectedItems } from '../contexts/useAffectedItems';
 
 const Formats = () => {
-  const { formats, setFormats, fetchFormats } = useFormats();
+  const { formats, fetchFormats } = useFormats();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [selectedFormat, setSelectedFormat] = useState(null);
-  const { fetchAffectedItems,clearAffected } = useAffectedItems();
   const { auth, logout } = useAuth();
   const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem('token');
@@ -61,9 +59,8 @@ const Formats = () => {
   const openAddDialog = useCallback(() => {
     setDialogMode('add');
     setDialogOpen(true);
-    clearAffected();
     setSelectedFormat(null);
-  }, [clearAffected]);
+  }, []);
 
   const openEditDialog = useCallback((format) => {
     setDialogMode('edit');
@@ -84,14 +81,12 @@ const Formats = () => {
   // Handlers for closing dialogs.
   const closeAddDialog = useCallback(() => {
     setDialogMode(null);
-    clearAffected();
     setDialogOpen(false);
-  }, [clearAffected]);
+  }, []);
 
   const closeDeleteDialog = useCallback(() => {
-    clearAffected();
     setDeleteDialogOpen(false);
-  }, [clearAffected]);
+  }, []);
 
   const closeReportDialog = useCallback(() => {
     setSelectedFormat(null);
@@ -104,7 +99,7 @@ const Formats = () => {
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/formats/${deletedFormat.name}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setFormats((prev) => prev.filter((fmt) => fmt.name !== deletedFormat.name));
+      fetchFormats();
       enqueueSnackbar('Format deleted successfully', { variant: 'success' });
       closeDeleteDialog();
       setSelectedFormat(null);
@@ -118,7 +113,7 @@ const Formats = () => {
       enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
       closeDeleteDialog();
     }
-  }, [token, logout, setRefreshSearchables, closeDeleteDialog,setFormats]);
+  }, [token, logout, setRefreshSearchables, closeDeleteDialog, fetchFormats]);
 
   return (
     <Box sx={{ p: 1, width: '100%' }}>

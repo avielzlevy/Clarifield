@@ -17,7 +17,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 const QuickAccess = ({ onDefinitionClick }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [definitions, setDefinitions] = useState([]);
+  const [mostUsedDefinitions, setMostUsedDefinitions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Define crown colors for the top three items.
@@ -32,10 +32,10 @@ const QuickAccess = ({ onDefinitionClick }) => {
     const fetchAnalytics = async () => {
       try {
         const analytics = await getAnalytics();
-        const sortedDefinitions = Object.entries(analytics.definition || {})
+        const sortedMostUsedDefinitions = Object.entries(analytics.definition || {})
           .sort(([, a], [, b]) => b - a)
           .map(([name, count]) => ({ name, count }));
-        setDefinitions(sortedDefinitions);
+        setMostUsedDefinitions(sortedMostUsedDefinitions);
       } catch (error) {
         console.error("Error fetching analytics")
         console.debug(error);
@@ -63,7 +63,7 @@ const QuickAccess = ({ onDefinitionClick }) => {
     );
   }
 
-  if (!loading && definitions.length === 0) {
+  if (!loading && mostUsedDefinitions.length === 0) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
@@ -93,7 +93,7 @@ const QuickAccess = ({ onDefinitionClick }) => {
         }}
       >
         <List>
-          {definitions.map((definition, index) => {
+          {mostUsedDefinitions.map((definition, index) => {
             const crownColor = getCrownColor(index);
             return (
               <ListItemButton

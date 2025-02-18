@@ -12,27 +12,23 @@ import {
   Typography,
 } from '@mui/material';
 import ChangeWarning from '../components/ChangeWarning';
-import { enqueueSnackbar } from 'notistack';
 import { useAffectedItems } from '../contexts/useAffectedItems';
 
-const DeleteDialog = ({ open, onClose, deletedItem, onDelete,type }) => {
+const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {
   const { affected, fetchAffectedItems } = useAffectedItems();
   // If there are affected items, require confirmation; otherwise default to true.
-  const [sure, setSure] = useState(affected);
+  const [sure, setSure] = useState(false);
 
   // Reset the confirmation state whenever the dialog opens or affected items change.
   useEffect(() => {
-    if (deletedItem)
+    if (open&&deletedItem)
       fetchAffectedItems({ name: deletedItem.name, type });
-  }, [deletedItem, fetchAffectedItems,type]);
-
-  const handleDelete = () => {
-    if (sure||!affected) {
-      onDelete(deletedItem);
-    } else {
-      enqueueSnackbar('Please confirm that you are sure', { variant: 'error' });
+  }, [open,deletedItem, fetchAffectedItems, type]);
+  useEffect(() => {
+    if (!open) {
+      setSure(false); // Reset when dialog closes
     }
-  };
+  }, [open]);
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -60,7 +56,7 @@ const DeleteDialog = ({ open, onClose, deletedItem, onDelete,type }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <Button onClick={handleDelete} variant="contained" color="error">
+        <Button onClick={() => onDelete(deletedItem)} variant="contained" color="error" disabled={affected && !sure}>
           Delete
         </Button>
       </DialogActions>

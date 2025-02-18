@@ -28,7 +28,6 @@ function CustomDataGrid(props) {
   const { auth } = useAuth();
   const { t, i18n } = useTranslation();
   const { search, setSearch } = useSearch();
-
   const [selectedRows, setSelectedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [viewportSize, setViewportSize] = useState({

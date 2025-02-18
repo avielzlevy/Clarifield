@@ -124,7 +124,7 @@ function EntityCard({ data }) {
                 {field.type === 'entity' && <DataObjectIcon sx={ICON_SIZE} />}
                 <ListItemText
                   primary={field.label}
-                  primaryTypographyProps={{ sx: { fontSize: 10 } }}
+                  slotProps={{ primary: { sx: { fontSize: 10 } } }}
                   sx={{ textAlign: 'center' }}
                 />
               </ListItem>

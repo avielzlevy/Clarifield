@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   Autocomplete,
   TextField,
@@ -11,18 +11,24 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import DataObjectIcon from '@mui/icons-material/DataObject';
 import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
+import { useDefinitions } from '../contexts/useDefinitions';
+import { useEntities } from '../contexts/useEntities';
 
-function EditEntityForm({ node, setNode, definitions, entities }) {
+function EditEntityForm({ node, setNode}) {
   // Build grouped options from definitions and entities.
-  const defOptions = Object.keys(definitions).map((key) => ({
-    label: key,
-    group: 'Definitions',
-  }));
-  const entityOptions = Object.keys(entities).map((key) => ({
-    label: key,
-    group: 'Entities',
-  }));
-  const options = [...entityOptions, ...defOptions];
+  const {definitions} = useDefinitions();
+  const {entities} = useEntities();
+  const options = useMemo(() => {
+    const defOptions = Object.keys(definitions).map((key) => ({
+      label: key,
+      group: 'Definitions',
+    }));
+    const entityOptions = Object.keys(entities).map((key) => ({
+      label: key,
+      group: 'Entities',
+    }));
+    return [...entityOptions, ...defOptions];
+  }, [definitions, entities]);
 
   // Map group names to icon components.
   const groupIconMap = {
