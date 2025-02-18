@@ -112,6 +112,7 @@ export const deleteFormat = async (name: string): Promise<void> => {
       await initMongo();
     }
     const result = await formatsCollection.deleteOne({ name });
+    console.log(result);
     if (!result.deletedCount) {
       throw new Error(`Format with name '${name}' not found`);
     }

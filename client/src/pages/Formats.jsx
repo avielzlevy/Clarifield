@@ -109,8 +109,15 @@ const Formats = () => {
         logout({ mode: 'bad_token' });
         return;
       }
-      console.error('Error deleting format:', error);
-      enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
+      console.error('Error deleting format:')
+      console.debug(error);
+      if (error.response?.status === 404) {
+        enqueueSnackbar('Format not found', { variant: 'error' });
+      } else if (error.response?.status === 409) {
+        enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
+      } else {
+        enqueueSnackbar('Error deleting format', { variant: 'error' });
+      }
       closeDeleteDialog();
     }
   }, [token, logout, setRefreshSearchables, closeDeleteDialog, fetchFormats]);
