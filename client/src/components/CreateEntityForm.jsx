@@ -1,4 +1,4 @@
-import React, { useEffect,useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Paper,
   TextField,
@@ -16,7 +16,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 
-const CreateEntityForm = ({newEntity, setNewEntity }) => {
+const CreateEntityForm = ({ newEntity, setNewEntity }) => {
   // Ensure there's at least one field on mount.
   useEffect(() => {
     if (!newEntity.fields || newEntity.fields.length === 0) {
@@ -25,8 +25,8 @@ const CreateEntityForm = ({newEntity, setNewEntity }) => {
   }, [newEntity, setNewEntity]);
 
   // Build options from definitions and entities with group labels.
-  const {definitions} = useDefinitions();
-  const {entities} = useEntities();
+  const { definitions } = useDefinitions();
+  const { entities } = useEntities();
   const options = useMemo(() => {
     const defOptions = Object.keys(definitions).map((key) => ({
       label: key,
@@ -112,58 +112,69 @@ const CreateEntityForm = ({newEntity, setNewEntity }) => {
           minWidth: 250,
         }}
       >
-        {newEntity.fields.map((field, index) => (
-          <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Autocomplete
-              freeSolo
-              options={options}
-              groupBy={(option) => option.group || ''}
-              getOptionLabel={(option) =>
-                typeof option === 'string' ? option : option.label
-              }
-              value={field.label}
-              onChange={(event, newValue) => handleFieldChange(index, newValue)}
-              onInputChange={(event, newInputValue) =>
-                handleFieldChange(index, newInputValue)
-              }
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={`Field ${index + 1}`}
-                  variant="outlined"
-                  fullWidth
-                />
+        {newEntity.fields.map((field, index) => {
+          // Exclude options already selected in other fields.
+          const selectedLabelsExceptCurrent = newEntity.fields
+            .filter((_, i) => i !== index)
+            .map((f) => f.label);
+          const filteredOptions = options.filter(
+            (option) => !selectedLabelsExceptCurrent.includes(option.label)
+          );
+
+          return (
+            <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Autocomplete
+                freeSolo
+                options={filteredOptions}
+                groupBy={(option) => option.group || ''}
+                getOptionLabel={(option) =>
+                  typeof option === 'string' ? option : option.label
+                }
+                value={field.label}
+                onChange={(event, newValue) => handleFieldChange(index, newValue)}
+                onInputChange={(event, newInputValue) =>
+                  handleFieldChange(index, newInputValue)
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={`Field ${index + 1}`}
+                    variant="outlined"
+                    fullWidth
+                  />
+                )}
+                // Render group headers with icons.
+                renderGroup={(params) => {
+                  const { key, group, children, ...rest } = params;
+                  return (
+                    <div key={key} {...rest}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          p: 1,
+                          bgcolor: 'action.hover',
+                        }}
+                      >
+                        {groupIconMap[group] || null}
+                        <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
+                          {group}
+                        </Typography>
+                      </Box>
+                      {children}
+                    </div>
+                  );
+                }}
+                sx={{ flex: 1 }}
+              />
+              {newEntity.fields.length > 1 && (
+                <IconButton onClick={() => removeField(index)}>
+                  <DeleteIcon />
+                </IconButton>
               )}
-              renderGroup={(params) => {
-                const { key, group, children, ...rest } = params;
-                return (
-                  <div key={key} {...rest}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        p: 1,
-                        bgcolor: 'action.hover',
-                      }}
-                    >
-                      {groupIconMap[group] || null}
-                      <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
-                        {group}
-                      </Typography>
-                    </Box>
-                    {children}
-                  </div>
-                );
-              }}
-              sx={{ flex: 1 }}
-            />
-            {newEntity.fields.length > 1 && (
-              <IconButton onClick={() => removeField(index)}>
-                <DeleteIcon />
-              </IconButton>
-            )}
-          </Box>
-        ))}
+            </Box>
+          );
+        })}
 
         <Button variant="outlined" startIcon={<AddIcon />} onClick={addField}>
           Add Field

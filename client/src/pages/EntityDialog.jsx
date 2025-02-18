@@ -190,96 +190,151 @@ function EntityDialog({
     setMenuOpen(false);
   }
 
-  const handleCopyClick = async ({entity,selectedData, type}) => {
-    console.log(selectedData, type);
-    const data = selectedData.map((def) => {
-      const formatPattern = formats[definitions[def.label].format]?.pattern || 'Pattern not found';
-      const description = definitions[def.label].description || 'No description available';
-      const regexType = determineRegexType(formatPattern);
-      sendAnalytics(def.label, 'definition', 1)
-      sendAnalytics(formatPattern, 'format', 1)
-      return {
-        name: def.label,
-        type: regexType,
-        format: formatPattern,
-        description: description,
-      };
-    });
-    if (!data || data.length === 0) {
-      enqueueSnackbar('No data available to export.', { variant: 'warning' });
-      return;
+function processField(field) {
+  // For a field from definitions:
+  if (field.type === 'definition') {
+    const def = definitions[field.label];
+    if (!def) {
+      console.error(`Definition for ${field.label} not found`);
+      return null;
     }
-    if (type === 'object') {
-      const entityData = {
-        [entity.label]: data.reduce((acc, curr) => {
-          acc[curr.name] = {
-            type: curr.type,
-            format: curr.format,
-            description: curr.description,
-          };
-          return acc;
-        }, {}),
-      }
-      const clipBoardData = JSON.stringify(entityData, null, 2);
-      //this needs to be string at the end
-      const clipboardItem = new ClipboardItem({ 'text/plain': new Blob([clipBoardData], { type: 'text/plain' }) });
-      await navigator.clipboard.write([clipboardItem]);
-      enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
-    }
-    else if (type === 'table') {
-      try {
-        // Extract headers
-        const headers = Object.keys(data[0]);
-
-        // Start constructing the HTML table
-        let htmlTable = `<h3>${entity.label}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
-
-        // Add table headers
-        // // TODO: Add support for rtl
-        headers.reverse().forEach(header => {
-          htmlTable += `<th>${header}</th>`;
-        });
-        htmlTable += '</tr></thead><tbody>';
-
-        // Add table rows
-        data.forEach(row => {
-          htmlTable += '<tr>';
-          headers.forEach(header => {
-            const cellData = row[header] !== null && row[header] !== undefined ? row[header] : '';
-            htmlTable += `<td>${cellData}</td>`;
-          });
-          htmlTable += '</tr>';
-        });
-        htmlTable += '</tbody></table>';
-
-        // Prepare clipboard items
-        const blobHtml = new Blob([htmlTable], { type: 'text/html' });
-        const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, "")], { type: 'text/plain' }); // Plain text fallback
-
-        const clipboardItems = [
-          new ClipboardItem({
-            'text/html': blobHtml,
-            'text/plain': blobText,
-          }),
-        ];
-
-        // Write to clipboard
-        await navigator.clipboard.write(clipboardItems);
-
-        enqueueSnackbar('Table copied to clipboard!', { variant: 'success' });
-      } catch (err) {
-        console.error('Failed to copy: ', err);
-        enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
-      }
-    }
-    else if (type === 'example') {
-      const sampleData = generateSampleObject(data);
-      const clipBoardData = JSON.stringify(sampleData, null, 2);
-      const clipboardItem = new ClipboardItem({ 'text/plain': new Blob([clipBoardData], { type: 'text/plain' }) });
-      await navigator.clipboard.write([clipboardItem]);
-      enqueueSnackbar('Sample data copied to clipboard!', { variant: 'success' });
-    }
+    const formatPattern = formats[def.format]?.pattern || 'Pattern not found';
+    const description = def.description || 'No description available';
+    const regexType = determineRegexType(formatPattern);
+    // (Analytics can be sent here if desired)
+    sendAnalytics(field.label, 'definition', 1);
+    sendAnalytics(formatPattern, 'format', 1);
+    return {
+      name: field.label,
+      type: regexType,
+      format: formatPattern,
+      description: description,
+    };
   }
+  // For a field that is an entity:
+  else if (field.type === 'entity') {
+    const entity = entities[field.label];
+    if (!entity) {
+      console.error(`Entity ${field.label} not found`);
+      return { name: field.label, type: 'entity', fields: [] };
+    }
+    // Process the nested fields recursively:
+    const nestedFields = entity.fields
+      .map(processField)
+      .filter((item) => item !== null); // remove any errors
+    return {
+      name: field.label,
+      type: 'entity',
+      fields: nestedFields,
+    };
+  }
+  // In case you have other types:
+  else {
+    console.error(`Unknown field type for ${field.label}`);
+    return null;
+  }
+}
+
+const handleCopyClick = async ({ entity, selectedData, type }) => {
+  console.log(selectedData, type);
+
+  // Process the selected fields. Each field might be a definition or an entity.
+  const data = selectedData
+    .map(processField)
+    .filter((item) => item !== null);
+
+  if (!data || data.length === 0) {
+    enqueueSnackbar('No data available to export.', { variant: 'warning' });
+    return;
+  }
+
+  if (type === 'object') {
+    // Create a nested object for the entity
+    const entityData = {
+      [entity.label]: data.reduce((acc, curr) => {
+        // For nested entities, the field value is an object containing further fields
+        acc[curr.name] = curr.type === 'entity' ? curr.fields : {
+          type: curr.type,
+          format: curr.format,
+          description: curr.description,
+        };
+        return acc;
+      }, {}),
+    };
+
+    const clipBoardData = JSON.stringify(entityData, null, 2);
+    const clipboardItem = new ClipboardItem({
+      'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
+    });
+    await navigator.clipboard.write([clipboardItem]);
+    enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
+  } else if (type === 'table') {
+    try {
+      // Extract headers (for a flat table, you may need to handle nested entities separately)
+      const headers = Object.keys(data[0]);
+
+      // Build the HTML table
+      let htmlTable = `<h3>${entity.label}</h3><table border="1" cellspacing="0" cellpadding="5"><thead><tr>`;
+      headers.reverse().forEach((header) => {
+        htmlTable += `<th>${header}</th>`;
+      });
+      htmlTable += '</tr></thead><tbody>';
+
+      data.forEach((row) => {
+        htmlTable += '<tr>';
+        headers.forEach((header) => {
+          let cellData = row[header];
+          // If the cell is an array (nested fields), you might want to join them or format them differently:
+          if (Array.isArray(cellData)) {
+            cellData = cellData
+              .map((field) =>
+                field.type === 'entity'
+                  ? `[Entity: ${field.name}]`
+                  : field.name + ': ' + field.format
+              )
+              .join(', ');
+          } else if (typeof cellData === 'object') {
+            // for a nested definition object, format accordingly
+            cellData = `${cellData.type}: ${cellData.format}`;
+          }
+          cellData = cellData !== null && cellData !== undefined ? cellData : '';
+          htmlTable += `<td>${cellData}</td>`;
+        });
+        htmlTable += '</tr>';
+      });
+      htmlTable += '</tbody></table>';
+
+      const blobHtml = new Blob([htmlTable], { type: 'text/html' });
+      const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, '')], { type: 'text/plain' });
+
+      const clipboardItems = [
+        new ClipboardItem({
+          'text/html': blobHtml,
+          'text/plain': blobText,
+        }),
+      ];
+
+      await navigator.clipboard.write(clipboardItems);
+      enqueueSnackbar('Table copied to clipboard!', { variant: 'success' });
+    } catch (err) {
+      console.error('Failed to copy: ', err);
+      enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
+    }
+  } else if (type === 'example') {
+    const sampleData = generateSampleObject(data);
+    // Wrap the sample data with the main entity's label
+    const clipboardRawData = {
+      [entity.label]: sampleData,
+    };
+    const clipBoardData = JSON.stringify(clipboardRawData, null, 2);
+    const clipboardItem = new ClipboardItem({
+      'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
+    });
+    await navigator.clipboard.write([clipboardItem]);
+    enqueueSnackbar('Sample data copied to clipboard!', { variant: 'success' });
+  }  
+};
+
 
   return (
     <Dialog open={open} onClose={onClose}>
@@ -333,7 +388,8 @@ function EntityDialog({
           variant="contained"
           color="primary"
           disabled={
-            (mode === 'copy' && checkedFields.length === 0) ||
+            (mode === 'create' && (newEntity.label === ''||newEntity.fields.filter((field) => field.label === '').length > 0)) ||
+            (mode === 'edit' && selectedNode.fields.filter((field) => field.label === '').length > 0) ||
             (mode === 'delete' && !sureDelete)
           }
         >

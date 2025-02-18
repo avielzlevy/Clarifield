@@ -43,10 +43,14 @@ export const generateSampleValue = (field) => {
       return field.items && field.items.type ? [generateSampleValue(field.items)] : [];
     case 'object':
       return field.properties ? generateSampleObject(field.properties) : {};
+    case 'entity':
+      // If this field is an entity and it contains nested fields, generate a sample object from them.
+      return field.fields ? generateSampleObject(field.fields) : {};
     default:
       return null;
   }
 };
+
 
 export const generateSampleObject = (schema) => {
   const sampleObject = {};

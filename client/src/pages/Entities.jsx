@@ -66,42 +66,66 @@ function Entities() {
             setSelectedNode(foundNode.data);
         }
     }, []);
+    // For instance, assume an average of 8 pixels per character.
+    function approximateTextWidth(text, averageCharWidth = 8, padding = 20) {
+        return text.length * averageCharWidth + padding;
+    }
+    const getCardWidth = useCallback((entity, averageCharWidth = 8, padding = 20) => {
+        let maxWidth = approximateTextWidth(entity.label, averageCharWidth, 0);
+        entity.fields.forEach(field => {
+            const width = approximateTextWidth(field.label, averageCharWidth, 0);
+            if (width > maxWidth) {
+                maxWidth = width;
+            }
+        });
+        // Add padding to the longest string's width.
+        return maxWidth + padding;
+    }, []);
     // Fetch nodes from the API
     const fetchNodes = useCallback(async () => {
         try {
             const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
-            const newNodes = Object.values(data).map((node, index) => ({
-                id: index.toString(),
-                type: 'entityCard',
-                position: { x: index * 150, y: 100 },
-                data: {
-                    label: node.label,
-                    fields: node.fields,
-                    onCopy: () => {
-                        setDialogMode('copy');
-                        setDialogOpen(true);
+            const newNodes = [];
+            let currentX = 0;
+            Object.values(data).forEach((node, index) => {
+                const cardWidth = getCardWidth(node, 8, 20);
+                newNodes.push({
+                    id: index.toString(),
+                    type: 'entityCard',
+                    position: { x: currentX, y: 100 },
+                    data: {
+                        label: node.label,
+                        fields: node.fields,
+                        onCopy: () => {
+                            setDialogMode('copy');
+                            setDialogOpen(true);
+                        },
+                        onEdit: () => {
+                            setDialogMode('edit');
+                            setDialogOpen(true);
+                        },
+                        onDelete: () => {
+                            setDialogMode('delete');
+                            setDialogOpen(true);
+                        },
+                        onMouseEnter: () => {
+                            setSelectedNode(node);
+                        },
+                        onMouseLeave: () => {
+                            setSelectedNode(null);
+                            setDialogMode(null);
+                        },
+                        onEntityClick: (nodeLabel) => {
+                            performSearch(nodeLabel);
+                        },
                     },
-                    onEdit: () => {
-                        setDialogMode('edit');
-                        setDialogOpen(true);
+                    style: {
+                        width: cardWidth,
                     },
-                    onDelete: () => {
-                        setDialogMode('delete');
-                        setDialogOpen(true);
-                    },
-                    onMouseEnter: () => {
-                        setSelectedNode(node);
-                    },
-                    onMouseLeave: () => {
-                        setSelectedNode(null);
-                        setDialogMode(null);
-                    },
-                    // Trigger search when an entity is clicked.
-                    onEntityClick: (nodeLabel) => {
-                        performSearch(nodeLabel);
-                    },
-                },
-            }));
+                });
+                // Move the x position for the next node (add extra spacing if needed)
+                currentX += cardWidth + 30;
+            });
             setNodes(newNodes);
         } catch (error) {
             console.error('Error fetching entities:', error);
@@ -109,7 +133,7 @@ function Entities() {
         } finally {
             setLoading(false);
         }
-    }, [performSearch]);
+    }, [performSearch, getCardWidth]);
 
     useEffect(() => {
         fetchNodes();

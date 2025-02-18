@@ -86,8 +86,10 @@ function EditEntityForm({ node, setNode}) {
           const selectedLabelsExceptCurrent = node.fields
             .filter((_, i) => i !== index)
             .map((f) => f.label);
+
+            // Filter options based on selected labels and dont allow to select the same label as the main entity
           const filteredOptions = options.filter(
-            (option) => !selectedLabelsExceptCurrent.includes(option.label)
+            (option) => !selectedLabelsExceptCurrent.includes(option.label) && option.label !== node.label
           );
           return (
             <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
