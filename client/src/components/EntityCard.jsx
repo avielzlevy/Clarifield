@@ -126,7 +126,7 @@ function EntityCard({ data }) {
                 <ListItemText
                   primary={field.label}
                   slotProps={{ primary: { sx: { fontSize: 10 } } }}
-                  sx={{ textAlign: 'center' }}
+                  sx={{ textAlign: 'center',mx: 0.5 }}
                 />
               </ListItem>
             ))}

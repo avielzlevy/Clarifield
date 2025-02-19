@@ -123,6 +123,7 @@ function EntityDialog({
             await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, {
               headers: { Authorization: `Bearer ${token}` },
             });
+            await fetchEntities()
             fetchNodes();
             enqueueSnackbar('Entity created successfully!', { variant: 'success' });
             setNewEntity({ label: '', fields: [] });
@@ -146,6 +147,7 @@ function EntityDialog({
             await axios.delete(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, {
               headers: { Authorization: `Bearer ${token}` },
             });
+            await fetchEntities()
             fetchNodes();
             enqueueSnackbar('Entity deleted successfully!', { variant: 'success' });
           } catch (e) {
