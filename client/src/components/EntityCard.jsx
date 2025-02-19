@@ -119,6 +119,7 @@ function EntityCard({ data }) {
                       ? theme.palette.custom.light
                       : theme.palette.background.paper,
                   borderRadius: 2,
+                  height: '3vh',
                 }}
               >
                 {field.type === 'entity' && <DataObjectIcon sx={ICON_SIZE} />}
