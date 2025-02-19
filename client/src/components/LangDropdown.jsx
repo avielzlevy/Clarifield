@@ -140,7 +140,7 @@ function LangDropdown() {
             countryCode={countryMapping[selectedLang.code]}
             svg
             style={{
-              borderRadius: '7px',
+              borderRadius: '9px',
               width: '1.05em',
               height: '1.05em',
             }}
