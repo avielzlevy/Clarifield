@@ -16,7 +16,7 @@ import DataObjectIcon from '@mui/icons-material/DataObject';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 
-const CreateEntityForm = ({ newEntity, setNewEntity }) => {
+const CreateEntityForm = ({ newEntity, setNewEntity,error }) => {
   // Ensure there's at least one field on mount.
   useEffect(() => {
     if (!newEntity.fields || newEntity.fields.length === 0) {
@@ -102,6 +102,8 @@ const CreateEntityForm = ({ newEntity, setNewEntity }) => {
         fullWidth
         value={newEntity.label}
         onChange={(e) => setNewEntity({ ...newEntity, label: e.target.value })}
+        helperText={error}
+        error={Boolean(error)}
       />
       <Box
         sx={{

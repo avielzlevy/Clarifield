@@ -42,6 +42,7 @@ function EntityDialog({
   const [sureDelete, setSureDelete] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [error, setError] = useState(null);
   const { logout } = useAuth();
   const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem('token');
@@ -114,6 +115,10 @@ function EntityDialog({
           break;
         }
         case 'create': {
+          if(/[A-Z]/.test(newEntity.label)) {
+            setError('Entity name must be lowercase');
+            return;
+          }
           try {
             await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, {
               headers: { Authorization: `Bearer ${token}` },
@@ -431,10 +436,9 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
           <CopyEntityForm node={selectedNode} onCheckChange={setCheckedFields} />
         ) : mode === 'create' ? (
           <CreateEntityForm
-            definitions={definitions}
-            entities={entities}
             newEntity={newEntity}
             setNewEntity={setNewEntity}
+            error={error}
           />
         ) : mode === 'delete' ? (
           <DeleteEntityForm
