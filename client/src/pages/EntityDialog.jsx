@@ -117,7 +117,7 @@ function EntityDialog({
         case 'create': {
           if(/[A-Z]/.test(newEntity.label)) {
             setError('Entity name must be lowercase');
-            return;
+            throw new Error('Entity name must be lowercase');
           }
           try {
             await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, {
@@ -167,7 +167,7 @@ function EntityDialog({
       setRefreshSearchables((prev) => prev + 1);
     } catch (error) {
       console.error('Error in handleAction:', error);
-      enqueueSnackbar('Action failed!', { variant: 'error' });
+      enqueueSnackbar(`Failed to ${mode} entity!`, { variant: 'error' });
     } finally {
       onClose();
     }
