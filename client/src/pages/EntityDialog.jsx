@@ -165,11 +165,10 @@ function EntityDialog({
           break;
       }
       setRefreshSearchables((prev) => prev + 1);
+      onClose();
     } catch (error) {
       console.error('Error in handleAction:', error);
       enqueueSnackbar(`Failed to ${mode} entity!`, { variant: 'error' });
-    } finally {
-      onClose();
     }
   }, [
     mode,
