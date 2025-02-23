@@ -87,7 +87,7 @@ const ViewerHomepage = () => {
   }, []);
 
   const AmountPaper = ({ title, amount, icon }) => (
-    <Paper sx={{ p: 2, minWidth: '25.5vw' }}>
+    <Paper sx={{ p: 2, minWidth: '25vw' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="subtitle1">
           {title}
@@ -132,7 +132,7 @@ const ViewerHomepage = () => {
       <Grid container spacing={2}>
         {/* Left side: Recent Activity (ChangeLog) */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, width: '25.5vw', height: '65vh' }}>
+          <Paper sx={{ p: 2, width: '25vw', height: '65vh' }}>
             <ChangeLog
               changeLog={changeLog}
               loadingChangeLog={loadingChangeLog}
@@ -142,7 +142,7 @@ const ViewerHomepage = () => {
 
         {/* Right side: Popular Definitions (QuickAccess) */}
         <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 , minWidth: '25.5vw',height: '65vh'}}>
+          <Paper sx={{ p: 2 , minWidth: '25vw',height: '65vh'}}>
             <QuickAccess onDefinitionClick={() => { }} />
           </Paper>
         </Grid>
@@ -153,7 +153,7 @@ const ViewerHomepage = () => {
           below or above the grid. Here’s an example at full width:
         */}
         <Grid item xs={12}>
-          <Paper sx={{ p: 2,minWidth:'25.5vw',height:'65vh' }}>
+          <Paper sx={{ p: 2,minWidth:'25vw',height:'65vh' }}>
             <Addons files={addons} />
           </Paper>
         </Grid>
