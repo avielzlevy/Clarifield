@@ -15,6 +15,16 @@ export const getFormats = async (ctx: Context) => {
   }
 };
 
+export const getFormatsAmount = async (ctx: Context) => {
+  try {
+    const formats = await formatRepo.getFormats();
+    ctx.response.body = { amount: Object.keys(formats).length };
+  } catch (_e) {
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal server error" };
+  }
+};
+
 export const addFormat = async (ctx: Context) => {
   const { value } = ctx.request.body({ type: "json" });
   const { name, pattern, description } = await value;

@@ -19,6 +19,19 @@ export const getDefinitions = async (ctx: Context) => {
 };
 
 /**
+ * GET /api/definitions/amount
+ * Returns the amount of definitions.
+ */
+export const getDefinitionsAmount = async (ctx: Context) => {
+  try {
+    const definitions = await defRepo.getDefinitions();
+    ctx.response.body = { amount: Object.keys(definitions).length };
+  } catch (_e) {
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal server error" };
+  }
+};
+/**
  * GET /api/definition/:name
  * Returns a single definition.
  */

@@ -19,6 +19,19 @@ export const getEntities = async (ctx: Context) => {
 };
 
 /**
+ * GET /api/entities/amount
+ */
+export const getEntitiesAmount = async (ctx: Context) => {
+  try {
+    const entities = await entityRepo.getEntities();
+    ctx.response.body = { amount: Object.keys(entities).length };
+  } catch (_e) {
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal server error" };
+  }
+}
+
+/**
  * POST /api/entity
  * Expected JSON body: { label: string, fields: Array<{ label: string, type: string }> }
  */
