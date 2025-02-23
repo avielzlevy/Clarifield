@@ -5,6 +5,7 @@ import {
   addFormat,
   updateFormat,
   deleteFormat,
+  getFormatsAmount,
 } from "../controllers/formatController.ts";
 import {
   getDefinitions,
@@ -12,12 +13,19 @@ import {
   addDefinition,
   updateDefinition,
   deleteDefinition,
+  getDefinitionsAmount,
 } from "../controllers/definitionController.ts";
 import {
   getAnalytics,
   addAnalytic,
 } from "../controllers/analyticsController.ts";
-import { getEntities, addEntity,updateEntity,deleteEntity } from "../controllers/entityController.ts";
+import {
+  getEntities,
+  addEntity,
+  updateEntity,
+  deleteEntity,
+  getEntitiesAmount,
+} from "../controllers/entityController.ts";
 import {
   getReports,
   addReport,
@@ -37,10 +45,12 @@ router
   .post("/api/signin", auditLogger, signIn)
   .get("/api/token/verify", authMiddleware, verifyToken)
   .get("/api/formats", getFormats)
+  .get("/api/formats/amount", getFormatsAmount)
   .post("/api/formats", auditLogger, authMiddleware, addFormat)
   .put("/api/formats/:name", auditLogger, authMiddleware, updateFormat)
   .delete("/api/formats/:name", auditLogger, authMiddleware, deleteFormat)
   .get("/api/definitions", getDefinitions)
+  .get("/api/definitions/amount", getDefinitionsAmount)
   .get("/api/definition/:name", getDefinition)
   .post("/api/definitions", auditLogger, authMiddleware, addDefinition)
   .put("/api/definitions/:name", auditLogger, authMiddleware, updateDefinition)
@@ -63,8 +73,9 @@ router
   .post("/api/analytic", addAnalytic)
   .get("/api/addons", getAddons)
   .get("/api/entities", getEntities)
-  .post("/api/entities",auditLogger,authMiddleware, addEntity)
-  .put("/api/entity/:name",auditLogger,authMiddleware, updateEntity)
-  .delete("/api/entity/:name",auditLogger,authMiddleware, deleteEntity);
+  .get("/api/entities/amount", getEntitiesAmount)
+  .post("/api/entities", auditLogger, authMiddleware, addEntity)
+  .put("/api/entity/:name", auditLogger, authMiddleware, updateEntity)
+  .delete("/api/entity/:name", auditLogger, authMiddleware, deleteEntity);
 
 export default router;

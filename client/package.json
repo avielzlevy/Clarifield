@@ -16,6 +16,7 @@
     "@xyflow/react": "^12.4.2",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
+    "date-fns": "^4.1.0",
     "dayjs": "^1.11.13",
     "i18next": "^23.4.0",
     "i18next-http-backend": "^3.0.1",

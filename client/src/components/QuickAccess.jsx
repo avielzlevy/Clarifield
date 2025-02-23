@@ -4,7 +4,7 @@ import {
   Typography,
   Divider,
   List,
-  ListItemButton,
+  ListItem,
   ListItemIcon,
   ListItemText,
   CircularProgress,
@@ -96,9 +96,8 @@ const QuickAccess = ({ onDefinitionClick }) => {
           {mostUsedDefinitions.map((definition, index) => {
             const crownColor = getCrownColor(index);
             return (
-              <ListItemButton
+              <ListItem
                 key={definition.name}
-                onClick={() => onDefinitionClick(definition)}
                 sx={{
                   py: 0.5,
                   px: 1,
@@ -139,7 +138,7 @@ const QuickAccess = ({ onDefinitionClick }) => {
                     <EmojiEventsIcon sx={{ color: crownColor }} fontSize="small" />
                   )}
                 </Typography>
-              </ListItemButton>
+              </ListItem>
             );
           })}
         </List>
