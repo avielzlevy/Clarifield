@@ -138,7 +138,7 @@ export default function SearchAll({ setPage}) {
                 <>
                   {params.InputProps.endAdornment}
                   <InputAdornment position="end">
-                    <IconButton onClick={() => setForceOpen(true)}>
+                    <IconButton onClick={() => setForceOpen(!forceOpen)}>
                       <ArrowDropDownIcon />
                     </IconButton>
                   </InputAdornment>
