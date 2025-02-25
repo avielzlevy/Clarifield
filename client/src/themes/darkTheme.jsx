@@ -5,28 +5,36 @@ const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     custom: {
-      titleIcon: '#2dd4bf',
+      titleIcon: '#2dd4bf', // ADDED to lightTheme below for consistency
       bright: '#9333ea',
       light: '#3f3f46',
       dark: '#d7cde0',
-      editor:'#1e1e1e',
+      editor: '#1e1e1e',
     },
     primary: {
-      // Same purple accent for brand
       main: '#7f56da',
-      // main: '#9333ea',
     },
     background: {
-      default: '#191919', // main background
-      paper: '#2c2c2c',   // card surfaces, etc.
+      default: '#191919', // Main background for Dark
+      paper: '#2c2c2c',   // Surfaces, cards
     },
     text: {
-      primary: '#f3f4f6',   // very light gray (off‐white)
-      secondary: '#9ca3af', // medium gray
+      primary: '#f3f4f6',   // Very light gray
+      secondary: '#9ca3af', // Medium gray
     },
   },
   typography: {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "Android Emoji", "EmojiSymbols"',
+    fontFamily: [
+      'ui-sans-serif',
+      'system-ui',
+      'sans-serif',
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+      '"Noto Color Emoji"',
+      '"Android Emoji"',
+      '"EmojiSymbols"',
+    ].join(','),
     fontSize: 16,
   },
   components: {

@@ -5,34 +5,42 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     custom: {
+      titleIcon: '#2dd4bf', // ADDED for consistency with dark theme
       bright: '#9333ea',
       light: '#f3e8ff',
       dark: '#d7cde0',
-      editor:'#fffffe',
+      editor: '#fffffe',
     },
     primary: {
-      // Purple accent used for buttons, active states
       main: '#7f56da',
     },
     background: {
-      // Pastel‐lavender background
-      default: '#faf5ff', // e.g. Tailwind's purple-50
-      paper: '#ffffff',   // white for cards, surfaces
+      default: '#faf5ff',  // e.g. Tailwind's purple-50
+      paper: '#ffffff',    // White for surfaces
     },
     text: {
-      primary: '#111827', // near‐black for headings
-      secondary: '#6b7280', // gray for subtext
+      primary: '#111827',  // Near‐black
+      secondary: '#6b7280', // Gray for subtext
     },
   },
   typography: {
-    fontFamily: 'ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji", "Android Emoji", "EmojiSymbols"',
+    fontFamily: [
+      'ui-sans-serif',
+      'system-ui',
+      'sans-serif',
+      '"Apple Color Emoji"',
+      '"Segoe UI Emoji"',
+      '"Segoe UI Symbol"',
+      '"Noto Color Emoji"',
+      '"Android Emoji"',
+      '"EmojiSymbols"',
+    ].join(','),
     fontSize: 16,
   },
   components: {
-
     MuiAppBar: {
       defaultProps: {
-        color: 'inherit', // so it uses the paper color instead of primary
+        color: 'inherit',
       },
     },
     MuiButton: {
@@ -48,7 +56,5 @@ const lightTheme = createTheme({
     },
   },
 });
-
-
 
 export default lightTheme;

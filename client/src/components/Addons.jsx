@@ -19,7 +19,7 @@ import JavaScriptIcon from "@mui/icons-material/Javascript";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-
+//TODO: find a place for this
 const Addons = ({ files }) => {
     const theme = useTheme();
     const { t } = useTranslation();
