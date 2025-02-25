@@ -4,6 +4,10 @@ import {
   LightModeOutlined as LightMode,
   DarkModeOutlined as DarkMode,
 } from '@mui/icons-material';
+import {
+  Sun,
+  Moon,
+} from 'lucide-react';
 import darkTheme from '../themes/darkTheme';
 import lightTheme from '../themes/lightTheme';
 
@@ -63,9 +67,9 @@ function ThemeButton({ theme, setTheme }) {
     <div style={{ position: 'relative' }}>
       <IconButton disableRipple onClick={handleClick}>
         {theme.palette.mode === 'dark' ? (
-          <LightMode sx={{ color: '#FFD242' }} />
+          <Sun style={{ color: '#FFD242' }} />
         ) : (
-          <DarkMode sx={{ color: 'black' }} />
+          <Moon style={{ color: 'black' }} />
         )}
       </IconButton>
       {fade && (

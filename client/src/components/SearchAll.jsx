@@ -4,18 +4,19 @@ import Autocomplete from '@mui/material/Autocomplete';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import SearchIcon from '@mui/icons-material/Search';
-import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import {
+  ChevronUp,
+  ChevronDown,
+  Boxes,
+  Book,
+  FileJson,
+} from 'lucide-react';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { useSearch } from '../contexts/SearchContext';
 import { useTranslation } from 'react-i18next';
-import {
-  ImportContactsOutlined as ImportContacts,
-  TextFieldsOutlined as TextFields,
-  DataObject,
-} from '@mui/icons-material';
 
 export default function SearchAll({ setPage}) {
   const theme = useTheme();
@@ -97,9 +98,9 @@ export default function SearchAll({ setPage}) {
 
   // Map group names to icon components.
   const groupIconMap = {
-    Entity: <DataObject sx={{ fontSize: '1.5rem', ml: 1 }} />,
-    Definition: <ImportContacts sx={{ fontSize: '1.5rem', ml: 1 }} />,
-    Format: <TextFields sx={{ fontSize: '1.5rem', ml: 1 }} />,
+    Entity: <Boxes style={{ fontSize: '1.5rem', ml: 1 }} />,
+    Definition: <Book style={{ fontSize: '1.5rem', ml: 1 }} />,
+    Format: <FileJson style={{ fontSize: '1.5rem', ml: 1 }} />,
   };
 
   return (
@@ -139,7 +140,7 @@ export default function SearchAll({ setPage}) {
                   {params.InputProps.endAdornment}
                   <InputAdornment position="end">
                     <IconButton onClick={() => setForceOpen(!forceOpen)}>
-                      <ArrowDropDownIcon />
+                      {forceOpen ? <ChevronUp /> : <ChevronDown />}
                     </IconButton>
                   </InputAdornment>
                 </>

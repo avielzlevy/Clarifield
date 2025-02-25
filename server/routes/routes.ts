@@ -29,7 +29,7 @@ import {
 import {
   getReports,
   addReport,
-  deleteReport,
+  updateReport,
 } from "../controllers/reportController.ts";
 import { authMiddleware } from "../middlewares/authMiddleware.ts";
 import { auditLogger } from "../middlewares/requestLogger.ts";
@@ -62,7 +62,6 @@ router
   )
   .get("/api/reports", getReports)
   .post("/api/report/:name", addReport)
-  .delete("/api/report/:type/:name", deleteReport)
   .get("/api/changes", getChanges)
   .get("/api/affected", authMiddleware, getAffected)
   .post("/api/validate", auditLogger, validate)

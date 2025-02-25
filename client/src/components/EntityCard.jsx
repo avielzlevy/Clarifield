@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -9,10 +9,12 @@ import {
   IconButton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import DataObjectIcon from '@mui/icons-material/DataObject';
-import EditIcon from '@mui/icons-material/Edit';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
-import DeleteIcon from '@mui/icons-material/Delete';
+import {
+  Boxes,
+  Pencil,
+  Trash,
+  Copy,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const ICON_SIZE = { width: 10, height: 10 };
@@ -21,6 +23,13 @@ function EntityCard({ data }) {
   const { auth } = useAuth();
   const theme = useTheme();
   const capitalizedLabel = data.label.charAt(0).toUpperCase() + data.label.slice(1);
+
+  const checkForLongestField = useCallback((data) => {
+    if (data.fields && data.fields.length > 0) {
+      return data.fields.reduce((a, b) => (a.label.length > b.label.length ? a : b)).label.length;
+    }
+  }, []);
+  const longestField = useMemo(() => checkForLongestField(data), [checkForLongestField, data])
 
   return (
     <Box
@@ -37,30 +46,48 @@ function EntityCard({ data }) {
         sx={{
           position: 'absolute',
           top: -7.5,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          justifyContent: 'space-between',
+          // left: '50%',
+          // transform: 'translateX(-50%)',
+          // display: 'flex',
+          // justifyContent: 'space-between',
           gap: 7.5,
           opacity: 0,
           transition: 'opacity 0.3s',
           zIndex: 10,
+          width: '100%',
         }}
       >
-        <Box sx={{ display: 'flex' }}>
-          {auth && (
-            <IconButton sx={ICON_SIZE} onClick={data.onEdit}>
-              <EditIcon sx={ICON_SIZE} />
-            </IconButton>
-          )}
-          <IconButton sx={ICON_SIZE} onClick={data.onCopy}>
-            <ContentCopyIcon sx={ICON_SIZE} />
-          </IconButton>
-        </Box>
-        {auth && (
-          <IconButton sx={ICON_SIZE} onClick={data.onDelete}>
-            <DeleteIcon sx={ICON_SIZE} />
-          </IconButton>
+        {auth ? (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              width: '100%',
+              flexGrow: 1,
+              // bgcolor:'red',
+              px: 1, // optional padding to space from edges
+            }}
+          >
+            {/* Left side: edit and copy */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Pencil style={ICON_SIZE} onClick={data.onEdit} />
+              <Copy style={ICON_SIZE} onClick={data.onCopy} />
+            </Box>
+            {/* Right side: trash */}
+            <Trash style={ICON_SIZE} onClick={data.onDelete} />
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              width: '100%',
+            }}
+          >
+            <Copy style={ICON_SIZE} onClick={data.onCopy} />
+          </Box>
         )}
       </Box>
 
@@ -122,11 +149,15 @@ function EntityCard({ data }) {
                   height: '3vh',
                 }}
               >
-                {field.type === 'entity' && <DataObjectIcon sx={ICON_SIZE} />}
+                {field.type === 'entity' && <Boxes style={{
+                  width: '12px',
+                  height: '12px',
+                  color: theme.palette.custom.bright,
+                }} />}
                 <ListItemText
                   primary={field.label}
                   slotProps={{ primary: { sx: { fontSize: 10 } } }}
-                  sx={{ textAlign: 'center',mx: 0.5 }}
+                  sx={{ textAlign: 'center', mx: 0.5 }}
                 />
               </ListItem>
             ))}

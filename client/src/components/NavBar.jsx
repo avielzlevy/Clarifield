@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -14,18 +14,20 @@ import {
   Tooltip,
   CircularProgress,
 } from '@mui/material';
-import {
-  ImportContactsOutlined as ImportContacts,
-  TextFieldsOutlined as TextFields,
-  PersonOutlineOutlined as PersonIcon,
-  EngineeringOutlined as EnginnerIcon,
-  DeviceHubOutlined as DeviceHub,
-  Settings as SettingIcon,
-  DataObject,
-  SpaceDashboardRounded as DashboardIcon,
-  BarChartOutlined as AnalyticsIcon,
-  ReceiptOutlined as LogsIcon,
-} from '@mui/icons-material';
+
+import { SpaceDashboardRounded as DashboardIcon } from '@mui/icons-material';
+
+import { 
+  Boxes,
+  Book,
+  FileJson,
+  Shield,
+  Settings as SettingsIcon,
+  ChartNoAxesColumn,
+  Logs as LogsIcon,
+  User as PersonIcon,
+  UserCog as EnginnerIcon,
+ } from 'lucide-react';
 import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
@@ -147,14 +149,14 @@ function NavBar({ theme, setTheme }) {
   // Memoize the drawer items so they don't get re-created on every render.
   const drawerItems = useMemo(() => {
     const items = [
-      { text: 'entities', icon: <DataObject />, route: 'entities' },
-      { text: 'definitions', icon: <ImportContacts />, route: 'definitions' },
-      { text: 'formats', icon: <TextFields />, route: 'formats' },
-      { text: 'validation', icon: <DeviceHub />, route: 'validation' },
+      { text: 'entities', icon: <Boxes />, route: 'entities' },
+      { text: 'definitions', icon: <Book />, route: 'definitions' },
+      { text: 'formats', icon: <FileJson />, route: 'formats' },
+      { text: 'validation', icon: <Shield />, route: 'validation' },
     ];
     if (auth) {
-      items.push({ text: 'settings', icon: <SettingIcon />, route: 'settings' });
-      items.push({ text: 'analytics', icon: <AnalyticsIcon />, route: 'analytics' });
+      items.push({ text: 'settings', icon: <SettingsIcon />, route: 'settings' });
+      items.push({ text: 'analytics', icon: <ChartNoAxesColumn/>, route: 'analytics' });
       items.push({ text: 'logs', icon: <LogsIcon />, route: 'logs' });
     }
     return items;

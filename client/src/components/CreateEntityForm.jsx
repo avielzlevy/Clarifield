@@ -9,14 +9,18 @@ import {
   Alert,
   Typography,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
-import DataObjectIcon from '@mui/icons-material/DataObject';
+import {
+  Trash2 as Trash,
+  Plus,
+  Book,
+  Boxes
+} from 'lucide-react';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
+import { useTheme } from '@emotion/react';
 
 const CreateEntityForm = ({ newEntity, setNewEntity,error }) => {
+  const theme = useTheme();
   // Ensure there's at least one field on mount.
   useEffect(() => {
     if (!newEntity.fields || newEntity.fields.length === 0) {
@@ -41,8 +45,8 @@ const CreateEntityForm = ({ newEntity, setNewEntity,error }) => {
 
   // Map group names to icon components.
   const groupIconMap = {
-    Definitions: <ImportContactsOutlinedIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
-    Entities: <DataObjectIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
+    Definitions: <Book sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
+    Entities: <Boxes sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
   };
 
   // Update a field's label and type based on the input.
@@ -155,7 +159,7 @@ const CreateEntityForm = ({ newEntity, setNewEntity,error }) => {
                           display: 'flex',
                           alignItems: 'center',
                           p: 1,
-                          bgcolor: 'action.hover',
+                          bgcolor: theme.palette.custom.light,
                         }}
                       >
                         {groupIconMap[group] || null}
@@ -171,14 +175,14 @@ const CreateEntityForm = ({ newEntity, setNewEntity,error }) => {
               />
               {newEntity.fields.length > 1 && (
                 <IconButton onClick={() => removeField(index)}>
-                  <DeleteIcon />
+                  <Trash />
                 </IconButton>
               )}
             </Box>
           );
         })}
 
-        <Button variant="outlined" startIcon={<AddIcon />} onClick={addField}>
+        <Button variant="outlined" startIcon={<Plus />} onClick={addField}>
           Add Field
         </Button>
 

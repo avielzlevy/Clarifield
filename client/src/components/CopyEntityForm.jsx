@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Checkbox, FormControlLabel, Typography } from '@mui/material';
-import DataObjectIcon from '@mui/icons-material/DataObject';
+import { Boxes } from 'lucide-react';
 
 function CopyEntityForm({ node, onCheckChange }) {
   const [checked, setChecked] = useState([]);
@@ -32,12 +32,12 @@ function CopyEntityForm({ node, onCheckChange }) {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography>{field.label}</Typography>
               {field.type === 'entity' && (
-                <DataObjectIcon
-                  sx={{
+                <Boxes
+                  style={{
                     height: 16,
                     width: 16,
                     color: 'primary.main',
-                    ml: 0.5
+                    marginLeft: '10px',
                   }}
                 />
               )}

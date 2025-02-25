@@ -31,10 +31,6 @@ function Definitions() {
   const [actionedDefinition, setActionedDefinition] = useState(null);
   const { auth } = useAuth();
   const { setRefreshSearchables } = useSearch();
-  const [favorites, setFavorites] = useState(() => {
-    const saved = localStorage.getItem('favorites');
-    return saved ? new Set(JSON.parse(saved)) : new Set();
-  });
   const { t } = useTranslation();
   const theme = useTheme();
   const { reverseWords } = useRtl();
@@ -215,12 +211,10 @@ function Definitions() {
         <CustomDataGrid
           rows={rows}
           columns={columns}
-          favorites={favorites}
-          setFavorites={setFavorites}
           handleDeleteRow={handleDeleteDialogClick}
           handleEditRow={handleEditDialogClick}
           handleReportRow={handleReportDialogClick}
-          formats={formats}
+          type="definition"
         />
         <DefinitionDialog
           mode={dialogMode}

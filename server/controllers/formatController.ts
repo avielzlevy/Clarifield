@@ -36,6 +36,7 @@ export const addFormat = async (ctx: Context) => {
   }
 
   try {
+    await formatRepo.addFormat(name, { pattern, description });
     // Record the change if necessary.
     await addChange({
       type: "formats",
@@ -44,7 +45,6 @@ export const addFormat = async (ctx: Context) => {
       before: "",
       after: { name, pattern, description },
     });
-    await formatRepo.addFormat(name, { pattern, description });
     ctx.response.status = 201;
     ctx.response.body = { name, pattern };
   } catch (e) {
@@ -83,6 +83,7 @@ export const updateFormat = async (
       ctx.response.body = { message: "Format not found" };
       return;
     }
+    await formatRepo.updateFormat(name, { pattern, description });
     await addChange({
       type: "formats",
       name,
@@ -90,7 +91,6 @@ export const updateFormat = async (
       before: formats[name],
       after: { pattern, description },
     });
-    await formatRepo.updateFormat(name, { pattern, description });
     ctx.response.status = 204;
   } catch (e) {
     if (e instanceof Error) {
@@ -126,6 +126,7 @@ export const deleteFormat = async (
       ctx.response.body = { message: "Format not found" };
       return;
     }
+    await formatRepo.deleteFormat(name);
     await addChange({
       type: "formats",
       name,
@@ -133,7 +134,6 @@ export const deleteFormat = async (
       before: formats[name],
       after: "",
     });
-    await formatRepo.deleteFormat(name);
     ctx.response.status = 204;
   } catch (e) {
     if (e instanceof Error) {

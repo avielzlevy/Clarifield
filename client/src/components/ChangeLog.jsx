@@ -87,7 +87,10 @@ const ChangeLog = ({ changeLog, loadingChangeLog }) => {
               sx={{
                 borderRadius: 1,
                 mb: 1,
-                backgroundColor: theme.palette.background.paper
+                backgroundColor: theme.palette.background.default,
+                '&:hover': {
+                  backgroundColor: theme.palette.custom.light
+                }
               }}
             >
               <ListItemText
@@ -115,9 +118,9 @@ const ChangeLog = ({ changeLog, loadingChangeLog }) => {
           display: "flex",
           flexDirection: "column",
           height: "92.5%",
-          backgroundColor: theme.palette.background.default,
+          // backgroundColor: theme.palette.background.default,
           borderRadius: 2,
-          p: 2
+          // p: 2
         }}
       >
         {renderChangeLogList()}

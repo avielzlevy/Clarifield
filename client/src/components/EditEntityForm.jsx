@@ -7,14 +7,22 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
-import DataObjectIcon from '@mui/icons-material/DataObject';
-import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
+// import DeleteIcon from '@mui/icons-material/Delete';
+// import AddIcon from '@mui/icons-material/Add';
+// import DataObjectIcon from '@mui/icons-material/DataObject';
+// import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
+import {
+  Boxes,
+  Trash2 as Trash,
+  Book,
+  Plus
+} from 'lucide-react';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
+import { useTheme } from '@mui/material/styles';
 
 function EditEntityForm({ node, setNode}) {
+  const theme = useTheme();
   // Build grouped options from definitions and entities.
   const {definitions} = useDefinitions();
   const {entities} = useEntities();
@@ -32,8 +40,8 @@ function EditEntityForm({ node, setNode}) {
 
   // Map group names to icon components.
   const groupIconMap = {
-    Definitions: <ImportContactsOutlinedIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
-    Entities: <DataObjectIcon sx={{ fontSize: '1.2rem', mr: 0.5 }} />,
+    Definitions: <Book style={{ fontSize: '1.2rem', mr: 0.5 }} />,
+    Entities: <Boxes style={{ fontSize: '1.2rem', mr: 0.5 }} />,
   };
 
   // Update a field's value and its type based on the selected option.
@@ -118,7 +126,7 @@ function EditEntityForm({ node, setNode}) {
                           display: 'flex',
                           alignItems: 'center',
                           p: 1,
-                          bgcolor: 'action.hover',
+                          bgcolor: theme.palette.custom.light,
                         }}
                       >
                         {groupIconMap[group] || null}
@@ -134,13 +142,13 @@ function EditEntityForm({ node, setNode}) {
               />
               {node.fields.length > 1 && (
                 <IconButton onClick={() => removeField(index)}>
-                  <DeleteIcon />
+                  <Trash />
                 </IconButton>
               )}
             </Box>
           );
         })}
-      <Button variant="outlined" startIcon={<AddIcon />} onClick={addField}>
+      <Button variant="outlined" startIcon={<Plus />} onClick={addField}>
         Add Field
       </Button>
     </Box>

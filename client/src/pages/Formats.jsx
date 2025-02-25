@@ -151,6 +151,7 @@ const Formats = () => {
           handleDeleteRow={openDeleteDialog}
           handleEditRow={openEditDialog}
           handleReportRow={openReportDialog}
+          type="format"
         />
         <FormatDialog
           mode={dialogMode}

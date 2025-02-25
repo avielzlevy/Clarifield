@@ -73,7 +73,10 @@ export const addDefinition = async (ctx: Context) => {
       ctx.response.body = { message: "Invalid definition data" };
       return;
     }
-
+    await defRepo.addDefinition(name, {
+      format,
+      description: description || "",
+    });
     // Record the change before adding the definition.
     await addChange({
       type: "definitions",
@@ -81,10 +84,6 @@ export const addDefinition = async (ctx: Context) => {
       timestamp: new Date().toISOString(),
       before: "",
       after: { name, format, description },
-    });
-    await defRepo.addDefinition(name, {
-      format,
-      description: description || "",
     });
     ctx.response.status = 201;
     ctx.response.body = { name, format, description };
@@ -124,6 +123,7 @@ export const deleteDefinition = async (
       ctx.response.body = { message: "Definition not found" };
       return;
     }
+    await defRepo.deleteDefinition(name);
     await addChange({
       type: "definitions",
       name,
@@ -131,7 +131,6 @@ export const deleteDefinition = async (
       before: definition,
       after: "",
     });
-    await defRepo.deleteDefinition(name);
     ctx.response.status = 204;
   } catch (e) {
     if (e instanceof Error) {
@@ -177,16 +176,16 @@ export const updateDefinition = async (
       ctx.response.body = { message: "Definition not found" };
       return;
     }
+    await defRepo.updateDefinition(name, {
+      format,
+      description: description || "",
+    });
     await addChange({
       type: "definitions",
       name,
       timestamp: new Date().toISOString(),
       before: existingDefinition,
       after: { name, format, description },
-    });
-    await defRepo.updateDefinition(name, {
-      format,
-      description: description || "",
     });
     ctx.response.status = 204;
   } catch (e) {

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback,useMemo } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Box,
   Typography,
@@ -132,12 +132,19 @@ const QuickAccess = ({ onDefinitionClick }) => {
                   />
                 </Box>
                 {/* Right section: Usage count and crown icon (if applicable) */}
-                <Typography variant="caption" color="textSecondary">
-                  {definition.count}{" "}
+                <Box sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}>
                   {crownColor && (
                     <EmojiEventsIcon sx={{ color: crownColor }} fontSize="small" />
                   )}
-                </Typography>
+                  <Typography variant="caption" color="textSecondary">
+                    {definition.count}{" "}
+                  </Typography>
+
+                </Box>
               </ListItem>
             );
           })}

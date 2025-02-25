@@ -1,16 +1,18 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
 import { TextField, Checkbox, Box, Button, Menu, MenuItem, Tooltip } from '@mui/material';
-import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import EditIcon from '@mui/icons-material/Edit';
-import FavoriteIcon from '@mui/icons-material/Favorite';
-import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
-import FlagIcon from '@mui/icons-material/Flag';
+import {
+  Trash2 as Trash,
+  Pencil,
+  Heart,
+  Flag,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
+import { useTheme } from '@mui/material/styles';
 
 function CustomDataGrid(props) {
   const {
@@ -18,14 +20,13 @@ function CustomDataGrid(props) {
     columns,
     handleDeleteRow,
     handleEditRow,
-    favorites,
-    setFavorites,
     handleReportRow,
     onCopy,
-    formats,
+    type,
   } = props;
 
   const { auth } = useAuth();
+  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const { search, setSearch } = useSearch();
   const [selectedRows, setSelectedRows] = useState(new Set());
@@ -74,31 +75,6 @@ function CustomDataGrid(props) {
       return updated;
     });
   }, []);
-
-  const handleFavorite = useCallback(
-    (id) => {
-      sendAnalytics(id, 'definition', 3);
-      const row = rows.find((row) => row.id === id);
-      if (row) {
-        const formatUsed = row.format;
-        sendAnalytics(formatUsed, 'format', 3);
-      }
-      setFavorites((prev) => {
-        const updated = new Set(prev);
-        if (updated.has(id)) {
-          updated.delete(id);
-        } else {
-          updated.add(id);
-        }
-        localStorage.setItem('favorites', JSON.stringify(Array.from(updated)));
-        return updated;
-      });
-    },
-    [rows, setFavorites]
-  );
-
-  // -- Effects --
-
   // Update viewport size on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -168,24 +144,7 @@ function CustomDataGrid(props) {
 
   // Build columns with additional checkbox and actions columns
   const columnsWithCheckbox = useMemo(() => {
-    // Start with a checkbox column if favorites exist
     let baseColumns = [];
-    if (favorites) {
-      baseColumns.push({
-        field: 'checkbox',
-        headerName: '',
-        sortable: false,
-        width: 50,
-        disableColumnMenu: true,
-        renderCell: (params) => (
-          <Checkbox
-            disabled={formats && !Object.keys(formats).includes(params.row.format)}
-            checked={selectedRows.has(params.id)}
-            onChange={() => handleCheckboxChange(params.id)}
-          />
-        ),
-      });
-    }
     // Append the provided columns
     baseColumns = baseColumns.concat(columns);
 
@@ -208,10 +167,10 @@ function CustomDataGrid(props) {
             }}
           >
             <Tooltip title="Edit" arrow>
-              <EditIcon style={{ cursor: 'pointer' }} onClick={() => handleEditRow(params.row)} />
+              <Pencil style={{ cursor: 'pointer' }} onClick={() => handleEditRow(params.row)} />
             </Tooltip>
             <Tooltip title="Delete" arrow>
-              <DeleteForeverIcon style={{ cursor: 'pointer' }} onClick={() => handleDeleteRow(params.row)} />
+              <Trash style={{ cursor: 'pointer' }} onClick={() => handleDeleteRow(params.row)} />
             </Tooltip>
           </Box>
         ) : (
@@ -225,18 +184,8 @@ function CustomDataGrid(props) {
             }}
           >
             <Tooltip title="Report" arrow>
-              <FlagIcon style={{ cursor: 'pointer' }} onClick={() => handleReportRow(params.row)} />
+              <Flag style={{ cursor: 'pointer', fill: 'black' }} onClick={() => handleReportRow(params.row)} />
             </Tooltip>
-            {favorites && (
-              <Tooltip title="Favorite" arrow>
-                <Checkbox
-                  icon={<FavoriteBorderOutlinedIcon />}
-                  checkedIcon={<FavoriteIcon />}
-                  checked={favorites.has(params.id)}
-                  onChange={() => handleFavorite(params.id)}
-                />
-              </Tooltip>
-            )}
           </Box>
         );
       },
@@ -245,16 +194,11 @@ function CustomDataGrid(props) {
     return [...baseColumns, actionsColumn];
   }, [
     columns,
-    favorites,
-    selectedRows,
     auth,
     t,
-    formats,
-    handleCheckboxChange,
     handleEditRow,
     handleDeleteRow,
     handleReportRow,
-    handleFavorite,
   ]);
 
   return (
@@ -311,11 +255,7 @@ function CustomDataGrid(props) {
         onCellClick={(params) => {
           if (params.value) {
             navigator.clipboard.writeText(params.value);
-            if (favorites) {
-              sendAnalytics(params.row.id, 'definition', 1);
-            } else {
-              sendAnalytics(params.row.id, 'format', 1);
-            }
+            sendAnalytics(params.row.id, type, 1);
             enqueueSnackbar('Copied to clipboard', { variant: 'success' });
           }
         }}

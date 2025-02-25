@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from "react";
-import {
-  Box,
-  Grid2 as Grid,
-  Paper,
-  Typography,
-  Button,
-  Stack,
-} from "@mui/material";
+import React, { useState, useEffect, useMemo } from "react";
+import { Box, Grid2 as Grid, Paper, Typography } from "@mui/material";
 import ChangeLog from "../components/ChangeLog";
 import QuickAccess from "../components/QuickAccess";
 import Addons from "../components/Addons";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
-import { DataObject, ImportContacts, TextFields } from "@mui/icons-material";
-import Icon from '@mui/material/Icon';
+import { Book, Boxes, FileJson } from "lucide-react";
+import { useTheme } from "@emotion/react";
 
 const ViewerHomepage = () => {
+  // Active filters state – all active by default
+  const [activeFilters, setActiveFilters] = useState({
+    entities: true,
+    definitions: true,
+    formats: true,
+  });
+
+  // Data states
   const [changeLog, setChangeLog] = useState({ formats: [], definitions: [] });
   const [addons, setAddons] = useState([]);
   const [loadingChangeLog, setLoadingChangeLog] = useState(true);
@@ -24,23 +25,11 @@ const ViewerHomepage = () => {
   useEffect(() => {
     const fetchChangeLog = async () => {
       try {
-        const favorites = JSON.parse(localStorage.getItem("favorites")) || [];
-        const { data } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/changes`
-        );
-
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/changes`);
         if (!data.formats || !data.definitions) return;
-
-        const filteredFormats = data.formats.filter((format) =>
-          favorites.includes(format.name)
-        );
-        const filteredDefinitions = data.definitions.filter((definition) =>
-          favorites.includes(definition.name)
-        );
-
         setChangeLog({
-          formats: filteredFormats,
-          definitions: filteredDefinitions,
+          formats: data.formats,
+          definitions: data.definitions,
         });
       } catch (error) {
         console.error("Error fetching change log:", error);
@@ -52,9 +41,7 @@ const ViewerHomepage = () => {
 
     const fetchAddons = async () => {
       try {
-        const { data } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/addons`
-        );
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/addons`);
         setAddons(data);
       } catch (error) {
         console.error("Error fetching addons:", error);
@@ -64,16 +51,14 @@ const ViewerHomepage = () => {
 
     const fetchItemsAmount = async () => {
       try {
-        const { data: definitionsAmount } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/definitions/amount`
-        );
-        const { data: formatsAmount } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/formats/amount`
-        );
-        const { data: entitiesAmount } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/entities/amount`
-        );
-        setItemsAmount({ formats: formatsAmount.amount, definitions: definitionsAmount.amount, entities: entitiesAmount.amount });
+        const { data: definitionsAmount } = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions/amount`);
+        const { data: formatsAmount } = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats/amount`);
+        const { data: entitiesAmount } = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities/amount`);
+        setItemsAmount({
+          formats: formatsAmount.amount,
+          definitions: definitionsAmount.amount,
+          entities: entitiesAmount.amount
+        });
       }
       catch (error) {
         console.error("Error fetching items amount:", error);
@@ -86,80 +71,114 @@ const ViewerHomepage = () => {
     fetchAddons();
   }, []);
 
-  const AmountPaper = ({ title, amount, icon }) => (
-    <Paper sx={{ p: 2, minWidth: '25vw' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="subtitle1">
-          {title}
-        </Typography>
-        <Box
-          sx={{
-            display: "inline-flex", // Center the icon
-            alignItems: "center",
-            justifyContent: "center",
-            width: 40, // Adjust as needed
-            height: 40,
-            borderRadius: "20%",
-            backgroundColor: "#b4b4b418", // Change color as needed
-            color: "black", // Icon color
-          }}
-        >
+  // Toggle filter state
+  const toggleFilter = (filterKey) => {
+    setActiveFilters((prev) => ({ ...prev, [filterKey]: !prev[filterKey] }));
+  };
 
-          {icon}
-        </Box>
-      </Box>
-      <Typography variant="h4" sx={{ fontWeight: 700 }}>
-        {amount}
-      </Typography>
-    </Paper>
-  );
+  // Filter ChangeLog data based on active filters for definitions and formats
+  const filteredChangeLog = useMemo(() => {
+    return {
+      entities: activeFilters.entities ? changeLog.definitions : [],
+      definitions: activeFilters.definitions ? changeLog.definitions : [],
+      formats: activeFilters.formats ? changeLog.formats : [],
+    }
+  }, [activeFilters, changeLog]);
+
   return (
-    <Box sx={{ p: 3 }}>
-      {/* Quick Stats */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-        <Grid item xs={12} sm={4}>
-          <AmountPaper title="Entities" amount={itemsAmount.entities} icon={<DataObject color="primary" />} />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <AmountPaper title="Definitions" amount={itemsAmount.definitions} icon={<ImportContacts color="primary" />} />
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <AmountPaper title="Formats" amount={itemsAmount.formats} icon={<TextFields color="primary" />} />
-        </Grid>
-      </Grid>
+    <>
+      {/* Toolbar */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+        <Paper elevation={3} sx={{ p: 1, borderRadius: 4, display: 'flex', gap: 2 }}>
+          <ToolbarItem
+            icon={Boxes}
+            label="Entities"
+            count={itemsAmount.entities}
+            isActive={activeFilters.entities}
+            onClick={() => toggleFilter("entities")}
+          />
+          <ToolbarItem
+            icon={Book}
+            label="Definitions"
+            count={itemsAmount.definitions}
+            isActive={activeFilters.definitions}
+            onClick={() => toggleFilter("definitions")}
+          />
+          <ToolbarItem
+            icon={FileJson}
+            label="Formats"
+            count={itemsAmount.formats}
+            isActive={activeFilters.formats}
+            onClick={() => toggleFilter("formats")}
+          />
+        </Paper>
+      </Box>
 
-      {/* Main Content: Recent Activity & Popular Definitions */}
-      <Grid container spacing={2}>
-        {/* Left side: Recent Activity (ChangeLog) */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2, width: '25vw', height: '65vh' }}>
-            <ChangeLog
-              changeLog={changeLog}
-              loadingChangeLog={loadingChangeLog}
-            />
-          </Paper>
-        </Grid>
+      <Box sx={{ p: 3 }}>
+        <Grid container spacing={2}>
+          {/* Conditionally render ChangeLog if definitions or formats are active */}
+          <Grid xs={12} md={6}>
+            <Paper sx={{ p: 2, width: '25vw', height: '65vh' }}>
+              <ChangeLog
+                changeLog={filteredChangeLog}
+                loadingChangeLog={loadingChangeLog}
+              />
+            </Paper>
+          </Grid>
 
-        {/* Right side: Popular Definitions (QuickAccess) */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 2 , minWidth: '25vw',height: '65vh'}}>
-            <QuickAccess onDefinitionClick={() => { }} />
-          </Paper>
-        </Grid>
+          {/* Conditionally render QuickAccess if entities is active */}
+          {activeFilters.entities && (
+            <Grid xs={12} md={6}>
+              <Paper sx={{ p: 2, minWidth: '25vw', height: '65vh' }}>
+                <QuickAccess onDefinitionClick={() => { }} />
+              </Paper>
+            </Grid>
+          )}
 
-        {/* Example Addons Section (Optional) */}
-        {/* 
-          If you still want to display Addons, you could place them
-          below or above the grid. Here’s an example at full width:
-        */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 2,minWidth:'25vw',height:'65vh' }}>
-            <Addons files={addons} />
-          </Paper>
+          {/* Addons section always visible */}
+          {/* <Grid item xs={12}>
+            <Paper sx={{ p: 2, minWidth: '25vw', height: '65vh' }}>
+              <Addons files={addons} />
+            </Paper>
+          </Grid> */}
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </>
   );
 };
+
+function ToolbarItem({ icon: Icon, label, count, isActive, onClick }) {
+  const theme = useTheme();
+  return (
+    <Box
+      onClick={onClick}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        px: 3,
+        py: 2,
+        borderRadius: 2,
+        transition: 'all 0.3s ease',
+        cursor: 'pointer',
+        bgcolor: isActive ? theme.palette.custom.light : "transparent",
+        color: isActive ? theme.palette.custom.bright : "inherit",
+        "&:hover": {
+          bgcolor: isActive ? theme.palette.custom.dark : theme.palette.custom.light,
+        },
+      }}
+    >
+      <Icon size={20} />
+      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+        <Typography variant="body1" sx={{ fontWeight: 500 }}>
+          {label}
+        </Typography>
+        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+          {count}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
 
 export default ViewerHomepage;

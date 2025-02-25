@@ -2,6 +2,7 @@
 
 import { Context, RouterContext } from "../deps.ts";
 import { Entity } from "../models/entities.ts";
+import { addChange } from "../utils/changes.ts";
 import * as entityRepo from "../repositories/entityRepository.ts";
 import * as definitionRepo from "../repositories/definitionRepository.ts";
 
@@ -112,6 +113,13 @@ export const addEntity = async (ctx: Context) => {
     const newEntity: Entity = { label, fields };
 
     await entityRepo.addEntity(newEntity);
+    await addChange({
+      type: "entities",
+      name,
+      timestamp: new Date().toISOString(),
+      before: "",
+      after: { name, fields:fields.map((f) => f.label) },
+    });
     ctx.response.status = 201;
     ctx.response.body = {
       message: "Entity added successfully",
@@ -215,6 +223,13 @@ export const updateEntity = async (
     const updatedEntity: Entity = { label, fields };
 
     await entityRepo.updateEntity(name, updatedEntity);
+    await addChange({
+      type: "entities",
+      name,
+      timestamp: new Date().toISOString(),
+      before: { name, fields:existingEntities[name].fields.map((f) => f.label) },
+      after: { name, fields:fields.map((f) => f.label) },
+    });
     ctx.response.status = 200;
     ctx.response.body = {
       message: "Entity updated successfully",
@@ -255,6 +270,13 @@ export const deleteEntity = async (
     }
 
     await entityRepo.deleteEntity(name);
+    await addChange({
+      type: "entities",
+      name,
+      timestamp: new Date().toISOString(),
+      before: entities[name],
+      after: "",
+    });
     ctx.response.status = 204;
   } catch (error) {
     if (error instanceof Error) {

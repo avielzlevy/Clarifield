@@ -20,10 +20,10 @@ export const addReport = async (
 ) => {
   try {
     const { value } = ctx.request.body({ type: "json" });
-    const { type, description } = await value;
+    const { type, status = "pending", description } = await value;
     const { name } = ctx.params;
 
-    if (!name || !type || !description) {
+    if (!name || !type || !description || !status) {
       ctx.response.status = 400;
       ctx.response.body = { message: "Invalid report data" };
       return;
@@ -34,6 +34,7 @@ export const addReport = async (
     ctx.response.body = {
       message: "Report added successfully",
       type,
+      status,
       name,
       description,
     };
@@ -43,69 +44,32 @@ export const addReport = async (
   }
 };
 
-// Delete a specific report by type and name
-export const deleteReport = async (
-  ctx: RouterContext<"/api/report/:type/:name", { type: string; name: string }>
+// Update a report's status
+export const updateReport = async (
+  ctx: RouterContext<"/api/report/:name", { name: string }>
 ) => {
   try {
-    const { type, name } = ctx.params;
-    if (!type || !name) {
+    const { value } = ctx.request.body({ type: "json" });
+    // Expecting type, description (to identify the entry), and newStatus.
+    const { type, description, status } = await value;
+    const { name } = ctx.params;
+
+    if (!name || !type || !description || !status) {
       ctx.response.status = 400;
-      ctx.response.body = { message: "Invalid report type or name" };
+      ctx.response.body = { message: "Invalid report data" };
       return;
     }
-    await reportRepo.deleteReport(type, name);
-    ctx.response.status = 204;
-  } catch (e) {
-    if (e instanceof Error) {
-      if (e.message && e.message.includes("not found")) {
-        ctx.response.status = 404;
-        ctx.response.body = { message: e.message };
-      } else {
-        ctx.response.status = 500;
-        ctx.response.body = { message: "Internal server error" };
-      }
-    } else {
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Internal server error" };
-    }
-  }
-};
 
-// Clear all reports for a specific type
-export const clearReportsByType = async (
-  ctx: RouterContext<"/api/report/type/:type", { type: string }>
-) => {
-  try {
-    const { type } = ctx.params;
-    if (!type) {
-      ctx.response.status = 400;
-      ctx.response.body = { message: "Invalid report type" };
-      return;
-    }
-    await reportRepo.clearReportsByType(type);
-    ctx.response.status = 204;
-  } catch (e) {
-    if (e instanceof Error) {
-      if (e.message && e.message.includes("not found")) {
-        ctx.response.status = 404;
-        ctx.response.body = { message: e.message };
-      } else {
-        ctx.response.status = 500;
-        ctx.response.body = { message: "Internal server error" };
-      }
-    } else {
-      ctx.response.status = 500;
-      ctx.response.body = { message: "Internal server error" };
-    }
-  }
-};
+    await reportRepo.updateReport(type, name, description, status);
 
-// Clear all reports (optional)
-export const clearAllReports = async (ctx: Context) => {
-  try {
-    await reportRepo.clearAllReports();
-    ctx.response.status = 204;
+    ctx.response.status = 200;
+    ctx.response.body = {
+      message: "Report updated successfully",
+      type,
+      name,
+      description,
+      status,
+    };
   } catch (_e) {
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
