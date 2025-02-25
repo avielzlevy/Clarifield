@@ -18,7 +18,8 @@ export const getFormats = async (ctx: Context) => {
 export const getFormatsAmount = async (ctx: Context) => {
   try {
     const formats = await formatRepo.getFormats();
-    ctx.response.body = { amount: Object.keys(formats).length };
+    const allFormats = { ...staticFormats, ...formats };
+    ctx.response.body = { amount: Object.keys(allFormats).length };
   } catch (_e) {
     ctx.response.status = 500;
     ctx.response.body = { message: "Internal server error" };
