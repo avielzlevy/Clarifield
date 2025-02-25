@@ -110,7 +110,7 @@ function Definitions() {
   ];
 
   return (
-    <Box sx={{ padding: '4px', width: '100%' }}>
+    <Box sx={{ padding: 1, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
           {t('definitions')}

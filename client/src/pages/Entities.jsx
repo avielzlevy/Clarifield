@@ -125,6 +125,10 @@ function Entities() {
                         onEntityClick: (nodeLabel) => {
                             performSearch(nodeLabel);
                         },
+                        onReport: () => {
+                            setDialogMode('report');
+                            setDialogOpen(true);
+                        }
                     },
                     style: {
                         width: cardWidth,

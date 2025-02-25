@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { Book, FileJson, ChevronDown } from "lucide-react";
+import { Book, FileJson, ChevronDown, Boxes } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 
@@ -46,6 +46,7 @@ const Reports = ({ activeFilters }) => {
   const combinedReports = useMemo(() => {
     const formatsData = reportsData?.formats || reportsData?.format || {};
     const definitionsData = reportsData?.definitions || reportsData?.definition || {};
+    const entitiesData = reportsData?.entities || reportsData?.entity || {};
     const combined = [
       ...Object.entries(formatsData).map(([name, descriptions]) => ({
         name,
@@ -57,11 +58,17 @@ const Reports = ({ activeFilters }) => {
         descriptions,
         category: "definition",
       })),
+      ...Object.entries(entitiesData).map(([name, descriptions]) => ({
+        name,
+        descriptions,
+        category: "entity",
+      })),
     ];
     // Filter based on activeFilters: if the relevant filter is off, skip that category.
     return combined.filter((report) => {
       if (report.category === "format" && !activeFilters.formats) return false;
       if (report.category === "definition" && !activeFilters.definitions) return false;
+      if (report.category === "entity" && !activeFilters.entities) return false;
       return true;
     });
   }, [reportsData, activeFilters]);
@@ -125,6 +132,8 @@ const Reports = ({ activeFilters }) => {
       return <FileJson size={24} style={{ color: theme.palette.custom.bright }} />;
     } else if (category === "definition") {
       return <Book size={24} style={{ color: theme.palette.custom.bright }} />;
+    } else if (category === "entity") {
+      return <Boxes size={24} style={{ color: theme.palette.custom.bright }} />;
     }
     return null;
   };
@@ -163,7 +172,7 @@ const Reports = ({ activeFilters }) => {
             <CardHeader
               title={
                 <Box display="flex" alignItems="center" justifyContent={"space-between"}>
-                  <Typography variant="subtitle1" color="primary" fontWeight="bold">
+                  <Typography variant="subtitle1" fontWeight="bold">
                     {report.name}
                   </Typography>
                   {/* TODO: maybe make a filter with 3 badges for each category */}

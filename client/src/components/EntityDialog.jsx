@@ -13,6 +13,7 @@ import EditEntityForm from './EditEntityForm';
 import CopyEntityForm from './CopyEntityForm';
 import CreateEntityForm from './CreateEntityForm';
 import DeleteEntityForm from './DeleteEntityForm';
+import ReportEntityForm from './ReportEntityForm';
 import ChangeWarning from './ChangeWarning';
 import { useAuth } from '../contexts/AuthContext';
 import { enqueueSnackbar } from 'notistack';
@@ -43,6 +44,7 @@ function EntityDialog({
   const [anchorEl, setAnchorEl] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [error, setError] = useState(null);
+  const [report, setReport] = useState({ type: '', description: '' });
   const { logout } = useAuth();
   const { setRefreshSearchables } = useSearch();
   const token = localStorage.getItem('token');
@@ -80,7 +82,7 @@ function EntityDialog({
           break;
         }
         case 'create': {
-          if(/[A-Z]/.test(newEntity.label)) {
+          if (/[A-Z]/.test(newEntity.label)) {
             setError('Entity name must be lowercase');
             throw new Error('Entity name must be lowercase');
           }
@@ -128,6 +130,13 @@ function EntityDialog({
           }
           break;
         }
+        case 'report': {
+          await axios.post(`${process.env.REACT_APP_API_URL}/api/report/${selectedNode.label}`, report, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          enqueueSnackbar('Entity reported successfully!', { variant: 'success' });
+          break;
+        }
         default:
           break;
       }
@@ -146,7 +155,8 @@ function EntityDialog({
     setRefreshSearchables,
     onClose,
     newEntity,
-    fetchEntities
+    fetchEntities,
+    report,
   ]);
 
   const handleMenuOpen = (event) => {
@@ -159,218 +169,218 @@ function EntityDialog({
     setMenuOpen(false);
   }
 
-function processField(field) {
-  // For a field from definitions:
-  if (field.type === 'definition') {
-    const def = definitions[field.label];
-    if (!def) {
-      console.error(`Definition for ${field.label} not found`);
+  function processField(field) {
+    // For a field from definitions:
+    if (field.type === 'definition') {
+      const def = definitions[field.label];
+      if (!def) {
+        console.error(`Definition for ${field.label} not found`);
+        return null;
+      }
+      const formatPattern = formats[def.format]?.pattern || 'Pattern not found';
+      const description = def.description || 'No description available';
+      const regexType = determineRegexType(formatPattern);
+      // (Analytics can be sent here if desired)
+      sendAnalytics(field.label, 'definition', 1);
+      sendAnalytics(formatPattern, 'format', 1);
+      return {
+        name: field.label,
+        type: regexType,
+        format: formatPattern,
+        description: description,
+      };
+    }
+    // For a field that is an entity:
+    else if (field.type === 'entity') {
+      const entity = entities[field.label];
+      if (!entity) {
+        console.error(`Entity ${field.label} not found`);
+        return { name: field.label, type: 'entity', fields: [] };
+      }
+      sendAnalytics(field.label, 'entity', 1);
+      // Process the nested fields recursively:
+      const nestedFields = entity.fields
+        .map(processField)
+        .filter((item) => item !== null); // remove any errors
+      return {
+        name: field.label,
+        type: 'entity',
+        fields: nestedFields,
+      };
+    }
+    // In case you have other types:
+    else {
+      console.error(`Unknown field type for ${field.label}`);
       return null;
     }
-    const formatPattern = formats[def.format]?.pattern || 'Pattern not found';
-    const description = def.description || 'No description available';
-    const regexType = determineRegexType(formatPattern);
-    // (Analytics can be sent here if desired)
-    sendAnalytics(field.label, 'definition', 1);
-    sendAnalytics(formatPattern, 'format', 1);
-    return {
-      name: field.label,
-      type: regexType,
-      format: formatPattern,
-      description: description,
-    };
   }
-  // For a field that is an entity:
-  else if (field.type === 'entity') {
-    const entity = entities[field.label];
-    if (!entity) {
-      console.error(`Entity ${field.label} not found`);
-      return { name: field.label, type: 'entity', fields: [] };
-    }
-    sendAnalytics(field.label, 'entity', 1);
-    // Process the nested fields recursively:
-    const nestedFields = entity.fields
-      .map(processField)
-      .filter((item) => item !== null); // remove any errors
-    return {
-      name: field.label,
-      type: 'entity',
-      fields: nestedFields,
-    };
-  }
-  // In case you have other types:
-  else {
-    console.error(`Unknown field type for ${field.label}`);
-    return null;
-  }
-}
 
-// Helper: Generates an HTML table for an array of processed fields.
-// Assumes every field in data has a similar shape.
-function generateHtmlTable(entityLabel, data) {
-  if (!data || data.length === 0) return '';
+  // Helper: Generates an HTML table for an array of processed fields.
+  // Assumes every field in data has a similar shape.
+  function generateHtmlTable(entityLabel, data) {
+    if (!data || data.length === 0) return '';
 
-  // Determine headers dynamically from the first row
-  const headers = Object.keys(data[0]);
+    // Determine headers dynamically from the first row
+    const headers = Object.keys(data[0]);
 
-  // Use inline CSS for a modern table style
-  let html = `
+    // Use inline CSS for a modern table style
+    let html = `
     <h3 style="font-family: Arial, sans-serif; color: #333;">${entityLabel}</h3>
     <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; color: #333;">
       <thead>
         <tr>
   `;
-  
-  // Reverse headers order if desired (or keep as is)
-  headers.slice().reverse().forEach((header) => {
-    html += `<th style="border: 1px solid #ccc; padding: 8px; background-color: #f2f2f2; text-align: right;">${header}</th>`;
-  });
-  
-  html += `
+
+    // Reverse headers order if desired (or keep as is)
+    headers.slice().reverse().forEach((header) => {
+      html += `<th style="border: 1px solid #ccc; padding: 8px; background-color: #f2f2f2; text-align: right;">${header}</th>`;
+    });
+
+    html += `
         </tr>
       </thead>
       <tbody>
   `;
-  
-  data.forEach((row, rowIndex) => {
-    // Optional: add alternating row colors for readability
-    const rowStyle = rowIndex % 2 === 0 ? 'background-color: #fff;' : 'background-color: #fafafa;';
-    html += `<tr style="${rowStyle}">`;
-    
-    headers.slice().reverse().forEach((header) => {
-      let cellData = row[header];
-      
-      if (Array.isArray(cellData)) {
-        // For arrays, join the string representations of each field.
-        cellData = cellData
-          .map((field) => {
-            if (field.type === 'entity') {
-              // Mark nested entity with its name; its full table will be appended later.
-              return `[Entity: ${field.name}]`;
-            } else {
-              return `${field.name}: ${field.format || ''}`;
-            }
-          })
-          .join(', ');
-      } else if (typeof cellData === 'object' && cellData !== null) {
-        // For definition objects
-        cellData = `${cellData.type}: ${cellData.format || ''}`;
-      }
-      
-      cellData = (cellData !== null && cellData !== undefined)
-        ? (cellData === 'entity' ? 'object' : cellData)
-        : '';
-      
-      html += `<td style="border: 1px solid #ccc; padding: 8px;">${cellData}</td>`;
+
+    data.forEach((row, rowIndex) => {
+      // Optional: add alternating row colors for readability
+      const rowStyle = rowIndex % 2 === 0 ? 'background-color: #fff;' : 'background-color: #fafafa;';
+      html += `<tr style="${rowStyle}">`;
+
+      headers.slice().reverse().forEach((header) => {
+        let cellData = row[header];
+
+        if (Array.isArray(cellData)) {
+          // For arrays, join the string representations of each field.
+          cellData = cellData
+            .map((field) => {
+              if (field.type === 'entity') {
+                // Mark nested entity with its name; its full table will be appended later.
+                return `[Entity: ${field.name}]`;
+              } else {
+                return `${field.name}: ${field.format || ''}`;
+              }
+            })
+            .join(', ');
+        } else if (typeof cellData === 'object' && cellData !== null) {
+          // For definition objects
+          cellData = `${cellData.type}: ${cellData.format || ''}`;
+        }
+
+        cellData = (cellData !== null && cellData !== undefined)
+          ? (cellData === 'entity' ? 'object' : cellData)
+          : '';
+
+        html += `<td style="border: 1px solid #ccc; padding: 8px;">${cellData}</td>`;
+      });
+
+      html += '</tr>';
     });
-    
-    html += '</tr>';
-  });
-  
-  html += `
+
+    html += `
       </tbody>
     </table>
   `;
-  
-  return html;
-}
 
-
-// Helper: Recursively generate tables for any entity fields found
-function generateNestedEntityTables(data) {
-  let nestedTablesHtml = '';
-
-  data.forEach((field) => {
-    if (field.type === 'entity' && field.fields && field.fields.length > 0) {
-      // Generate table for the nested entity.
-      nestedTablesHtml += generateHtmlTable(field.name, field.fields);
-      // Recursively check for deeper nested entities
-      nestedTablesHtml += generateNestedEntityTables(field.fields);
-    }
-  });
-
-  return nestedTablesHtml;
-}
-
-function convertFieldsToObject(fields) {
-  return fields.reduce((acc, field) => {
-    if (field.type === 'entity') {
-      // For entity fields, recursively convert their nested fields
-      acc[field.name] = convertFieldsToObject(field.fields);
-    } else {
-      // For definition fields, assign the object as is.
-      acc[field.name] = {
-        type: field.type,
-        format: field.format,
-        description: field.description,
-      };
-    }
-    return acc;
-  }, {});
-}
-
-const handleCopyClick = async ({ entity, selectedData, type }) => {
-  console.log(selectedData, type);
-
-  // Process the selected fields. Each field might be a definition or an entity.
-  sendAnalytics(entity.label, 'entity', 1);
-  const data = selectedData
-    .map(processField)
-    .filter((item) => item !== null);
-
-  if (!data || data.length === 0) {
-    enqueueSnackbar('No data available to export.', { variant: 'warning' });
-    return;
+    return html;
   }
 
-  if (type === 'object') {
-    // ... (existing code unchanged for object type)
-    const entityData = convertFieldsToObject(data);
 
-    const clipBoardData = JSON.stringify(entityData, null, 2);
-    const clipboardItem = new ClipboardItem({
-      'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
+  // Helper: Recursively generate tables for any entity fields found
+  function generateNestedEntityTables(data) {
+    let nestedTablesHtml = '';
+
+    data.forEach((field) => {
+      if (field.type === 'entity' && field.fields && field.fields.length > 0) {
+        // Generate table for the nested entity.
+        nestedTablesHtml += generateHtmlTable(field.name, field.fields);
+        // Recursively check for deeper nested entities
+        nestedTablesHtml += generateNestedEntityTables(field.fields);
+      }
     });
-    await navigator.clipboard.write([clipboardItem]);
-    enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
-  } else if (type === 'table') {
-    try {
-      // Generate main table HTML for the top-level entity
-      let htmlTable = generateHtmlTable(entity.label, data);
-      // Now, for any entity fields, append their own tables below.
-      htmlTable += generateNestedEntityTables(data);
 
-      const blobHtml = new Blob([htmlTable], { type: 'text/html' });
-      // Also create a plain text version by stripping HTML tags
-      const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, '')], { type: 'text/plain' });
+    return nestedTablesHtml;
+  }
 
-      const clipboardItems = [
-        new ClipboardItem({
-          'text/html': blobHtml,
-          'text/plain': blobText,
-        }),
-      ];
+  function convertFieldsToObject(fields) {
+    return fields.reduce((acc, field) => {
+      if (field.type === 'entity') {
+        // For entity fields, recursively convert their nested fields
+        acc[field.name] = convertFieldsToObject(field.fields);
+      } else {
+        // For definition fields, assign the object as is.
+        acc[field.name] = {
+          type: field.type,
+          format: field.format,
+          description: field.description,
+        };
+      }
+      return acc;
+    }, {});
+  }
 
-      await navigator.clipboard.write(clipboardItems);
-      enqueueSnackbar('Table copied to clipboard!', { variant: 'success' });
-    } catch (err) {
-      console.error('Failed to copy: ', err);
-      enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
+  const handleCopyClick = async ({ entity, selectedData, type }) => {
+    console.log(selectedData, type);
+
+    // Process the selected fields. Each field might be a definition or an entity.
+    sendAnalytics(entity.label, 'entity', 1);
+    const data = selectedData
+      .map(processField)
+      .filter((item) => item !== null);
+
+    if (!data || data.length === 0) {
+      enqueueSnackbar('No data available to export.', { variant: 'warning' });
+      return;
     }
-  } else if (type === 'example') {
-    // ... (existing code unchanged for example type)
-    const sampleData = generateSampleObject(data);
-    const clipboardRawData = {
-      [entity.label]: sampleData,
-    };
-    const clipBoardData = JSON.stringify(clipboardRawData, null, 2);
-    const clipboardItem = new ClipboardItem({
-      'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
-    });
-    await navigator.clipboard.write([clipboardItem]);
-    enqueueSnackbar('Sample data copied to clipboard!', { variant: 'success' });
-  }  
-};
+
+    if (type === 'object') {
+      // ... (existing code unchanged for object type)
+      const entityData = convertFieldsToObject(data);
+
+      const clipBoardData = JSON.stringify(entityData, null, 2);
+      const clipboardItem = new ClipboardItem({
+        'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
+      });
+      await navigator.clipboard.write([clipboardItem]);
+      enqueueSnackbar('Data copied to clipboard!', { variant: 'success' });
+    } else if (type === 'table') {
+      try {
+        // Generate main table HTML for the top-level entity
+        let htmlTable = generateHtmlTable(entity.label, data);
+        // Now, for any entity fields, append their own tables below.
+        htmlTable += generateNestedEntityTables(data);
+
+        const blobHtml = new Blob([htmlTable], { type: 'text/html' });
+        // Also create a plain text version by stripping HTML tags
+        const blobText = new Blob([htmlTable.replace(/<\/?[^>]+(>|$)/g, '')], { type: 'text/plain' });
+
+        const clipboardItems = [
+          new ClipboardItem({
+            'text/html': blobHtml,
+            'text/plain': blobText,
+          }),
+        ];
+
+        await navigator.clipboard.write(clipboardItems);
+        enqueueSnackbar('Table copied to clipboard!', { variant: 'success' });
+      } catch (err) {
+        console.error('Failed to copy: ', err);
+        enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
+      }
+    } else if (type === 'example') {
+      // ... (existing code unchanged for example type)
+      const sampleData = generateSampleObject(data);
+      const clipboardRawData = {
+        [entity.label]: sampleData,
+      };
+      const clipBoardData = JSON.stringify(clipboardRawData, null, 2);
+      const clipboardItem = new ClipboardItem({
+        'text/plain': new Blob([clipBoardData], { type: 'text/plain' }),
+      });
+      await navigator.clipboard.write([clipboardItem]);
+      enqueueSnackbar('Sample data copied to clipboard!', { variant: 'success' });
+    }
+  };
 
 
   return (
@@ -384,7 +394,10 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
               ? 'Create'
               : mode === 'delete'
                 ? 'Delete'
-                : null}{' '}
+                : mode === 'report'
+                  ? 'Report'
+                  : null}
+        {' '}
         Entity
         {mode === 'edit'
           ? affected && <ChangeWarning items={affected} level="warning" />
@@ -415,6 +428,8 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
             onCancel={onClose}
             setSelectedNode={setSelectedNode}
           />
+        ) : mode === 'report' ? (
+          <ReportEntityForm node={selectedNode} report={report} setReport={setReport} />
         ) : null}
       </DialogContent>
       <DialogActions>
@@ -424,7 +439,7 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
           variant="contained"
           color="primary"
           disabled={
-            (mode === 'create' && (newEntity.label === ''||newEntity.fields.filter((field) => field.label === '').length > 0)) ||
+            (mode === 'create' && (newEntity.label === '' || newEntity.fields.filter((field) => field.label === '').length > 0)) ||
             (mode === 'edit' && selectedNode.fields.filter((field) => field.label === '').length > 0) ||
             (mode === 'delete' && !sureDelete)
           }
@@ -435,7 +450,9 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
               ? 'Create'
               : mode === 'delete'
                 ? 'Delete'
-                : null}
+                : mode === 'report'
+                  ? 'Report'
+                  : null}
         </Button> :
           <Box>
             <Button variant="contained" color="primary" onClick={handleMenuOpen} disabled={checkedFields.length === 0}>
@@ -448,9 +465,9 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
-              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'table'})}>Copy as Table</MenuItem>
-              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'object'})}>Copy as Object</MenuItem>
-              <MenuItem onClick={() => handleCopyClick({entity: selectedNode, selectedData: checkedFields, type: 'example'})}>Copy as Example</MenuItem>
+              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'table' })}>Copy as Table</MenuItem>
+              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'object' })}>Copy as Object</MenuItem>
+              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'example' })}>Copy as Example</MenuItem>
             </Menu>
           </Box>}
       </DialogActions>

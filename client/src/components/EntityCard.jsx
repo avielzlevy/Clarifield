@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React from 'react';
 import {
   Box,
   Paper,
@@ -6,7 +6,6 @@ import {
   ListItem,
   ListItemText,
   ListSubheader,
-  IconButton,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -14,6 +13,7 @@ import {
   Pencil,
   Trash,
   Copy,
+  Flag,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,13 +23,6 @@ function EntityCard({ data }) {
   const { auth } = useAuth();
   const theme = useTheme();
   const capitalizedLabel = data.label.charAt(0).toUpperCase() + data.label.slice(1);
-
-  const checkForLongestField = useCallback((data) => {
-    if (data.fields && data.fields.length > 0) {
-      return data.fields.reduce((a, b) => (a.label.length > b.label.length ? a : b)).label.length;
-    }
-  }, []);
-  const longestField = useMemo(() => checkForLongestField(data), [checkForLongestField, data])
 
   return (
     <Box
@@ -87,6 +80,7 @@ function EntityCard({ data }) {
             }}
           >
             <Copy style={ICON_SIZE} onClick={data.onCopy} />
+            <Flag style={ICON_SIZE} onClick={data.onReport} />
           </Box>
         )}
       </Box>

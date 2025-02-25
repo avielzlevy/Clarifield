@@ -94,7 +94,23 @@ const ChangeLog = ({ activeFilters }) => {
           const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
           const primaryContent = (
             <>
-              {userName || t("admin")} {t(changeType)} <Typography component="span" fontWeight={600}>{name}</Typography>
+              {userName || t("admin")} {t(changeType)} <Box sx={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 1,
+              }}>
+                <Typography component="span" fontWeight={600}>
+                  {name}
+                </Typography>
+                {category === "format" ? (
+                    <FileJson size={16} style={{ color: theme.palette.custom.bright }} />
+                  ) : category === "definition" ? (
+                    <Book size={16} style={{ color: theme.palette.custom.bright }} />
+                  ) : category === "entity" ? (
+                    <Boxes size={16} style={{ color: theme.palette.custom.bright }} />
+                  ) : null}
+              </Box>
+              
             </>
           );
 
@@ -119,13 +135,6 @@ const ChangeLog = ({ activeFilters }) => {
                 // borderRadius: 1,
               }}>
                 <ListItemText primary={primaryContent} secondary={timeAgo} />
-                {category === "format" ? (
-                  <FileJson size={16} style={{ color: theme.palette.custom.bright }} />
-                ) : category === "definition" ? (
-                  <Book size={16} style={{ color: theme.palette.custom.bright }} />
-                ) : category === "entity" ? (
-                  <Boxes size={16} style={{ color: theme.palette.custom.bright }} />
-                ) : null}
               </Box>
             </ListItemButton>
           );
