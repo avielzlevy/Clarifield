@@ -1,10 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { TextField, Checkbox, Box, Button, Menu, MenuItem, Tooltip } from '@mui/material';
+import { TextField, Box, Tooltip, Typography } from '@mui/material';
 import {
   Trash2 as Trash,
   Pencil,
-  Heart,
+  Copy,
   Flag,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
-import { useTheme } from '@mui/material/styles';
 
 function CustomDataGrid(props) {
   const {
@@ -21,60 +20,23 @@ function CustomDataGrid(props) {
     handleDeleteRow,
     handleEditRow,
     handleReportRow,
-    onCopy,
     type,
   } = props;
 
   const { auth } = useAuth();
-  const theme = useTheme();
   const { t, i18n } = useTranslation();
   const { search, setSearch } = useSearch();
-  const [selectedRows, setSelectedRows] = useState(new Set());
   const [searchTerm, setSearchTerm] = useState('');
   const [viewportSize, setViewportSize] = useState({
     width: window.innerWidth,
     height: window.innerHeight,
   });
-  const [anchorEl, setAnchorEl] = useState(null);
-  const menuOpen = Boolean(anchorEl);
   const [locale, setLocale] = useState(undefined);
-
-  // -- Handlers --
-
-  const handleMenuOpen = useCallback((event) => {
-    setAnchorEl(event.currentTarget);
-  }, []);
-
-  const handleMenuClose = useCallback(() => {
-    setAnchorEl(null);
-  }, []);
-
-  const handleCopyClick = useCallback(
-    (type) => {
-      if (onCopy) {
-        const selectedData = rows.filter((row) => selectedRows.has(row.id));
-        onCopy(selectedData, type);
-      }
-      handleMenuClose();
-    },
-    [onCopy, rows, selectedRows, handleMenuClose]
-  );
 
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
   }, []);
 
-  const handleCheckboxChange = useCallback((id) => {
-    setSelectedRows((prev) => {
-      const updated = new Set(prev);
-      if (updated.has(id)) {
-        updated.delete(id);
-      } else {
-        updated.add(id);
-      }
-      return updated;
-    });
-  }, []);
   // Update viewport size on window resize
   useEffect(() => {
     const handleResize = () => {
@@ -145,9 +107,42 @@ function CustomDataGrid(props) {
   // Build columns with additional checkbox and actions columns
   const columnsWithCheckbox = useMemo(() => {
     let baseColumns = [];
-    // Append the provided columns
-    baseColumns = baseColumns.concat(columns);
 
+    // Append the provided columns
+    baseColumns = baseColumns.concat(
+      columns.map((col) => ({
+        ...col,
+        renderCell: (params) => (
+          <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            width: '100%',
+            minHeight: '40px', // Ensures row height consistency
+            gap: 1,
+          }}
+        >
+           {params.value && (
+            <Tooltip title="Copy" arrow>
+              <Copy
+                style={{ cursor: 'pointer', minWidth: '16px', minHeight: '16px' }}
+                size={16}
+                onClick={() => {
+                  navigator.clipboard.writeText(params.value);
+                  enqueueSnackbar('Copied to clipboard', { variant: 'success' });
+                  sendAnalytics(params.row.id, type, 1);
+                }}
+              />
+            </Tooltip>
+          )}
+          <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {params.value || null} 
+          </Typography>
+        </Box>
+        ),
+      }))
+    );
     // Define the actions column
     const actionsColumn = {
       field: 'actions',
@@ -199,6 +194,7 @@ function CustomDataGrid(props) {
     handleEditRow,
     handleDeleteRow,
     handleReportRow,
+    type,
   ]);
 
   return (
@@ -220,24 +216,6 @@ function CustomDataGrid(props) {
           size="small"
           sx={{ maxWidth: 500 }}
         />
-        {selectedRows.size > 0 && onCopy && (
-          <Box>
-            <Button variant="contained" color="primary" onClick={handleMenuOpen}>
-              Copy
-            </Button>
-            <Menu
-              anchorEl={anchorEl}
-              open={menuOpen}
-              onClose={handleMenuClose}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              <MenuItem onClick={() => handleCopyClick('table')}>Copy as Table</MenuItem>
-              <MenuItem onClick={() => handleCopyClick('object')}>Copy as Object</MenuItem>
-              <MenuItem onClick={() => handleCopyClick('example')}>Copy as Example</MenuItem>
-            </Menu>
-          </Box>
-        )}
       </Box>
       <DataGrid
         rows={filteredRows}
@@ -252,13 +230,6 @@ function CustomDataGrid(props) {
         disableColumnSelector
         disableDensitySelector
         disableRowSelectionOnClick
-        onCellClick={(params) => {
-          if (params.value) {
-            navigator.clipboard.writeText(params.value);
-            sendAnalytics(params.row.id, type, 1);
-            enqueueSnackbar('Copied to clipboard', { variant: 'success' });
-          }
-        }}
         localeText={locale}
         isCellEditable={() => false}
         sx={{

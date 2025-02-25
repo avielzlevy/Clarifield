@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useCallback, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
   Divider,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
   CircularProgress,
 } from "@mui/material";
@@ -13,11 +12,12 @@ import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
 import { getAnalytics } from "../utils/analytics";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { Boxes, FileJson, Book } from "lucide-react";
 
-const QuickAccess = ({ onDefinitionClick }) => {
+const QuickAccess = ({ activeFilters }) => {
   const theme = useTheme();
   const { t } = useTranslation();
-  const [mostUsedDefinitions, setMostUsedDefinitions] = useState([]);
+  const [mostUsedItems, setMostUsedItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Define crown colors for the top three items.
@@ -32,20 +32,50 @@ const QuickAccess = ({ onDefinitionClick }) => {
     const fetchAnalytics = async () => {
       try {
         const analytics = await getAnalytics();
-        const sortedMostUsedDefinitions = Object.entries(analytics.definition || {})
-          .sort(([, a], [, b]) => b - a)
-          .map(([name, count]) => ({ name, count }));
-        setMostUsedDefinitions(sortedMostUsedDefinitions);
+        // Combine analytics for definitions, entities, and formats
+        const combinedItems = [
+          ...Object.entries(analytics.definition || {}).map(([name, count]) => ({
+            name,
+            count,
+            category: "definition",
+          })),
+          ...Object.entries(analytics.entity || {}).map(([name, count]) => ({
+            name,
+            count,
+            category: "entity",
+          })),
+          ...Object.entries(analytics.format || {}).map(([name, count]) => ({
+            name,
+            count,
+            category: "format",
+          })),
+        ];
+        // Sort by count in descending order
+        const sortedItems = combinedItems.sort((a, b) => b.count - a.count);
+        setMostUsedItems(sortedItems);
       } catch (error) {
-        console.error("Error fetching analytics")
-        console.debug(error);
+        console.error("Error fetching analytics", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchAnalytics();
   }, []);
+
+  // Filter analytics items based on activeFilters
+  const filteredItems = useMemo(() => {
+    let items = mostUsedItems;
+    if (!activeFilters.definitions) {
+      items = items.filter((item) => item.category !== "definition");
+    }
+    if (!activeFilters.entities) {
+      items = items.filter((item) => item.category !== "entity");
+    }
+    if (!activeFilters.formats) {
+      items = items.filter((item) => item.category !== "format");
+    }
+    return items;
+  }, [mostUsedItems, activeFilters]);
 
   if (loading) {
     return (
@@ -63,7 +93,7 @@ const QuickAccess = ({ onDefinitionClick }) => {
     );
   }
 
-  if (!loading && mostUsedDefinitions.length === 0) {
+  if (!loading && filteredItems.length === 0) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
@@ -93,11 +123,19 @@ const QuickAccess = ({ onDefinitionClick }) => {
         }}
       >
         <List>
-          {mostUsedDefinitions.map((definition, index) => {
+          {filteredItems.map((item, index) => {
             const crownColor = getCrownColor(index);
+            let icon = null;
+            if (item.category === "format") {
+              icon = <FileJson size={16} />;
+            } else if (item.category === "definition") {
+              icon = <Book size={16} />;
+            } else if (item.category === "entity") {
+              icon = <Boxes size={16} />;
+            }
             return (
               <ListItem
-                key={definition.name}
+                key={item.name}
                 sx={{
                   py: 0.5,
                   px: 1,
@@ -114,36 +152,29 @@ const QuickAccess = ({ onDefinitionClick }) => {
                   justifyContent: "space-between",
                 }}
               >
-                {/* Left section: Index and Definition Name */}
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <Typography variant="subtitle2" sx={{ fontWeight: "bold", mr: 1 }}>
                     {index + 1}.
                   </Typography>
-                  <ListItemIcon sx={{ minWidth: 0, mr: 1 }} />
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant="subtitle2"
-                        sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
-                      >
-                        {definition.name}
-                      </Typography>
-                    }
-                  />
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    {icon}
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                        >
+                          {item.name}
+                        </Typography>
+                      }
+                    />
+                  </Box>
                 </Box>
-                {/* Right section: Usage count and crown icon (if applicable) */}
-                <Box sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                }}>
-                  {crownColor && (
-                    <EmojiEventsIcon sx={{ color: crownColor }} fontSize="small" />
-                  )}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  {crownColor && <EmojiEventsIcon sx={{ color: crownColor }} fontSize="small" />}
                   <Typography variant="caption" color="textSecondary">
-                    {definition.count}{" "}
+                    {item.count}
                   </Typography>
-
                 </Box>
               </ListItem>
             );

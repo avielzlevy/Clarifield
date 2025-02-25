@@ -80,40 +80,6 @@ function EntityDialog({
           }
           break;
         }
-        case 'copy': {
-          if (checkedFields.length === 0) return;
-          let checkedFieldsData = {};
-          for (const field of checkedFields) {
-            if (field.type === 'definition') {
-              const item = {
-                ...definitions[field.label],
-                format: formats[definitions[field.label].format].pattern,
-              };
-              checkedFieldsData[field.label] = item;
-              sendAnalytics(field.label, 'definition', 1);
-            } else if (field.type === 'entity') {
-              const entity = entities[field.label];
-              let entityData = {};
-              for (const entityField of entity.fields) {
-                const item = {
-                  ...definitions[entityField.label],
-                  format: formats[definitions[entityField.label].format].pattern,
-                };
-                entityData[entityField.label] = item;
-                sendAnalytics(entityField.label, 'definition', 1);
-              }
-              checkedFieldsData[entity.label] = entityData;
-            }
-          }
-          const copyObject = { [selectedNode.label]: checkedFieldsData };
-          try {
-            await navigator.clipboard.writeText(JSON.stringify(copyObject, null, 2));
-            enqueueSnackbar('Copied to clipboard!', { variant: 'success' });
-          } catch (err) {
-            console.error('Failed to copy:', err);
-          }
-          break;
-        }
         case 'create': {
           if(/[A-Z]/.test(newEntity.label)) {
             setError('Entity name must be lowercase');
@@ -175,15 +141,13 @@ function EntityDialog({
   }, [
     mode,
     selectedNode,
-    checkedFields,
-    definitions,
-    entities,
     fetchNodes,
     token,
     logout,
     setRefreshSearchables,
     onClose,
     newEntity,
+    fetchEntities
   ]);
 
   const handleMenuOpen = (event) => {
@@ -224,6 +188,7 @@ function processField(field) {
       console.error(`Entity ${field.label} not found`);
       return { name: field.label, type: 'entity', fields: [] };
     }
+    sendAnalytics(field.label, 'entity', 1);
     // Process the nested fields recursively:
     const nestedFields = entity.fields
       .map(processField)
@@ -349,6 +314,7 @@ const handleCopyClick = async ({ entity, selectedData, type }) => {
   console.log(selectedData, type);
 
   // Process the selected fields. Each field might be a definition or an entity.
+  sendAnalytics(entity.label, 'entity', 1);
   const data = selectedData
     .map(processField)
     .filter((item) => item !== null);

@@ -2,11 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Box, Paper } from "@mui/material";
 import Reports from "../components/Reports";
 import ChangeLog from "../components/ChangeLog";
-import Problems from "../components/Problems";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
+import FilterToolbar from "../components/FilterToolbar";
 
-// Common Paper styles for each section
 const paperSx = {
   flex: 1,
   p: 2,
@@ -16,67 +15,54 @@ const paperSx = {
 };
 
 const AdminHomepage = () => {
-  const [reports, setReports] = useState({});
-  const [changeLog, setChangeLog] = useState({ formats: [], definitions: [] });
-  const [loadingReports, setLoadingReports] = useState(true);
-  const [loadingChangeLog, setLoadingChangeLog] = useState(true);
+  const [activeFilters, setActiveFilters] = useState({
+    entities: true,
+    definitions: true,
+    formats: true,
+  });
 
-  // Fetch reports
+  const [itemsAmount, setItemsAmount] = useState({ formats: 0, definitions: 0, entities: 0 });
+
   useEffect(() => {
-    const fetchReports = async () => {
+    const fetchItemsAmount = async () => {
       try {
-        const { data } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/reports`
+        const { data: definitionsAmount } = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/definitions/amount`
         );
-        setReports(data);
+        const { data: formatsAmount } = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/formats/amount`
+        );
+        const { data: entitiesAmount } = await axios.get(
+          `${process.env.REACT_APP_API_URL}/api/entities/amount`
+        );
+        setItemsAmount({
+          formats: formatsAmount.amount,
+          definitions: definitionsAmount.amount,
+          entities: entitiesAmount.amount,
+        });
       } catch (error) {
-        console.error("Error fetching reports")
-        console.debug(error)
-        enqueueSnackbar("Error fetching reports", { variant: "error" });
-      } finally {
-        setLoadingReports(false);
+        console.error("Error fetching items amount:", error);
+        enqueueSnackbar("Error fetching items amount", { variant: "error" });
       }
     };
-
-    fetchReports();
+    fetchItemsAmount();
   }, []);
 
-  // Fetch change log
-  useEffect(() => {
-    const fetchChangeLog = async () => {
-      try {
-        const { data } = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/changes`
-        );
-        setChangeLog(data);
-      } catch (error) {
-        console.error("Error fetching change log")
-        console.debug(error)
-        enqueueSnackbar("Error fetching change log", { variant: "error" });
-      } finally {
-        setLoadingChangeLog(false);
-      }
-    };
-
-    fetchChangeLog();
-  }, []);
+  const toggleFilter = (filterKey) => {
+    setActiveFilters((prev) => ({ ...prev, [filterKey]: !prev[filterKey] }));
+  };
 
   return (
-    <Box sx={{ p: 1, display: "flex", gap: 2, height: "89.5vh" }}>
-      {/* Section 1: Reports */}
-      <Paper sx={paperSx}>
-        <Reports reports={reports} loadingReports={loadingReports} />
-      </Paper>
-
-      {/* Section 2: Problems */}
-      <Paper sx={paperSx}>
-        <Problems />
-      </Paper>
-
-      {/* Section 3: Change Log */}
-      <Paper sx={paperSx}>
-        <ChangeLog changeLog={changeLog} loadingChangeLog={loadingChangeLog} />
-      </Paper>
+    <Box sx={{ p: 1, display: "flex", flexDirection: "column", gap: 2, height: "89.5vh" }}>
+      <FilterToolbar activeFilters={activeFilters} itemsAmount={itemsAmount} toggleFilter={toggleFilter} />
+      <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
+        <Paper sx={paperSx}>
+          <Reports activeFilters={activeFilters} />
+        </Paper>
+        <Paper sx={paperSx}>
+          <ChangeLog activeFilters={activeFilters} />
+        </Paper>
+      </Box>
     </Box>
   );
 };
