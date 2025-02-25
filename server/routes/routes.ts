@@ -62,6 +62,7 @@ router
   )
   .get("/api/reports", getReports)
   .post("/api/report/:name", addReport)
+  .put("/api/report/:name", updateReport)
   .get("/api/changes", getChanges)
   .get("/api/affected", authMiddleware, getAffected)
   .post("/api/validate", auditLogger, validate)
