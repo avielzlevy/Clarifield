@@ -12,7 +12,7 @@ import '@xyflow/react/dist/style.css';
 import { useTheme } from '@mui/material/styles';
 import { useAuth } from '../contexts/AuthContext';
 import EntityCard from '../components/EntityCard';
-import EntityDialog from './EntityDialog';
+import EntityDialog from '../components/EntityDialog';
 import axios from 'axios';
 import AddIcon from '@mui/icons-material/Add';
 import { useSearch } from '../contexts/SearchContext';

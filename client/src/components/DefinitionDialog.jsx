@@ -13,7 +13,7 @@ import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 import { useAuth } from "../contexts/AuthContext";
 import { useSearch } from "../contexts/SearchContext";
-import ChangeWarning from "../components/ChangeWarning";
+import ChangeWarning from "./ChangeWarning";
 import { useAffectedItems } from "../contexts/useAffectedItems";
 import { useDefinitions } from "../contexts/useDefinitions";
 import { useFormats } from "../contexts/useFormats";

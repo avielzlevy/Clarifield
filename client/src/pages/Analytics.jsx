@@ -36,6 +36,7 @@ const prepareChartData = (dataObj, bgColor, borderColor) => {
 const Analytics = () => {
   const [formatsData, setFormatsData] = useState({ labels: [], datasets: [] });
   const [definitionsData, setDefinitionsData] = useState({ labels: [], datasets: [] });
+  const [entitiesData, setEntitiesData] = useState({ labels: [], datasets: [] });
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
@@ -44,9 +45,10 @@ const Analytics = () => {
     const fetchData = async () => {
       try {
         const analytics = await getAnalytics();
-        if (!analytics || (!analytics.format && !analytics.definition)) {
+        if (!analytics || (!analytics.format && !analytics.definition && !analytics.entity)) {
           setFormatsData({ labels: [], datasets: [] });
           setDefinitionsData({ labels: [], datasets: [] });
+          setEntitiesData({ labels: [], datasets: [] });
           return;
         }
         // Prepare chart data if available.
@@ -71,6 +73,18 @@ const Analytics = () => {
           );
         } else {
           setDefinitionsData({ labels: [], datasets: [] });
+        }
+        if (analytics.entity) {
+          setEntitiesData(
+            prepareChartData(
+              analytics.entity,
+              "rgba(255, 159, 64, 0.6)",
+              "rgba(255, 159, 64, 1)"
+            )
+          );
+        }
+        else {
+          setEntitiesData({ labels: [], datasets: [] });
         }
       } catch (error) {
         console.error("Error fetching analytics");
@@ -116,10 +130,12 @@ const Analytics = () => {
         <Tabs value={activeTab} onChange={handleTabChange} centered>
           <Tab label={t("formats")} />
           <Tab label={t("definitions")} />
+          <Tab label={t("entities")} />
         </Tabs>
         <Box sx={{ flex: 1, overflow: "auto", mt: 2 }}>
           {activeTab === 0 && <Bar data={formatsData} options={commonOptions} />}
           {activeTab === 1 && <Bar data={definitionsData} options={commonOptions} />}
+          {activeTab === 2 && <Bar data={entitiesData} options={commonOptions} />}
         </Box>
       </Box>
     </Paper>

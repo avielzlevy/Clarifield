@@ -127,11 +127,11 @@ const QuickAccess = ({ activeFilters }) => {
             const crownColor = getCrownColor(index);
             let icon = null;
             if (item.category === "format") {
-              icon = <FileJson size={16} />;
+              icon = <FileJson size={16} style={{ color: theme.palette.custom.bright }} />;
             } else if (item.category === "definition") {
-              icon = <Book size={16} />;
+              icon = <Book size={16} style={{ color: theme.palette.custom.bright }} />;
             } else if (item.category === "entity") {
-              icon = <Boxes size={16} />;
+              icon = <Boxes size={16} style={{ color: theme.palette.custom.bright }} />;
             }
             return (
               <ListItem
@@ -162,7 +162,7 @@ const QuickAccess = ({ activeFilters }) => {
                       primary={
                         <Typography
                           variant="subtitle2"
-                          sx={{ fontWeight: "bold", color: theme.palette.primary.main }}
+                          sx={{ fontWeight: "bold"}}
                         >
                           {item.name}
                         </Typography>

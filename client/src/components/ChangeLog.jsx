@@ -22,7 +22,7 @@ import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 
 const ChangeLog = ({ activeFilters }) => {
-  const [changeData, setChangeData] = useState({ formats: [], definitions: [] });
+  const [changeData, setChangeData] = useState({ formats: [], definitions: [], entities: [] });
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
@@ -37,6 +37,7 @@ const ChangeLog = ({ activeFilters }) => {
           setChangeData({
             formats: data.formats,
             definitions: data.definitions,
+            entities: data.entities,
           });
         }
       } catch (error) {
@@ -54,6 +55,7 @@ const ChangeLog = ({ activeFilters }) => {
     let logs = [
       ...(changeData.formats || []).map((item) => ({ ...item, category: "format" })),
       ...(changeData.definitions || []).map((item) => ({ ...item, category: "definition" })),
+      ...(changeData.entities || []).map((item) => ({ ...item, category: "entity" })),
     ];
     // Sort newest first
     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -90,7 +92,11 @@ const ChangeLog = ({ activeFilters }) => {
           const changeType =
             before === "" ? "created" : after === "" ? "deleted" : "updated";
           const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-          const primaryText = `${userName || t("admin")} ${t(changeType)} ${name}`;
+          const primaryContent = (
+            <>
+              {userName || t("admin")} {t(changeType)} <Typography component="span" fontWeight={600}>{name}</Typography>
+            </>
+          );
 
           return (
             <ListItemButton
@@ -107,19 +113,19 @@ const ChangeLog = ({ activeFilters }) => {
             >
               <Box sx={{
                 display: "flex",
-                alignItems: "center",
+                // alignItems: "center",
                 gap: 1,
                 // p: 1,
                 // borderRadius: 1,
               }}>
+                <ListItemText primary={primaryContent} secondary={timeAgo} />
                 {category === "format" ? (
-                  <FileJson size={16} />
+                  <FileJson size={16} style={{ color: theme.palette.custom.bright }} />
                 ) : category === "definition" ? (
-                  <Book size={16} />
+                  <Book size={16} style={{ color: theme.palette.custom.bright }} />
                 ) : category === "entity" ? (
-                  <Boxes size={16} />
+                  <Boxes size={16} style={{ color: theme.palette.custom.bright }} />
                 ) : null}
-                <ListItemText primary={primaryText} secondary={timeAgo} />
               </Box>
             </ListItemButton>
           );

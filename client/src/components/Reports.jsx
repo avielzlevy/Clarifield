@@ -7,10 +7,13 @@ import {
   Divider,
   Chip,
   CircularProgress,
+  IconButton,
+  Collapse,
+  Badge,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";
-import { Book, FileJson } from "lucide-react";
+import { Book, FileJson, ChevronDown } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
 
@@ -19,6 +22,8 @@ const Reports = ({ activeFilters }) => {
   const { t } = useTranslation();
   const [reportsData, setReportsData] = useState({});
   const [loadingReports, setLoadingReports] = useState(true);
+  // Track which report items are expanded using a keyed object.
+  const [expanded, setExpanded] = useState({});
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -61,30 +66,55 @@ const Reports = ({ activeFilters }) => {
     });
   }, [reportsData, activeFilters]);
 
+  // Toggle the expansion state for a given report.
+  const handleExpandClick = (report) => {
+    const key = `${report.category}:${report.name}`;
+    setExpanded((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  // Render individual descriptions. Ensure it works with both arrays and single objects.
   const renderDescriptions = (descriptions) => {
     const descArray = Array.isArray(descriptions) ? descriptions : [descriptions];
     return descArray.map((desc, idx) => {
       let label;
       if (typeof desc === "object" && desc !== null) {
-        label = `${desc.description} (${desc.status})`;
+        label = desc.status;
       } else {
         label = desc;
       }
       return (
-        <Chip
+        <Box
           key={idx}
-          label={label}
-          variant="outlined"
-          size="small"
           sx={{
-            backgroundColor:
-              theme.palette.background.paper !== "#fff"
-                ? theme.palette.background.paper
-                : "#e9e9e9",
-            fontWeight: "bold",
-            maxWidth: "25vw",
+            display: "flex",
+            alignItems: "center",
+            padding: 1,
+            gap: 1,
+            bgcolor: theme.palette.background.paper,
           }}
-        />
+        >
+          <Chip
+            label={label}
+            variant="outlined"
+            size="small"
+            sx={{
+              p: 1,
+              py: 0.5,
+              backgroundColor:
+                theme.palette.background.paper !== "#fff"
+                  ? theme.palette.background.paper
+                  : "#e9e9e9",
+              fontWeight: "bold",
+              maxWidth: "25vw",
+            }}
+          />
+          <Typography variant="caption" sx={{ color: theme.palette.text.secondary }}>
+            {desc.description}
+          </Typography>
+        </Box>
       );
     });
   };
@@ -92,9 +122,9 @@ const Reports = ({ activeFilters }) => {
   // Return the relevant icon for each category.
   const getIconForCategory = (category) => {
     if (category === "format") {
-      return <FileJson size={24} />;
+      return <FileJson size={24} style={{ color: theme.palette.custom.bright }} />;
     } else if (category === "definition") {
-      return <Book size={24} />;
+      return <Book size={24} style={{ color: theme.palette.custom.bright }} />;
     }
     return null;
   };
@@ -109,13 +139,63 @@ const Reports = ({ activeFilters }) => {
     );
   }
 
-  if (combinedReports.length === 0) {
-    return (
-      <Box sx={{ p: 2 }}>
-        <Typography>{t("reports_empty")}</Typography>
-      </Box>
+  // Render each report as a collapsible card.
+  const renderReports = (reports) => {
+    return reports.length === 0 ? (
+      <Typography>{t("reports_empty")}</Typography>
+    ) : (
+      reports.map((report) => {
+        const key = `${report.category}:${report.name}`;
+        const isExpanded = expanded[key] || false;
+        // Determine how many descriptions there are.
+        const count = Array.isArray(report.descriptions)
+          ? report.descriptions.length
+          : 1;
+        return (
+          <Card
+            key={key}
+            elevation={3}
+            sx={{
+              marginBottom: 2,
+              bgcolor: theme.palette.background.default,
+            }}
+          >
+            <CardHeader
+              title={
+                <Box display="flex" alignItems="center" justifyContent={"space-between"}>
+                  <Typography variant="subtitle1" color="primary" fontWeight="bold">
+                    {report.name}
+                  </Typography>
+                  {/* TODO: maybe make a filter with 3 badges for each category */}
+                  <Badge badgeContent={count} color="primary" sx={{
+                    mr: 1,
+                  }} />
+                </Box>
+              }
+              sx={{ padding: 1 }}
+              avatar={getIconForCategory(report.category)}
+              action={
+                <IconButton onClick={() => handleExpandClick(report)}>
+                  <ChevronDown
+                    size={24}
+                    style={{
+                      transform: isExpanded ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.3s",
+                      color: theme.palette.text.secondary,
+                    }}
+                  />
+                </IconButton>
+              }
+            />
+            <Divider />
+            <Collapse in={isExpanded} timeout="auto" unmountOnExit>
+              {renderDescriptions(report.descriptions)}
+            </Collapse>
+          </Card>
+        );
+      })
     );
-  }
+  };
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
@@ -124,41 +204,7 @@ const Reports = ({ activeFilters }) => {
           {t("reports")}
         </Typography>
       </Box>
-      <Box
-        sx={{
-          flex: 1,
-          overflow: "auto",
-          backgroundColor: theme.palette.background.default,
-          borderRadius: 2,
-          p: 2,
-        }}
-      >
-        {combinedReports.map((report) => (
-          <Card key={report.name} elevation={3} sx={{ mb: 2 }}>
-            <CardHeader
-              avatar={getIconForCategory(report.category)}
-              title={report.name}
-              titleTypographyProps={{
-                variant: "subtitle1",
-                color: "primary",
-                fontWeight: "bold",
-              }}
-              sx={{ p: 1 }}
-            />
-            <Divider />
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-                p: 2,
-              }}
-            >
-              {renderDescriptions(report.descriptions)}
-            </Box>
-          </Card>
-        ))}
-      </Box>
+      {renderReports(combinedReports)}
     </Box>
   );
 };

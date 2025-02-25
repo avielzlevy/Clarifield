@@ -11,7 +11,7 @@ import {
   Box,
   Typography,
 } from '@mui/material';
-import ChangeWarning from '../components/ChangeWarning';
+import ChangeWarning from './ChangeWarning';
 import { useAffectedItems } from '../contexts/useAffectedItems';
 
 const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {

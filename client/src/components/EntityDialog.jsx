@@ -9,11 +9,11 @@ import {
   Menu,
   MenuItem,
 } from '@mui/material';
-import EditEntityForm from '../components/EditEntityForm';
-import CopyEntityForm from '../components/CopyEntityForm';
-import CreateEntityForm from '../components/CreateEntityForm';
-import DeleteEntityForm from '../components/DeleteEntityForm';
-import ChangeWarning from '../components/ChangeWarning';
+import EditEntityForm from './EditEntityForm';
+import CopyEntityForm from './CopyEntityForm';
+import CreateEntityForm from './CreateEntityForm';
+import DeleteEntityForm from './DeleteEntityForm';
+import ChangeWarning from './ChangeWarning';
 import { useAuth } from '../contexts/AuthContext';
 import { enqueueSnackbar } from 'notistack';
 import axios from 'axios';
@@ -64,7 +64,6 @@ function EntityDialog({
   // Handle the dialog action based on the current mode.
   const handleAction = useCallback(async () => {
     try {
-      const { data: formats } = await axios.get(`${process.env.REACT_APP_API_URL}/api/formats`);
       switch (mode) {
         case 'edit': {
           const res = await axios.put(

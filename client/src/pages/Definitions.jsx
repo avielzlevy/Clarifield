@@ -5,14 +5,14 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
-import DeleteDialog from './DeleteDialog';
+import DeleteDialog from '../components/DeleteDialog';
 import AddIcon from '@mui/icons-material/Add';
 import axios from 'axios';
-import DefinitionDialog from './DefinitionDialog';
+import DefinitionDialog from '../components/DefinitionDialog';
 import { useAuth } from '../contexts/AuthContext';
 import CustomDataGrid from '../components/CustomDataGrid';
 import { enqueueSnackbar } from 'notistack';
-import ReportDialog from './ReportDialog';
+import ReportDialog from '../components/ReportDialog';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { useRtl } from '../contexts/RtlContext';

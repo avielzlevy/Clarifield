@@ -115,7 +115,7 @@ export const addEntity = async (ctx: Context) => {
     await entityRepo.addEntity(newEntity);
     await addChange({
       type: "entities",
-      name,
+      name: label,
       timestamp: new Date().toISOString(),
       before: "",
       after: { name, fields:fields.map((f) => f.label) },

@@ -56,12 +56,13 @@ const AdminHomepage = () => {
     <Box sx={{ p: 1, display: "flex", flexDirection: "column", gap: 2, height: "89.5vh" }}>
       <FilterToolbar activeFilters={activeFilters} itemsAmount={itemsAmount} toggleFilter={toggleFilter} />
       <Box sx={{ display: "flex", gap: 2, flex: 1 }}>
+      <Paper sx={paperSx}>
+          <ChangeLog activeFilters={activeFilters} />
+        </Paper>
         <Paper sx={paperSx}>
           <Reports activeFilters={activeFilters} />
         </Paper>
-        <Paper sx={paperSx}>
-          <ChangeLog activeFilters={activeFilters} />
-        </Paper>
+
       </Box>
     </Box>
   );
