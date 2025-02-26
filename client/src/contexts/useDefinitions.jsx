@@ -1,11 +1,10 @@
-import React, { createContext, useContext, useState, useEffect,useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const DefinitionsContext = createContext();
 
 export const DefinitionsProvider = ({ children }) => {
   const [definitions, setDefinitions] = useState({});
-
   const fetchDefinitions = useCallback(async () => {
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/definitions`);
@@ -15,9 +14,11 @@ export const DefinitionsProvider = ({ children }) => {
     }
   }, []);
 
+
   useEffect(() => {
     fetchDefinitions();
-  }, []);
+
+  }, [fetchDefinitions]);
 
   return (
     <DefinitionsContext.Provider value={{ definitions, fetchDefinitions, setDefinitions }}>

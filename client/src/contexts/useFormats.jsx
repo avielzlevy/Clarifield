@@ -17,7 +17,7 @@ export const FormatsProvider = ({ children }) => {
 
   useEffect(() => {
     fetchFormats();
-  }, []);
+  }, [fetchFormats]);
 
   return (
     <FormatsContext.Provider value={{ formats, fetchFormats, setFormats }}>

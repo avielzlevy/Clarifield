@@ -77,6 +77,7 @@ function EntityCard({ data }) {
               justifyContent: 'center',
               alignItems: 'center',
               width: '100%',
+              gap: 3,
             }}
           >
             <Copy style={ICON_SIZE} onClick={data.onCopy} />

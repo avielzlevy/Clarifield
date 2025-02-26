@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import {
   Box,
   Typography,
-  Tooltip,
   Button,
 } from '@mui/material';
 import DeleteDialog from '../components/DeleteDialog';
@@ -17,13 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from '@mui/material/styles';
 import { useRtl } from '../contexts/RtlContext';
 import { useSearch } from '../contexts/SearchContext';
-import { sendAnalytics } from '../utils/analytics';
-import { determineRegexType, generateSampleObject } from '../utils/clipboardUtils';
 import { useDefinitions } from '../contexts/useDefinitions';
-import { useFormats } from '../contexts/useFormats';
 function Definitions() {
   const { definitions, fetchDefinitions } = useDefinitions();
-  const { formats } = useFormats();
   const [DialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -93,17 +88,6 @@ function Definitions() {
       field: 'format',
       headerName: t('format'),
       flex: 1,
-      renderCell: (params) => {
-        const formatName = params.value;
-        const formatPattern = formats[formatName]?.pattern || 'Pattern not found';
-        const isPatternNotFound = formatPattern === 'Pattern not found';
-
-        return (
-          <Tooltip title={formatPattern}>
-            <span style={{ color: isPatternNotFound ? 'red' : 'inherit' }}>{formatName}</span>
-          </Tooltip>
-        );
-      },
       editable: true,
     },
     { field: 'description', headerName: t('description'), flex: 2, editable: true },

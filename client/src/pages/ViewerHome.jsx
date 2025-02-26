@@ -17,6 +17,14 @@ const ViewerHomepage = () => {
     setActiveFilters((prev) => ({ ...prev, [filterKey]: !prev[filterKey] }));
   };
 
+  console.log(`                                                                          
+    _____       _        _____        _____     _     _    __                
+   |     |___ _| |___   | __  |_ _   |  _  |_ _|_|___| |  |  |   ___ _ _ _ _ 
+   | | | | .'| . | -_|  | __ -| | |  |     | | | | -_| |  |  |__| -_| | | | |
+   |_|_|_|__,|___|___|  |_____|_  |  |__|__|\\_/|_|___|_|  |_____|___|\\_/|_  |
+                              |___|                                     |___|
+   `);
+
   return (
     <>
       <FilterToolbar activeFilters={activeFilters} toggleFilter={toggleFilter} />

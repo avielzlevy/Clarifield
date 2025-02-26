@@ -1,10 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { IconButton } from '@mui/material';
 import {
-  LightModeOutlined as LightMode,
-  DarkModeOutlined as DarkMode,
-} from '@mui/icons-material';
-import {
   Sun,
   Moon,
 } from 'lucide-react';

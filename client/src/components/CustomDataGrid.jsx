@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
+import { useFormats } from '../contexts/useFormats';
 
 function CustomDataGrid(props) {
   const {
@@ -31,6 +32,7 @@ function CustomDataGrid(props) {
     width: window.innerWidth,
     height: window.innerHeight,
   });
+  const { formats } = useFormats();
   const [locale, setLocale] = useState(undefined);
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
@@ -100,7 +102,7 @@ function CustomDataGrid(props) {
       columns.some((col) =>
         String(row[col.field]).toLowerCase().includes(searchTerm.toLowerCase())
       )
-    );
+    )
   }, [rows, columns, searchTerm]);
 
   // Build columns with additional checkbox and actions columns
@@ -112,34 +114,81 @@ function CustomDataGrid(props) {
         ...col,
         renderCell: (params) => (
           <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            width: '100%',
-            minHeight: '40px', // Ensures row height consistency
-            gap: 1,
-          }}
-        >
-           {params.value && (
-            <Tooltip title="Copy" arrow>
-              <Copy
-                style={{ cursor: 'pointer', minWidth: '16px', minHeight: '16px' }}
-                size={16}
-                onClick={() => {
-                  navigator.clipboard.writeText(params.value);
-                  enqueueSnackbar('Copied to clipboard', { variant: 'success' });
-                  sendAnalytics(params.row.id, type, 1);
-                }}
-              />
-            </Tooltip>
-          )}
-          <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {params.value || null} 
-          </Typography>
-        </Box>
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              width: '100%',
+              minHeight: '40px', // Ensures row height consistency
+              gap: 1,
+            }}
+          >
+            {params.value && (
+              <Tooltip title="Copy" arrow>
+                <Copy
+                  style={{ cursor: 'pointer', minWidth: '16px', minHeight: '16px' }}
+                  size={16}
+                  onClick={() => {
+                    navigator.clipboard.writeText(params.value);
+                    enqueueSnackbar('Copied to clipboard', { variant: 'success' });
+                    sendAnalytics(params.row.id, type, 1);
+                  }}
+                />
+              </Tooltip>
+            )}
+            <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {params.value || null}
+            </Typography>
+          </Box>
         ),
       }))
+    );
+
+    baseColumns = baseColumns.map((col) => {
+
+      if (col.field === 'format') {
+        return {
+          ...col,
+          renderCell: (params) => {
+            const formatName = params.value;
+            const formatPattern = formats[formatName]?.pattern || 'Pattern not found';
+            const isPatternNotFound = formatPattern === 'Pattern not found';
+            return (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  minHeight: '40px', // Ensures row height consistency
+                  gap: 1,
+                }}
+              >
+                {params.value && (
+                  <Tooltip title="Copy" arrow>
+                    <Copy
+                      style={{ cursor: 'pointer', minWidth: '16px', minHeight: '16px' }}
+                      size={16}
+                      onClick={() => {
+                        navigator.clipboard.writeText(params.value);
+                        enqueueSnackbar('Copied to clipboard', { variant: 'success' });
+                        sendAnalytics(params.row.id, type, 1);
+                      }}
+                    />
+                  </Tooltip>
+                )}
+                <Tooltip title={formatPattern}>
+                  <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',color: isPatternNotFound ? 'red' : 'inherit' }}>
+                    {params.value || null}
+                  </Typography>
+                </Tooltip>
+              </Box>
+            )
+          }
+        }
+      }
+      return col;
+    }
     );
     // Define the actions column
     const actionsColumn = {
@@ -193,6 +242,7 @@ function CustomDataGrid(props) {
     handleDeleteRow,
     handleReportRow,
     type,
+    formats,
   ]);
 
   return (

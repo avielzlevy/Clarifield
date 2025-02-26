@@ -8,8 +8,6 @@ import {
   Button,
   Checkbox,
   FormControlLabel,
-  Box,
-  Typography,
 } from '@mui/material';
 import ChangeWarning from './ChangeWarning';
 import { useAffectedItems } from '../contexts/useAffectedItems';

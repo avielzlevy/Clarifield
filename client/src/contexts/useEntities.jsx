@@ -17,7 +17,7 @@ export const EntitiesProvider = ({ children }) => {
 
   useEffect(() => {
     fetchEntities();
-  }, []);
+  }, [fetchEntities]);
 
   return (
     <EntitiesContext.Provider value={{ entities, fetchEntities, setEntities }}>

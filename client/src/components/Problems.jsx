@@ -11,22 +11,36 @@ import {
   Box,
   ClickAwayListener
 } from '@mui/material';
-import { Bell, X, AlertCircle } from 'lucide-react';
+import { X, AlertCircle, ShieldAlert } from 'lucide-react';
+import { useDefinitions } from '../contexts/useDefinitions';
+import { useFormats } from '../contexts/useFormats';
 
 export default function Problems() {
   const [isOpen, setIsOpen] = useState(false);
+  const { definitions } = useDefinitions();
+  const { formats } = useFormats();
 
-  const problems = useMemo(() => [
-    {
-      format: "2-8 Digits",
-      definitions: [
-        "id",
-        "employeeId",
-        "memberId",
-        "bdikakakakkakakakakakakakkaasdsadsadadsa"
-      ]
-    }
-  ], []);
+  // Build a problems map where the key is the missing format and the value is an array of definition keys
+  const problems = useMemo(() => {
+    const problemsMap = {};
+
+    Object.entries(definitions).forEach(([field, defObj]) => {
+      const { format } = defObj;
+      // If the format is not defined in formats, then it's a problem
+      if (!formats[format]) {
+        if (!problemsMap[format]) {
+          problemsMap[format] = [];
+        }
+        problemsMap[format].push(field);
+      }
+    });
+
+    // Convert the problemsMap into an array of objects for rendering
+    return Object.entries(problemsMap).map(([format, defs]) => ({
+      format,
+      definitions: defs
+    }));
+  }, [definitions, formats]);
 
   const totalDefinitions = useMemo(() => {
     return problems.reduce((count, problem) => count + problem.definitions.length, 0);
@@ -35,9 +49,9 @@ export default function Problems() {
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Notification Bell */}
-      <IconButton onClick={() => setIsOpen(!isOpen)} aria-label="Toggle problems menu">
+      <IconButton onClick={() => setIsOpen(!isOpen)} aria-label="Toggle problems menu" disabled={totalDefinitions === 0}>
         <Badge badgeContent={totalDefinitions} color="error" invisible={totalDefinitions === 0}>
-          <Bell size={24} />
+          <ShieldAlert size={24} color={totalDefinitions > 0 ? 'black' : 'white'} />
         </Badge>
       </IconButton>
 
@@ -50,7 +64,7 @@ export default function Problems() {
               position: 'absolute',
               right: 0,
               mt: 1,
-              width: 'auto ',
+              width: 'auto',
               zIndex: 10,
               borderRadius: 2,
               overflow: 'hidden'
@@ -93,7 +107,7 @@ export default function Problems() {
                         key={def}
                         primary={def}
                         slotProps={{
-                          primary:{
+                          primary: {
                             variant: 'body2',
                             color: 'text.secondary',
                             sx: { pl: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }

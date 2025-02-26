@@ -66,6 +66,9 @@ const ChangeLog = ({ activeFilters }) => {
     if (!activeFilters.formats) {
       logs = logs.filter((log) => log.category !== "format");
     }
+    if (!activeFilters.entities) {
+      logs = logs.filter((log) => log.category !== "entity");
+    }
     return logs;
   }, [changeData, activeFilters]);
 
