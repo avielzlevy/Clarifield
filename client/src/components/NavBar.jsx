@@ -17,7 +17,7 @@ import {
 
 import { SpaceDashboardRounded as DashboardIcon } from '@mui/icons-material';
 
-import { 
+import {
   Boxes,
   Book,
   FileJson,
@@ -27,7 +27,7 @@ import {
   Logs as LogsIcon,
   User as PersonIcon,
   UserCog as EnginnerIcon,
- } from 'lucide-react';
+} from 'lucide-react';
 import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
 import { usePage } from '../contexts/PageContext';
@@ -46,10 +46,7 @@ import Logs from '../pages/Logs';
 import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
-import { FormatsProvider } from '../contexts/useFormats';
-import { DefinitionsProvider } from '../contexts/useDefinitions';
-import { EntitiesProvider } from '../contexts/useEntities';
-import { AffectedItemsProvider } from '../contexts/useAffectedItems';
+import Problems from './Problems';
 
 //
 // PageContent Component
@@ -109,7 +106,7 @@ const PageContent = () => {
       ComponentToRender = () => <div>Page Not Found</div>;
   }
 
-  return <ComponentToRender/>;
+  return <ComponentToRender />;
 };
 
 //
@@ -156,7 +153,7 @@ function NavBar({ theme, setTheme }) {
     ];
     if (auth) {
       items.push({ text: 'settings', icon: <SettingsIcon />, route: 'settings' });
-      items.push({ text: 'analytics', icon: <ChartNoAxesColumn/>, route: 'analytics' });
+      items.push({ text: 'analytics', icon: <ChartNoAxesColumn />, route: 'analytics' });
       items.push({ text: 'logs', icon: <LogsIcon />, route: 'logs' });
     }
     return items;
@@ -204,8 +201,9 @@ function NavBar({ theme, setTheme }) {
               {t('app_name')}
             </Typography>
           </Box>
-          <SearchAll setPage={setPage}/>
+          <SearchAll setPage={setPage} />
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {auth ? <Problems /> : null}
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
                 {auth ? <EnginnerIcon /> : <PersonIcon />}
@@ -249,16 +247,16 @@ function NavBar({ theme, setTheme }) {
                       ? theme.palette.custom.bright
                       : undefined
                     : page === item.route
-                    ? theme.palette.custom.dark
-                    : undefined,
+                      ? theme.palette.custom.dark
+                      : undefined,
                 bgcolor:
                   theme.palette.mode === 'light'
                     ? page === item.route
                       ? theme.palette.custom.light
                       : undefined
                     : page === item.route
-                    ? theme.palette.custom.bright
-                    : undefined,
+                      ? theme.palette.custom.bright
+                      : undefined,
                 borderRadius: '20px',
                 width: '90%',
                 justifyContent: 'center',
@@ -273,8 +271,8 @@ function NavBar({ theme, setTheme }) {
                         ? theme.palette.custom.bright
                         : undefined
                       : page === item.route
-                      ? theme.palette.custom.db
-                      : undefined,
+                        ? theme.palette.custom.db
+                        : undefined,
                 }}
               >
                 {item.icon}
@@ -286,15 +284,7 @@ function NavBar({ theme, setTheme }) {
       </Drawer>
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}>
         <Toolbar />
-        <FormatsProvider>
-        <DefinitionsProvider>
-        <EntitiesProvider>
-        <AffectedItemsProvider>
-        <PageContent/>
-        </AffectedItemsProvider>
-        </EntitiesProvider>
-        </DefinitionsProvider>
-        </FormatsProvider>
+        <PageContent />
       </Box>
     </Box>
   );

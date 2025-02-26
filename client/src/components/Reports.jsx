@@ -208,7 +208,7 @@ const ReportCard = ({ report, isExpanded, onToggleExpand, theme, t, refreshRepor
   const cardKey = `${report.category}:${report.name}`;
 
   return (
-    <Card key={cardKey} elevation={3} sx={{ mb: 2, bgcolor: theme.palette.background.default }}>
+    <Card key={cardKey} elevation={1} sx={{ mb: 2, bgcolor: theme.palette.background.default }}>
       <CardHeader
         title={
           <Box display="flex" alignItems="center" justifyContent="space-between">

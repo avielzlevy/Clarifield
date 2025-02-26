@@ -12,6 +12,10 @@ import createCache from '@emotion/cache';
 import { prefixer } from 'stylis';
 import rtlPlugin from 'stylis-plugin-rtl';
 import { SearchProvider } from './contexts/SearchContext';
+import { FormatsProvider } from './contexts/useFormats';
+import { DefinitionsProvider } from './contexts/useDefinitions';
+import { EntitiesProvider } from './contexts/useEntities';
+import { AffectedItemsProvider } from './contexts/useAffectedItems';
 
 const rtlCache = createCache({
   key: 'muirtl',
@@ -45,7 +49,15 @@ const Providers = ({ children }) => (
     <AuthProvider>
       <RtlProvider>
         <SearchProvider>
-            {children}
+          <FormatsProvider>
+            <DefinitionsProvider>
+              <EntitiesProvider>
+                <AffectedItemsProvider>
+                  {children}
+                </AffectedItemsProvider>
+              </EntitiesProvider>
+            </DefinitionsProvider>
+          </FormatsProvider>
         </SearchProvider>
       </RtlProvider>
     </AuthProvider>

@@ -12,6 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
+import { useFormats } from '../contexts/useFormats';
 
 function CustomDataGrid(props) {
   const {
@@ -32,6 +33,7 @@ function CustomDataGrid(props) {
     height: window.innerHeight,
   });
   const [locale, setLocale] = useState(undefined);
+  const { formats } = useFormats();
 
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
@@ -105,9 +107,8 @@ function CustomDataGrid(props) {
   }, [rows, columns, searchTerm]);
 
   // Build columns with additional checkbox and actions columns
-  const columnsWithCheckbox = useMemo(() => {
+  const columnsWithCopy = useMemo(() => {
     let baseColumns = [];
-
     // Append the provided columns
     baseColumns = baseColumns.concat(
       columns.map((col) => ({
@@ -219,7 +220,7 @@ function CustomDataGrid(props) {
       </Box>
       <DataGrid
         rows={filteredRows}
-        columns={columnsWithCheckbox}
+        columns={columnsWithCopy}
         pageSize={10}
         rowsPerPageOptions={[50]}
         slotProps={{

@@ -11,7 +11,7 @@ import { useTheme } from '@mui/material/styles';
 import {
   Boxes,
   Pencil,
-  Trash,
+  Trash2 as Trash,
   Copy,
   Flag,
 } from 'lucide-react';
@@ -100,14 +100,14 @@ function EntityCard({ data }) {
         <List
           component="nav"
           sx={{
-            width: '100%',
+            width: 'auto',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
             gap: 0.3,
-            mx: '10px',
-            minWidth: '5.25vw',
+            px: 1,
+            
           }}
           subheader={
             <ListSubheader
