@@ -46,7 +46,7 @@ const initMongo = async () => {
 // Helper function to normalize description entries.
 // If an entry is a string (old format), it converts it into the new object format.
 const normalizeDescriptions = (
-  descriptions: any[]
+  descriptions: { status: string; description: string; }[]
 ): { status: string; description: string }[] => {
   return descriptions.map((item) => {
     if (typeof item === "string") {

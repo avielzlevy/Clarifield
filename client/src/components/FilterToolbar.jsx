@@ -32,7 +32,7 @@ const FilterToolbar = ({ activeFilters, toggleFilter }) => {
       }
     };
     fetchItemsAmount();
-  }, []);
+  }, [enqueueSnackbar]);
   return (
     <Box sx={{ display: "flex", justifyContent: "center", gap: 3 }}>
       <Paper elevation={3} sx={{ p: 1, borderRadius: 4, display: "flex", gap: 2 }}>

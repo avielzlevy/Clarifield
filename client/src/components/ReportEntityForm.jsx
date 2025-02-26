@@ -15,7 +15,7 @@ const ReportEntityForm = ({ node,report,setReport }) => {
 
   const handleDescriptionChange = useCallback((e) => {
     setReport((prev) => ({ ...prev, description: e.target.value }));
-  }, []);
+  }, [setReport]);
 
   return (
     <Box>

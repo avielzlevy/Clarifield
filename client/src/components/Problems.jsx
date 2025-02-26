@@ -11,7 +11,7 @@ import {
   Box,
   ClickAwayListener
 } from '@mui/material';
-import { Bell, X, AlertCircle, ChevronRight } from 'lucide-react';
+import { Bell, X, AlertCircle } from 'lucide-react';
 
 export default function Problems() {
   const [isOpen, setIsOpen] = useState(false);

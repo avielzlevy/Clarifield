@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Chip,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useTranslation } from "react-i18next";

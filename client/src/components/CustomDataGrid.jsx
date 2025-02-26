@@ -12,7 +12,6 @@ import { useTranslation } from 'react-i18next';
 import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
-import { useFormats } from '../contexts/useFormats';
 
 function CustomDataGrid(props) {
   const {
@@ -33,8 +32,6 @@ function CustomDataGrid(props) {
     height: window.innerHeight,
   });
   const [locale, setLocale] = useState(undefined);
-  const { formats } = useFormats();
-
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
   }, []);
