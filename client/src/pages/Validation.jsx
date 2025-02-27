@@ -1,63 +1,67 @@
 import React, { useState, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
-import { Box, Typography } from '@mui/material';
-import axios from 'axios';
+import { Box, Typography, Stack } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useTranslation } from 'react-i18next';
+import axios from 'axios';
+// Adjust these imports to match your icon library
+import { Shield, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 
-// Helper function to check if a string is valid JSON
+// Define a simple keyframes animation for the loading spinner
+const spinAnimation = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
+
+// Helper to check valid JSON
 const isValidJSON = (jsonString) => {
   if (!jsonString) return false;
   try {
     JSON.parse(jsonString);
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
 
-// Function to validate JSON via an API call
+// Validate JSON via API call
 const validateJSON = async (jsonString) => {
   try {
-    // If the validation is successful, we assume no errors and return null
     await axios.post(`${process.env.REACT_APP_API_URL}/api/validate`, jsonString, {
       headers: { 'Content-Type': 'application/json' },
     });
     return null;
   } catch (error) {
-    // Check for a 400 error and return the response if present
     if (error.response && error.response.status === 400) {
       return error.response;
     }
-    // For other errors, log and return a generic error
     console.error('Validation error:', error);
-    return { data: ['Unexpected error during validation.'] };
+    return { data: [{ path: '', message: 'Unexpected error during validation.' }] };
   }
 };
 
 function Validation() {
-  const [errors, setErrors] = useState([]);
   const [schema, setSchema] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+  const [validationResult, setValidationResult] = useState(null);
   const theme = useTheme();
   const { t } = useTranslation();
 
-  // Handler to validate schema changes
+  // Validate schema changes on every editor change
   const handleSchemaValidation = useCallback(async (value) => {
     setSchema(value);
     if (isValidJSON(value)) {
+      setIsValidating(true);
       const response = await validateJSON(value);
+      console.log('Validation response:', response);
       if (response && response.data) {
-        setErrors(response.data);
+        // Assume response.data is an array of violations when invalid
+        setValidationResult({ isValid: false, violations: response.data });
       } else {
-        setErrors([]);
+        setValidationResult({ isValid: true });
       }
+      setIsValidating(false);
     } else {
-      setErrors([]);
+      setValidationResult(null);
     }
   }, []);
-
-  // Compute validity once to avoid multiple calls in render
-  const valid = isValidJSON(schema);
 
   return (
     <Box
@@ -83,7 +87,7 @@ function Validation() {
         />
       </Box>
 
-      {/* Validation Results Section */}
+      {/* New Validation Results Section */}
       <Box
         sx={{
           width: '50%',
@@ -92,44 +96,188 @@ function Validation() {
           backgroundColor: theme.palette.custom.editor,
         }}
       >
-        <Typography variant="h6" gutterBottom>
-          {t('validation_results')}
-        </Typography>
-        <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-          <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-            {t('valid_object')}:{' '}
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: valid ? 'green' : 'red',
-              fontWeight: 'bold',
-              ml: 1,
-            }}
-          >
-            {valid ? t('true') : t('false')}
-          </Typography>
-        </Box>
-        <Box mt={2}>
-          <Typography variant="body1">{t('policy_violation')}:</Typography>
-          <Box
-          dir="ltr"
-            sx={{
-              color: 'red',
-              fontWeight: 'bold',
-              whiteSpace: 'pre-wrap',
-              mt: 1,
-            }}
-          >
-            {errors.map((error, index) => (
-              <Typography
-                key={index}
-                variant="body1"
-                sx={{ whiteSpace: 'pre-wrap', fontWeight: 'bold' }}
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minWidth: 0,
+            overflow: 'auto',
+          }}
+        >
+          {/* Header */}
+          <Box sx={{ p: 0, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography
+              variant="h6"
+              component="h2"
+              sx={{ display: 'flex', alignItems: 'center', fontWeight: 600 }}
+            >
+              <Shield
+                style={{
+                  marginRight: 8,
+                  height: 20,
+                  width: 20,
+                  color: '#6366F1',
+                }}
+              />
+              {t('validation_results') || 'Validation Results'}
+            </Typography>
+          </Box>
+
+          {/* Content */}
+          <Box sx={{ p: 3, overflow: 'auto' }}>
+            {isValidating ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: 160,
+                }}
               >
-                {`${index + 1}. ${error}`}
-              </Typography>
-            ))}
+                <RefreshCw
+                  style={{
+                    height: 32,
+                    width: 32,
+                    color: '#6366F1',
+                    marginBottom: 16,
+                    animation: `${spinAnimation} 1s linear infinite`,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {t('validating_json') || 'Validating JSON...'}
+                </Typography>
+              </Box>
+            ) : validationResult ? (
+              <Stack spacing={3}>
+                {/* Validation Result */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderRadius: 2,
+                    backgroundColor: validationResult.isValid
+                      ? '#f0fdf4'
+                      : '#fef2f2',
+                    border: 1,
+                    borderColor: validationResult.isValid ? 'success.main' : 'error.main',
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {validationResult.isValid ? (
+                      <CheckCircle
+                        style={{
+                          height: 24,
+                          width: 24,
+                          color: '#10B981',
+                          marginRight: 12,
+                        }}
+                      />
+                    ) : (
+                      <AlertTriangle
+                        style={{
+                          height: 24,
+                          width: 24,
+                          color: '#EF4444',
+                          marginRight: 12,
+                        }}
+                      />
+                    )}
+                    <Box>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                        {validationResult.isValid ? 'Valid JSON' : 'Invalid JSON'}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: validationResult.isValid ? 'success.dark' : 'error.dark',
+                        }}
+                      >
+                        {validationResult.isValid
+                          ? 'The JSON is valid and meets all schema requirements.'
+                          : 'The JSON contains errors or does not meet schema requirements.'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Validation Issues */}
+                {!validationResult.isValid &&
+                  validationResult.violations &&
+                  validationResult.violations.length > 0 && (
+                    <Box>
+                      <Typography
+                        variant="subtitle1"
+                        sx={{ fontWeight: 500, mb: 2, color: 'text.primary' }}
+                      >
+                        Validation Issues
+                      </Typography>
+                      <Stack spacing={2}>
+                        {validationResult.violations.map((violation, index) => (
+                          <Box
+                            key={index}
+                            sx={{
+                              p: 1,
+                              backgroundColor: 'grey.100',
+                              borderRadius: 1,
+                              display: 'flex',
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <AlertTriangle
+                              style={{
+                                minHeight: 16,
+                                minWidth: 16,
+                                color: '#EF4444',
+                                marginRight: 8,
+                                marginTop: 0,
+                              }}
+                            />
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  display: 'block',
+                                  fontFamily: 'monospace',
+                                  color: '#DC2626',
+                                }}
+                              >
+                                {violation}
+                              </Typography>
+
+                            </Box>
+                          </Box>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                {/* Schema Validation Message */}
+                {validationResult.isValid && (
+                  <Box
+                    sx={{
+                      p: 2,
+                      backgroundColor: 'grey.100',
+                      borderRadius: 2,
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle1"
+                      sx={{ fontWeight: 500, mb: 1, color: 'text.primary' }}
+                    >
+                      Schema Validation
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      All schema requirements have been met. The JSON structure is valid and can be
+                      used in your application.
+                    </Typography>
+                  </Box>
+                )}
+              </Stack>
+            ) : (
+              null
+            )}
           </Box>
         </Box>
       </Box>

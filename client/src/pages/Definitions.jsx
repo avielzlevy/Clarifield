@@ -19,7 +19,7 @@ import { useSearch } from '../contexts/SearchContext';
 import { useDefinitions } from '../contexts/useDefinitions';
 function Definitions() {
   const { definitions, fetchDefinitions } = useDefinitions();
-  const [DialogOpen, setDialogOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -122,7 +122,7 @@ function Definitions() {
         />
         <DefinitionDialog
           mode={dialogMode}
-          open={DialogOpen}
+          open={dialogOpen}
           onClose={() => setDialogOpen(false)}
           editedDefinition={actionedDefinition}
         />

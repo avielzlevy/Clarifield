@@ -7,6 +7,7 @@ import {
   TextField,
   DialogActions,
   Button,
+  Box,
 } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
@@ -16,6 +17,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useSearch } from "../contexts/SearchContext";
 import { useAffectedItems } from "../contexts/useAffectedItems";
 import { useFormats } from "../contexts/useFormats";
+import RegexBuilderDialog from "./RegexBuilderDialog";
 
 const FormatDialog = ({
   mode,
@@ -31,6 +33,7 @@ const FormatDialog = ({
   const { t } = useTranslation();
   const { affected, fetchAffectedItems } = useAffectedItems();
   const { fetchFormats } = useFormats();
+  const [regexBuilderDialogOpen, setRegexBuilderDialogOpen] = useState(false);
   // Reset format to default
   const resetFormat = useCallback(() => {
     setFormat({ name: "", pattern: "", description: "" });
@@ -168,6 +171,7 @@ const FormatDialog = ({
           Save
         </Button>
       </DialogActions>
+      <RegexBuilderDialog open={regexBuilderDialogOpen} setOpen={setRegexBuilderDialogOpen} setFormat={setFormat} />
     </Dialog>
   );
 };

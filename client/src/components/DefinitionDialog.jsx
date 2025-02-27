@@ -141,7 +141,7 @@ const DefinitionDialog = ({
   }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token]);
 
   const handleCancel = () => {
-    setDefinition({ name: "", format: "", description: "" });
+    // setDefinition({ name: "", format: "", description: "" });
     onClose();
   };
 
