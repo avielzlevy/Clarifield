@@ -127,7 +127,7 @@ const FormatDialog = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         {mode === "add" ? "Add Format" : "Edit Format"}
-        {affected && <ChangeWarning items={affected} level="warning" />}
+        {affected && mode !== 'add'&& <ChangeWarning items={affected} level="warning" />}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>

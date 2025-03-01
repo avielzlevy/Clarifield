@@ -9,21 +9,20 @@ import {
     IconButton,
     TextField,
     Box,
-    Grid,
     Typography,
     Chip,
 } from '@mui/material'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import RefreshIcon from '@mui/icons-material/Refresh'
 import RandExp from 'randexp'
-import { RefreshCcw } from 'lucide-react'
+import { RefreshCcw, CircleCheck, CircleX } from 'lucide-react'
 
 export default function RegexBuilderDialog(props) {
-    const { open, setOpen,setFormat } = props
+    const { open, setOpen, setFormat } = props
     // Regex pattern state
     const [pattern, setPattern] = useState("")
     const [testString, setTestString] = useState("Test your regex here")
-    const [matches, setMatches] = useState([])
+    const [matches, setMatches] = useState(false)
     const [examples, setExamples] = useState({ valid: [] })
 
     // Character class presets
@@ -35,9 +34,6 @@ export default function RegexBuilderDialog(props) {
         whitespace: false,
         specialChars: false,
     })
-
-    // Length toggle and its parameters
-    const [lengthEnabled, setLengthEnabled] = useState(false)
     const [minLength, setMinLength] = useState("")
     const [maxLength, setMaxLength] = useState("")
     // Build regex pattern based on presets and length settings
@@ -45,56 +41,114 @@ export default function RegexBuilderDialog(props) {
         let basePattern = ""
         const charClasses = []
         if (presets.digits) charClasses.push("0-9")
-        if (presets.letters) charClasses.push("a-zA-Z")
-        else {
-            if (presets.lowercase) charClasses.push("a-z")
-            if (presets.uppercase) charClasses.push("A-Z")
-        }
+        if (presets.hebrewletters) charClasses.push("א-תךםןףץ")
+        if (presets.lowercase) charClasses.push("a-z")
+        if (presets.uppercase) charClasses.push("A-Z")
         if (presets.whitespace) charClasses.push("\\s")
         if (presets.specialChars)
             charClasses.push("!@#$%^&*()_+\\-=\\[\\]{}|;:'\",.<>/?\\\\")
         if (charClasses.length > 0) {
             basePattern = `[${charClasses.join("")}]`
         }
-        // If length toggle is enabled and there is a base pattern, append quantifier
-        if (lengthEnabled && basePattern) {
-            if (minLength !== "" || maxLength !== "") {
-                basePattern = `${basePattern}{${minLength||0},${maxLength}}`
-            }
+        if (minLength !== "" || maxLength !== "") {
+            basePattern = `${basePattern}{${minLength || 0},${maxLength}}`
         }
         setPattern(`^${basePattern}$`)
-    }, [presets, lengthEnabled, minLength, maxLength])
+    }, [presets, minLength, maxLength])
 
     // Test the regex against the test string
     useEffect(() => {
         if (!pattern) {
-            setMatches([])
+            setMatches(false)
             return
         }
         try {
             const regex = new RegExp(pattern, "g")
-            const matchResults = [...testString.matchAll(regex)]
-            setMatches(matchResults.map((match) => match[0]))
+            const matchResults = regex.test(testString)
+            setMatches(matchResults)
         } catch (error) {
-            setMatches([])
+            setMatches(false)
         }
     }, [pattern, testString])
 
+
+    // Extract {min,max} from the pattern
+    const extractMinMaxFromPattern = (pattern) => {
+        const match = pattern.match(/\{(\d+),?(\d+)?\}/); // Capture `{min,max}` or `{min}`
+        if (match) {
+            const min = parseInt(match[1], 10);
+            const max = match[2] ? parseInt(match[2], 10) : min; // If no max, min = max
+            return { min, max };
+        }
+        return { min: 5, max: 10 }; // Default fallback if no `{x,y}` is found
+    };
+
+    // Hebrew character set (including final letters)
+    const HEBREW_CHARS = "אבגדהוזחטיכלמנסעפצקרשתךםןףץ";
+
+    // Generate a fully Hebrew example
+    const generateHebrewExample = ({ min, max, numbers = false }) => {
+        console.log({ min, max, numbers })
+        const length = Math.floor(Math.random() * (max - min + 1)) + min;
+        let result = "";
+        let charUsed = HEBREW_CHARS
+        if (numbers) {
+            charUsed += "0123456789"
+        }
+        for (let i = 0; i < length; i++) {
+            result += charUsed.charAt(Math.floor(Math.random() * charUsed.length));
+        }
+        console.log(result)
+        return result;
+    };
+
+    // Function to mix Hebrew into a base string
+    const mixHebrewIntoExample = (baseExample) => {
+        let result = baseExample.split('');
+        for (let i = 0; i < result.length; i++) {
+            if (Math.random() < 0.5) { // 50% chance to replace a character with Hebrew
+                result[i] = HEBREW_CHARS.charAt(Math.floor(Math.random() * HEBREW_CHARS.length));
+            }
+        }
+        return result.join('');
+    };
+
     const generateAllowed = useCallback(() => {
-        // use RandExp and fill examples with valid examples
+        const { min, max } = extractMinMaxFromPattern(pattern); // Extract min/max from pattern
         const randexp = new RandExp(pattern);
         const valid = [];
-        const invalid = [];
-        for (let i = 0; i < 5; i++) {
-            valid.push(randexp.gen());
-        }
-        setExamples({ valid, invalid });
-    }, [pattern]);
 
+        for (let i = 0; i < 5; i++) {
+            let example;
+
+            if (pattern.includes("א-תךםןףץ") && !pattern.includes("a-z") && !pattern.includes("A-Z") && !pattern.includes("0-9")) {
+
+                example = generateHebrewExample({ min, max });
+
+            } else {
+                // Otherwise, use RandExp and inject Hebrew if needed
+                example = randexp.gen();
+                if (pattern.includes('א-ת') || pattern.includes('ךםןףץ')) {
+                    example = mixHebrewIntoExample(example);
+                }
+            }
+            if (example !== null && example !== undefined)
+                valid.push(example);
+        }
+
+        setExamples({ valid });
+    }, [pattern]);
     // Generate example matches and non-matches
     useEffect(() => {
-        if (!pattern) {
-            setExamples({ valid: [], invalid: [] })
+        if (
+            !pattern ||
+            (
+                minLength !== "" &&
+                maxLength !== "" &&
+                (!pattern.includes("[") || !pattern.includes("]"))
+            )
+        ) {
+            setExamples({ valid: [] })
             return
         }
         try {
@@ -144,79 +198,83 @@ export default function RegexBuilderDialog(props) {
             <Button variant="contained" onClick={() => setOpen(true)}>
                 Open Regex Builder
             </Button>
-            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="lg" fullWidth>
+            <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xl">
                 <DialogTitle>Regex Builder</DialogTitle>
                 <DialogContent dividers>
-                    <Grid container spacing={2}>
-                        {/* Sidebar for Character Classes */}
-                        <Grid item xs={12} md={3}>
-                            <Typography variant="h6" gutterBottom>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            maxWidth: '20vw',
+                            gap: 2,
+                            // padding: 2,
+                            // borderRight: { xs: 0, md: '1px solid #e0e0e0' },
+                        }}>
+                            <Typography variant="h7" gutterBottom>
                                 Character Classes
                             </Typography>
                             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                                 <Button
+                                    sx={{ textTransform: 'none' }}
                                     variant={presets.digits ? "contained" : "outlined"}
                                     onClick={() => togglePreset("digits")}
                                 >
                                     Digits (0-9)
                                 </Button>
                                 <Button
-                                    variant={presets.letters ? "contained" : "outlined"}
-                                    onClick={() => togglePreset("letters")}
+                                    sx={{ textTransform: 'none' }}
+                                    variant={presets.hebrewletters ? "contained" : "outlined"}
+                                    onClick={() => togglePreset("hebrewletters")}
                                 >
-                                    Letters (a-z, A-Z)
+                                    Hebrew Letters (א-ת)
                                 </Button>
                                 <Button
+                                    sx={{ textTransform: 'none' }}
                                     variant={presets.lowercase ? "contained" : "outlined"}
                                     onClick={() => togglePreset("lowercase")}
                                 >
-                                    Lowercase (a-z)
+                                    English Lowercase (a-z)
                                 </Button>
                                 <Button
+                                    sx={{ textTransform: 'none' }}
                                     variant={presets.uppercase ? "contained" : "outlined"}
                                     onClick={() => togglePreset("uppercase")}
                                 >
-                                    Uppercase (A-Z)
+                                    English Uppercase (A-Z)
                                 </Button>
                                 <Button
+                                    sx={{ textTransform: 'none' }}
                                     variant={presets.whitespace ? "contained" : "outlined"}
                                     onClick={() => togglePreset("whitespace")}
                                 >
                                     Whitespace
                                 </Button>
                                 <Button
+                                    sx={{ textTransform: 'none' }}
                                     variant={presets.specialChars ? "contained" : "outlined"}
                                     onClick={() => togglePreset("specialChars")}
                                 >
                                     Special Characters
                                 </Button>
-                                {/* New Length Toggle */}
-                                <Button
-                                    variant={lengthEnabled ? "contained" : "outlined"}
-                                    onClick={() => setLengthEnabled((prev) => !prev)}
-                                >
-                                    Length
-                                </Button>
-                                {lengthEnabled && (
-                                    <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                                        <TextField 
-                                            label="Min" 
-                                            variant="outlined" 
-                                            size="small" 
-                                            type="number" 
-                                            value={minLength} 
-                                            onChange={(e) => setMinLength(e.target.value)} 
-                                        />
-                                        <TextField 
-                                            label="Max" 
-                                            variant="outlined" 
-                                            size="small" 
-                                            type="number" 
-                                            value={maxLength} 
-                                            onChange={(e) => setMaxLength(e.target.value)} 
-                                        />
-                                    </Box>
-                                )}
+
+                                <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                                    <TextField
+                                        label="Min"
+                                        variant="outlined"
+                                        size="small"
+                                        type="number"
+                                        value={minLength}
+                                        onChange={(e) => setMinLength(e.target.value)}
+                                    />
+                                    <TextField
+                                        label="Max"
+                                        variant="outlined"
+                                        size="small"
+                                        type="number"
+                                        value={maxLength}
+                                        onChange={(e) => setMaxLength(e.target.value)}
+                                    />
+                                </Box>
                                 <Button
                                     variant="outlined"
                                     onClick={() =>
@@ -234,10 +292,19 @@ export default function RegexBuilderDialog(props) {
                                     Reset All
                                 </Button>
                             </Box>
-                        </Grid>
-                        {/* Main Content */}
-                        <Grid item xs={12} md={9}>
-                            <Box sx={{ mb: 2 }}>
+                        </Box>
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            maxWidth: '50vw',
+                            width: '50vw',
+                            gap: 2,
+                            // padding: 2,
+                        }}>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                            }}>
                                 <Typography variant="subtitle1">Current Regex</Typography>
                                 <Box
                                     sx={{
@@ -277,42 +344,35 @@ export default function RegexBuilderDialog(props) {
                                     variant="outlined"
                                     value={testString}
                                     onChange={(e) => setTestString(e.target.value)}
-                                    inputProps={{ style: { fontFamily: 'monospace' } }}
+                                    Ado
+                                    sx={{
+                                        "& fieldset": { border: 'none' },
+                                        "border": matches ? '1px solid green' : '1px solid red',
+                                        borderRadius: 2,
+                                    }}
+                                    slotProps={{
+                                        input: {
+                                            disableUnderline: true,
+                                            endAdornment: matches ? <CircleCheck color="green" /> : <CircleX color="red" />
+                                        }
+                                    }}
                                 />
                             </Box>
-                            <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle1">Matches</Typography>
-                                <Box
-                                    sx={{
-                                        minHeight: '40px',
-                                        padding: 1,
-                                        backgroundColor: '#f5f5f5',
-                                        borderRadius: 1,
-                                        display: 'flex',
-                                        flexWrap: 'wrap',
-                                        gap: 1,
-                                    }}
-                                >
-                                    {matches.length > 0 ? (
-                                        matches.map((match, i) => (
-                                            <Chip key={i} label={match} variant="outlined" />
-                                        ))
-                                    ) : (
-                                        <Typography variant="body2" color="textSecondary">
-                                            No matches found
-                                        </Typography>
-                                    )}
-                                </Box>
-                            </Box>
-                            <Box>
+                            <Box sx={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: 2,
+                                maxWidth: '50vw'
+
+                            }}>
                                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Typography variant="subtitle1">Reference Window</Typography>
-                                <RefreshCcw onClick={generateAllowed} style={{ cursor: 'pointer' }} />
+                                    <Typography variant="subtitle1">Reference Window</Typography>
+                                    <RefreshCcw onClick={generateAllowed} style={{ cursor: 'pointer' }} />
                                 </Box>
                                 {examples.valid.length > 0 ? (
-                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, overflowY: 'auto' }}>
                                         {examples.valid.map((ex, i) => (
-                                            <Chip key={i} label={ex} variant="outlined" color="success" />
+                                            <Chip key={i} label={ex} variant="outlined" color="success" onClick={() => setTestString(ex)} />
                                         ))}
                                     </Box>
                                 ) : (
@@ -321,8 +381,8 @@ export default function RegexBuilderDialog(props) {
                                     </Typography>
                                 )}
                             </Box>
-                        </Grid>
-                    </Grid>
+                        </Box>
+                    </Box>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setOpen(false)}>Close</Button>
