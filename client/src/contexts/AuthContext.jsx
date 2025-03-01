@@ -31,8 +31,8 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('username');
       setAuth(false);
       if (mode === 'bad_token') {
-        window.location.reload()
-        enqueueSnackbar('Session expired', { variant: 'info' });
+        enqueueSnackbar('Session expired.\n Page will reload', { variant: 'info' });
+        setTimeout(() => window.location.reload(), 3000);
       } else if (mode === 'logout') {
         enqueueSnackbar('Logged out', { variant: 'info' });
       }
