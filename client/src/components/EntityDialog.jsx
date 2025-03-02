@@ -221,7 +221,7 @@ function EntityDialog({
     if (!data || data.length === 0) return '';
 
     // Determine headers dynamically from the first row
-    const headers = Object.keys(data[0]);
+    const headers = ['name', 'type', 'format', 'description'];
 
     // Use inline CSS for a modern table style
     let html = `

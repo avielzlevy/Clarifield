@@ -98,7 +98,10 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
           Cancel
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleSubmit()
+          }}
           variant="contained"
           color="primary"
           disabled={!reportData.description.trim()}

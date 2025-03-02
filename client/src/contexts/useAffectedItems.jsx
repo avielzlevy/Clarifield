@@ -11,7 +11,7 @@ export const AffectedItemsProvider = ({ children }) => {
 
     const fetchAffectedItems = useCallback(
         async ({ name, type }) => {
-            console.log(`Fetching affected items for ${type} ${name}`);
+            console.trace(`Fetching affected items for ${type} ${name}`);
             let affectedItems = {};
 
             switch (type) {

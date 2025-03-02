@@ -178,7 +178,7 @@ function CustomDataGrid(props) {
                   </Tooltip>
                 )}
                 <Tooltip title={formatPattern}>
-                  <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',color: isPatternNotFound ? 'red' : 'inherit' }}>
+                  <Typography variant="subtitle" sx={{ flexGrow: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isPatternNotFound ? 'red' : 'inherit' }}>
                     {params.value || null}
                   </Typography>
                 </Tooltip>
@@ -225,9 +225,7 @@ function CustomDataGrid(props) {
               mt: 0.75,
             }}
           >
-            <Tooltip title="Report" arrow>
-              <Flag style={{ cursor: 'pointer', fill: 'black' }} onClick={() => handleReportRow(params.row)} />
-            </Tooltip>
+            <Flag style={{ cursor: 'pointer', fill: 'black' }} onClick={() => handleReportRow(params.row)} />
           </Box>
         );
       },
@@ -278,6 +276,7 @@ function CustomDataGrid(props) {
         disableColumnSelector
         disableDensitySelector
         disableRowSelectionOnClick
+        disable
         localeText={locale}
         isCellEditable={() => false}
         sx={{

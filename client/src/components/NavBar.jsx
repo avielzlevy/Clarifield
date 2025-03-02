@@ -203,7 +203,7 @@ function NavBar({ theme, setTheme }) {
           </Box>
           <SearchAll setPage={setPage} />
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {auth ? <Problems /> : null}
+            <Problems />
             <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
                 {auth ? <EnginnerIcon /> : <PersonIcon />}

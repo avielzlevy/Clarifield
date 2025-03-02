@@ -58,8 +58,8 @@ const Formats = () => {
   // Handlers for opening dialogs.
   const openAddDialog = useCallback(() => {
     setDialogMode('add');
-    setDialogOpen(true);
     setSelectedFormat(null);
+    setDialogOpen(true);
   }, []);
 
   const openEditDialog = useCallback((format) => {
@@ -74,6 +74,7 @@ const Formats = () => {
   }, []);
 
   const openReportDialog = useCallback((format) => {
+    console.trace("openReportDialog triggered", format)
     setSelectedFormat(format);
     setReportDialogOpen(true);
   }, []);

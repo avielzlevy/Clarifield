@@ -158,7 +158,7 @@ const ChangeLog = ({ activeFilters }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box sx={{ textAlign: "center" }}>
-        <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: "bold" }}>
           {t("change_log")}
         </Typography>
       </Box>

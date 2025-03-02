@@ -9,49 +9,71 @@ import {
   ListItemText,
   Divider,
   Box,
-  ClickAwayListener
+  ClickAwayListener,
+  ListItemIcon
 } from '@mui/material';
-import { X, AlertCircle, ShieldAlert } from 'lucide-react';
+import { X, AlertCircle, ShieldAlert,Boxes,Book } from 'lucide-react';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useFormats } from '../contexts/useFormats';
+import { useEntities } from '../contexts/useEntities';
+import { useTheme } from '@mui/material/styles';
 
 export default function Problems() {
   const [isOpen, setIsOpen] = useState(false);
-  const { definitions } = useDefinitions();
   const { formats } = useFormats();
+  const { definitions } = useDefinitions();
+  const { entities } = useEntities();
+  const theme = useTheme();
 
-  // Build a problems map where the key is the missing format and the value is an array of definition keys
+  // Combine two checks:
+  // 1. Definitions referencing missing formats.
+  // 2. Entities referencing missing definitions or entities.
   const problems = useMemo(() => {
-    const problemsMap = {};
+    const problemsList = [];
 
-    Object.entries(definitions).forEach(([field, defObj]) => {
+    // Check for definitions that use a format which is not defined.
+    Object.entries(definitions).forEach(([defKey, defObj]) => {
       const { format } = defObj;
-      // If the format is not defined in formats, then it's a problem
       if (!formats[format]) {
-        if (!problemsMap[format]) {
-          problemsMap[format] = [];
-        }
-        problemsMap[format].push(field);
+        problemsList.push({
+          type: 'definition-format',
+          message: `Definition '${defKey}' uses missing format '${format}'.`
+        });
       }
     });
 
-    // Convert the problemsMap into an array of objects for rendering
-    return Object.entries(problemsMap).map(([format, defs]) => ({
-      format,
-      definitions: defs
-    }));
-  }, [definitions, formats]);
+    // Check entity references.
+    Object.entries(entities).forEach(([entityKey, entity]) => {
+      entity.fields.forEach(field => {
+        if (field.type === 'definition' && !definitions[field.label]) {
+          problemsList.push({
+            type: 'entity-reference',
+            message: `Entity '${entityKey}' references missing definition '${field.label}'.`
+          });
+        } else if (field.type === 'entity' && !entities[field.label]) {
+          problemsList.push({
+            type: 'entity-reference',
+            message: `Entity '${entityKey}' references missing entity '${field.label}'.`
+          });
+        }
+      });
+    });
 
-  const totalDefinitions = useMemo(() => {
-    return problems.reduce((count, problem) => count + problem.definitions.length, 0);
-  }, [problems]);
+    return problemsList;
+  }, [definitions, formats, entities]);
+
+  const totalProblems = problems.length;
 
   return (
     <Box sx={{ position: 'relative' }}>
       {/* Notification Bell */}
-      <IconButton onClick={() => setIsOpen(!isOpen)} aria-label="Toggle problems menu" disabled={totalDefinitions === 0}>
-        <Badge badgeContent={totalDefinitions} color="error" invisible={totalDefinitions === 0}>
-          <ShieldAlert size={24} color={totalDefinitions > 0 ? 'black' : 'white'} />
+      <IconButton
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle problems menu"
+        disabled={totalProblems === 0}
+      >
+        <Badge badgeContent={totalProblems} color="error" invisible={totalProblems === 0}>
+          <ShieldAlert size={24} color={totalProblems > 0 ? 'black' : 'white'} />
         </Badge>
       </IconButton>
 
@@ -71,7 +93,16 @@ export default function Problems() {
             }}
           >
             {/* Header */}
-            <Box sx={{ bgcolor: 'error.main', color: 'white', p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box
+              sx={{
+                bgcolor: 'error.main',
+                color: 'white',
+                p: 2,
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}
+            >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <AlertCircle size={24} />
                 <Typography variant="h6">Problems</Typography>
@@ -84,37 +115,38 @@ export default function Problems() {
             {/* Description */}
             <Box sx={{ p: 2, bgcolor: 'error.light' }}>
               <Typography variant="body2" color="white">
-                {totalDefinitions} definition{totalDefinitions !== 1 ? 's' : ''} need{totalDefinitions === 1 ? 's' : ''} attention
+                {totalProblems} problem{totalProblems !== 1 ? 's' : ''} need{totalProblems === 1 ? 's' : ''} attention
               </Typography>
             </Box>
 
             {/* List of Problems */}
             <List sx={{ maxHeight: 400, overflowY: 'auto' }}>
               {problems.map((problem, index) => (
-                <React.Fragment key={problem.format}>
-                  <ListItem sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    {/* Format Title */}
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 8, height: 8, bgcolor: 'error.main', borderRadius: '50%' }} />
-                        <Typography variant="body1" fontWeight={500}>{problem.format}</Typography>
-                      </Box>
-                    </Box>
-
-                    {/* Definitions */}
-                    {problem.definitions.map((def) => (
-                      <ListItemText
-                        key={def}
-                        primary={def}
-                        slotProps={{
-                          primary: {
-                            variant: 'body2',
-                            color: 'text.secondary',
-                            sx: { pl: 3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }
+                <React.Fragment key={index}>
+                  <ListItem sx={{
+                    display: 'flex',
+                    // gap: 1,
+                  }}>
+                    <ListItemIcon sx={{ minWidth: 35 }}>
+                      {problem.type === 'definition-format' ? 
+                      <Book color={theme.palette.custom.bright}/> :
+                       problem.type === 'entity-reference' ? 
+                       <Boxes color={theme.palette.custom.bright}/> : null}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={problem.message}
+                      slotProps={{
+                        primary: {
+                          variant: 'body2',
+                          color: 'text.secondary',
+                          sx: {
+                            overflow: 'hidden',
+                            whiteSpace: 'nowrap',
+                            textOverflow: 'ellipsis',
                           }
-                        }}
-                      />
-                    ))}
+                        }
+                      }}
+                    />
                   </ListItem>
                   {index < problems.length - 1 && <Divider />}
                 </React.Fragment>
@@ -124,7 +156,7 @@ export default function Problems() {
             {/* Footer */}
             <Box sx={{ p: 2, bgcolor: 'grey.100', textAlign: 'center' }}>
               <Typography variant="body2" color="textSecondary">
-                Review and update the format definitions to resolve these issues
+                Review and update your definitions, formats, and entity references to resolve these issues.
               </Typography>
             </Box>
           </Paper>

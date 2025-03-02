@@ -3,6 +3,7 @@
 import { Context, RouterContext } from "../deps.ts";
 import { addChange } from "../utils/changes.ts";
 import * as defRepo from "../repositories/definitionRepository.ts";
+import * as entRepo from "../repositories/entityRepository.ts";
 
 /**
  * GET /api/definitions

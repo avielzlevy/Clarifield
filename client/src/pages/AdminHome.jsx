@@ -6,10 +6,10 @@ import FilterToolbar from "../components/FilterToolbar";
 
 const paperSx = {
   flex: 1,
-  p: 2,
+  p: 1,
   display: "flex",
   flexDirection: "column",
-  height: "65vh"
+  height: "70vh"
 };
 
 const AdminHomepage = () => {

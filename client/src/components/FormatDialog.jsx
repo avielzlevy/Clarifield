@@ -41,13 +41,13 @@ const FormatDialog = ({
 
   // Update form when editedFormat changes
   useEffect(() => {
-    if (editedFormat) {
+    if (editedFormat&&mode === "edit") {
       setFormat(editedFormat);
       fetchAffectedItems({ name: editedFormat.name, type: 'format' });
     } else {
       resetFormat();
     }
-  }, [editedFormat, resetFormat, fetchAffectedItems]);
+  }, [editedFormat, resetFormat, fetchAffectedItems,mode]);
 
   // Validate that the pattern starts with ^ and ends with $, and is a valid regex.
   const validatePattern = useCallback(() => {

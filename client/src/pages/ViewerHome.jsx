@@ -29,11 +29,11 @@ const ViewerHomepage = () => {
     <>
       <FilterToolbar activeFilters={activeFilters} toggleFilter={toggleFilter} />
 
-      <Box sx={{ p: 3, display: "flex", gap: 3 }}>
-        <Paper sx={{ p: 2, minWidth: "25vw", width: "50%", height: "70vh" }}>
+      <Box sx={{ p: 2, display: "flex", gap: 3 }}>
+        <Paper sx={{ p: 1, minWidth: "25vw", width: "50%", height: "70vh" }}>
           <ChangeLog activeFilters={activeFilters} />
         </Paper>
-        <Paper sx={{ p: 2, minWidth: "25vw", width: "50%", height: "70vh" }}>
+        <Paper sx={{ p: 1, minWidth: "25vw", width: "50%", height: "70vh" }}>
           <QuickAccess activeFilters={activeFilters} />
         </Paper>
       </Box>

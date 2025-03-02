@@ -318,7 +318,7 @@ const Reports = ({ activeFilters }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-      <Box sx={{ textAlign: "center", mb: 2 }}>
+      <Box sx={{ textAlign: "center", mb: 1 }}>
         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
           {t("reports")}
         </Typography>
