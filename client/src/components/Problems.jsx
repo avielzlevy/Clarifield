@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from "react";
 import {
   IconButton,
   Badge,
@@ -10,13 +10,13 @@ import {
   Divider,
   Box,
   ClickAwayListener,
-  ListItemIcon
-} from '@mui/material';
-import { X, AlertCircle, ShieldAlert,Boxes,Book } from 'lucide-react';
-import { useDefinitions } from '../contexts/useDefinitions';
-import { useFormats } from '../contexts/useFormats';
-import { useEntities } from '../contexts/useEntities';
-import { useTheme } from '@mui/material/styles';
+  ListItemIcon,
+} from "@mui/material";
+import { X, AlertCircle, ShieldAlert, Boxes, Book } from "lucide-react";
+import { useDefinitions } from "../contexts/useDefinitions";
+import { useFormats } from "../contexts/useFormats";
+import { useEntities } from "../contexts/useEntities";
+import { useTheme } from "@mui/material/styles";
 
 export default function Problems() {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,55 +25,57 @@ export default function Problems() {
   const { entities } = useEntities();
   const theme = useTheme();
 
-  // Combine two checks:
-  // 1. Definitions referencing missing formats.
-  // 2. Entities referencing missing definitions or entities.
+  const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
+
+  // Memoized problem list generation
   const problems = useMemo(() => {
-    const problemsList = [];
+    const formatIssues = Object.entries(definitions)
+      .filter(([_, def]) => !formats[def.format])
+      .map(([key, def]) => ({
+        type: "definition-format",
+        message: `Definition '${key}' uses missing format '${def.format}'.`,
+      }));
 
-    // Check for definitions that use a format which is not defined.
-    Object.entries(definitions).forEach(([defKey, defObj]) => {
-      const { format } = defObj;
-      if (!formats[format]) {
-        problemsList.push({
-          type: 'definition-format',
-          message: `Definition '${defKey}' uses missing format '${format}'.`
-        });
-      }
-    });
+    const entityIssues = Object.entries(entities).flatMap(([key, entity]) =>
+      entity.fields
+        .filter(
+          (field) =>
+            (field.type === "definition" && !definitions[field.label]) ||
+            (field.type === "entity" && !entities[field.label])
+        )
+        .map((field) => ({
+          type: "entity-reference",
+          message: `Entity '${key}' references missing ${field.type} '${field.label}'.`,
+        }))
+    );
 
-    // Check entity references.
-    Object.entries(entities).forEach(([entityKey, entity]) => {
-      entity.fields.forEach(field => {
-        if (field.type === 'definition' && !definitions[field.label]) {
-          problemsList.push({
-            type: 'entity-reference',
-            message: `Entity '${entityKey}' references missing definition '${field.label}'.`
-          });
-        } else if (field.type === 'entity' && !entities[field.label]) {
-          problemsList.push({
-            type: 'entity-reference',
-            message: `Entity '${entityKey}' references missing entity '${field.label}'.`
-          });
-        }
-      });
-    });
-
-    return problemsList;
+    return [...formatIssues, ...entityIssues];
   }, [definitions, formats, entities]);
 
   const totalProblems = problems.length;
 
+  const getProblemIcon = (type) => {
+    switch (type) {
+      case "definition-format":
+        return <Book color={theme.palette.custom.bright} />;
+      case "entity-reference":
+        return <Boxes color={theme.palette.custom.bright} />;
+      default:
+        return null;
+    }
+  };
+
   return (
-    <Box sx={{ position: 'relative' }}>
-      {/* Notification Bell */}
+    <Box sx={{ position: "relative" }}>
+      {/* Notification Badge */}
       <IconButton
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleOpen}
         aria-label="Toggle problems menu"
         disabled={totalProblems === 0}
+        color="inherit"
       >
         <Badge badgeContent={totalProblems} color="error" invisible={totalProblems === 0}>
-          <ShieldAlert size={24} color={totalProblems > 0 ? 'black' : 'white'} />
+          <ShieldAlert size={24} style={{ 'display': totalProblems > 0 ? "block" : "none" }} />
         </Badge>
       </IconButton>
 
@@ -83,67 +85,61 @@ export default function Problems() {
           <Paper
             elevation={3}
             sx={{
-              position: 'absolute',
+              position: "absolute",
               right: 0,
               mt: 1,
-              width: 'auto',
+              width: "auto",
               zIndex: 10,
               borderRadius: 2,
-              overflow: 'hidden'
+              overflow: "hidden",
             }}
           >
             {/* Header */}
             <Box
               sx={{
-                bgcolor: 'error.main',
-                color: 'white',
+                bgcolor: "error.main",
+                color: "white",
                 p: 2,
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <AlertCircle size={24} />
                 <Typography variant="h6">Problems</Typography>
               </Box>
-              <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: 'white' }}>
+              <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: "white" }}>
                 <X size={20} />
               </IconButton>
             </Box>
 
             {/* Description */}
-            <Box sx={{ p: 2, bgcolor: 'error.light' }}>
+            <Box sx={{ p: 2, bgcolor: "error.light" }}>
               <Typography variant="body2" color="white">
-                {totalProblems} problem{totalProblems !== 1 ? 's' : ''} need{totalProblems === 1 ? 's' : ''} attention
+                {totalProblems} problem{totalProblems !== 1 ? "s" : ""} need
+                {totalProblems === 1 ? "s" : ""} attention
               </Typography>
             </Box>
 
             {/* List of Problems */}
-            <List sx={{ maxHeight: 400, overflowY: 'auto' }}>
+            <List sx={{ maxHeight: 400, overflowY: "auto" }}>
               {problems.map((problem, index) => (
                 <React.Fragment key={index}>
-                  <ListItem sx={{
-                    display: 'flex',
-                    // gap: 1,
-                  }}>
-                    <ListItemIcon sx={{ minWidth: 35 }}>
-                      {problem.type === 'definition-format' ? 
-                      <Book color={theme.palette.custom.bright}/> :
-                       problem.type === 'entity-reference' ? 
-                       <Boxes color={theme.palette.custom.bright}/> : null}
-                    </ListItemIcon>
+                  <ListItem>
+                    <ListItemIcon sx={{ minWidth: 35 }}>{getProblemIcon(problem.type)}</ListItemIcon>
                     <ListItemText
                       primary={problem.message}
                       slotProps={{
                         primary: {
-                          variant: 'body2',
-                          color: 'text.secondary',
+                          variant: "body2",
+                          color: "text.secondary",
                           sx: {
-                            overflow: 'hidden',
-                            whiteSpace: 'nowrap',
-                            textOverflow: 'ellipsis',
-                          }
+                            overflow: "hidden",
+                            whiteSpace:
+                              "nowrap",
+                            textOverflow: "ellipsis",
+                          },
                         }
                       }}
                     />
@@ -154,9 +150,10 @@ export default function Problems() {
             </List>
 
             {/* Footer */}
-            <Box sx={{ p: 2, bgcolor: 'grey.100', textAlign: 'center' }}>
+            <Box sx={{ p: 2, bgcolor: "grey.100", textAlign: "center" }}>
               <Typography variant="body2" color="textSecondary">
-                Review and update your definitions, formats, and entity references to resolve these issues.
+                Review and update your definitions, formats, and entity references to resolve these
+                issues.
               </Typography>
             </Box>
           </Paper>

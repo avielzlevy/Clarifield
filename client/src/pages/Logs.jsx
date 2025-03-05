@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState,useMemo } from 'react';
 import axios from 'axios';
-import { Box, Paper, CircularProgress, Typography } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { DataGrid } from '@mui/x-data-grid';
@@ -72,36 +72,14 @@ const LogsPage = () => {
   }, [logout]);
 
   // Define columns for the DataGrid
-  const columns = [
+  const columns = useMemo(()=>[
     { field: 'timestamp', headerName: t('timestamp'), width: 210 },
     { field: 'ip', headerName: t('ip_address'), width: 120 },
     { field: 'method', headerName: t('method'), width: 100 },
     { field: 'url', headerName: t('url'), flex: 1 },
     { field: 'status', headerName: t('status'), width: 70 },
     { field: 'responseTime', headerName: t('response_time'), width: 90 },
-  ];
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          backdropFilter: 'blur(5px)',
-          zIndex: 9999,
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  ],[t]);
 
   if (error) {
     return (

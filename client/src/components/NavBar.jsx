@@ -12,7 +12,6 @@ import {
   ListItemButton,
   Divider,
   Tooltip,
-  CircularProgress,
 } from '@mui/material';
 
 import { SpaceDashboardRounded as DashboardIcon } from '@mui/icons-material';
@@ -47,6 +46,10 @@ import { useTranslation } from 'react-i18next';
 import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
 import Problems from './Problems';
+import Loading from './Loading';
+
+
+
 
 //
 // PageContent Component
@@ -73,40 +76,34 @@ const PageContent = () => {
   }, [token, login, logout]);
 
   // Determine which component to render based on the page.
-  let ComponentToRender;
-  switch (page) {
-    case 'home':
-      ComponentToRender = auth ? AdminHome : ViewerHome;
-      break;
-    case 'entities':
-      ComponentToRender = Entities;
-      break;
-    case 'definitions':
-      ComponentToRender = Definitions;
-      break;
-    case 'validation':
-      ComponentToRender = Validation;
-      break;
-    case 'formats':
-      ComponentToRender = Formats;
-      break;
-    case 'signin':
-      ComponentToRender = SignIn;
-      break;
-    case 'settings':
-      ComponentToRender = Settings;
-      break;
-    case 'analytics':
-      ComponentToRender = Analytics;
-      break;
-    case 'logs':
-      ComponentToRender = Logs;
-      break;
-    default:
-      ComponentToRender = () => <div>Page Not Found</div>;
-  }
+  const ComponentToRender = useMemo(() => {
+    switch (page) {
+      case 'home':
+        return auth ? <AdminHome /> : <ViewerHome />;
+      case 'entities':
+        return <Entities />;
+      case 'definitions':
+        return <Definitions />;
+      case 'validation':
+        return <Validation />;
+      case 'formats':
+        return <Formats />;
+      case 'signin':
+        return <SignIn />;
+      case 'settings':
+        return <Settings />;
+      case 'analytics':
+        return <Analytics />;
+      case 'logs':
+        return <Logs />;
+      default:
+        return <div>Page Not Found</div>;
+    }
+  }, [page, auth]);
 
-  return <ComponentToRender />;
+  return <React.Suspense fallback={<Loading />}>
+    {ComponentToRender}
+  </React.Suspense>
 };
 
 //
@@ -118,10 +115,9 @@ function NavBar({ theme, setTheme }) {
   const { page, setPage } = usePage();
   const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
-  const username = localStorage.getItem('username') || 'Viewer';
+  const username = useMemo(() => localStorage.getItem('username') || 'Viewer', []);
   const { t } = useTranslation();
   const { rtl, rtlLoading } = useRtl();
-
   // Handle switching user or logging out.
   const handleChangeUser = useCallback(() => {
     if (token) {
@@ -129,9 +125,7 @@ function NavBar({ theme, setTheme }) {
         .get(`${process.env.REACT_APP_API_URL}/api/token/verify`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        .then(() => {
-          logout({ mode: 'logout' });
-        })
+        .then(() => logout({ mode: 'logout' }))
         .catch(() => {
           localStorage.setItem('previousPage', page);
           setPage('signin');
@@ -159,27 +153,10 @@ function NavBar({ theme, setTheme }) {
     return items;
   }, [auth]);
 
+  if (rtlLoading) return <Loading />;
+
   return (
     <Box dir={rtl ? 'rtl' : 'ltr'} sx={{ display: 'flex' }}>
-      {rtlLoading && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            backdropFilter: 'blur(5px)',
-            zIndex: 9999,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      )}
       <AppBar
         position="fixed"
         sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}

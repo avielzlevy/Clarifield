@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,8 +10,9 @@ import {
   Legend,
 } from "chart.js";
 import { getAnalytics } from "../utils/analytics";
-import { Box, Tabs, Tab, Paper, CircularProgress } from "@mui/material";
+import { Box, Tabs, Tab, Paper } from "@mui/material";
 import { useTranslation } from "react-i18next";
+import Loading from "../components/Loading";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
@@ -40,62 +41,61 @@ const Analytics = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
+  const fetchData = useCallback(async () => {
+    try {
+      const analytics = await getAnalytics();
+      if (!analytics || (!analytics.format && !analytics.definition && !analytics.entity)) {
+        setFormatsData({ labels: [], datasets: [] });
+        setDefinitionsData({ labels: [], datasets: [] });
+        setEntitiesData({ labels: [], datasets: [] });
+        return;
+      }
+      // Prepare chart data if available.
+      if (analytics.format) {
+        setFormatsData(
+          prepareChartData(
+            analytics.format,
+            "rgba(75, 192, 192, 0.6)",
+            "rgba(75, 192, 192, 1)"
+          )
+        );
+      } else {
+        setFormatsData({ labels: [], datasets: [] });
+      }
+      if (analytics.definition) {
+        setDefinitionsData(
+          prepareChartData(
+            analytics.definition,
+            "rgba(153, 102, 255, 0.6)",
+            "rgba(153, 102, 255, 1)"
+          )
+        );
+      } else {
+        setDefinitionsData({ labels: [], datasets: [] });
+      }
+      if (analytics.entity) {
+        setEntitiesData(
+          prepareChartData(
+            analytics.entity,
+            "rgba(255, 159, 64, 0.6)",
+            "rgba(255, 159, 64, 1)"
+          )
+        );
+      }
+      else {
+        setEntitiesData({ labels: [], datasets: [] });
+      }
+    } catch (error) {
+      console.error("Error fetching analytics");
+      console.debug(error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const analytics = await getAnalytics();
-        if (!analytics || (!analytics.format && !analytics.definition && !analytics.entity)) {
-          setFormatsData({ labels: [], datasets: [] });
-          setDefinitionsData({ labels: [], datasets: [] });
-          setEntitiesData({ labels: [], datasets: [] });
-          return;
-        }
-        // Prepare chart data if available.
-        if (analytics.format) {
-          setFormatsData(
-            prepareChartData(
-              analytics.format,
-              "rgba(75, 192, 192, 0.6)",
-              "rgba(75, 192, 192, 1)"
-            )
-          );
-        } else {
-          setFormatsData({ labels: [], datasets: [] });
-        }
-        if (analytics.definition) {
-          setDefinitionsData(
-            prepareChartData(
-              analytics.definition,
-              "rgba(153, 102, 255, 0.6)",
-              "rgba(153, 102, 255, 1)"
-            )
-          );
-        } else {
-          setDefinitionsData({ labels: [], datasets: [] });
-        }
-        if (analytics.entity) {
-          setEntitiesData(
-            prepareChartData(
-              analytics.entity,
-              "rgba(255, 159, 64, 0.6)",
-              "rgba(255, 159, 64, 1)"
-            )
-          );
-        }
-        else {
-          setEntitiesData({ labels: [], datasets: [] });
-        }
-      } catch (error) {
-        console.error("Error fetching analytics");
-        console.debug(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const commonOptions = {
     indexAxis: "y",
@@ -107,22 +107,11 @@ const Analytics = () => {
     plugins: { legend: { display: false } },
   };
 
-  const handleTabChange = (event, newValue) => {
+  const handleTabChange = useCallback((event, newValue) => {
     setActiveTab(newValue);
-  };
+  }, []);
 
-  if (loading) {
-    return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        minHeight="50vh"
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
+  if (loading) return <Loading />;
 
   return (
     <Paper elevation={3} sx={{ p: 2, height: "calc(100vh - 90px)", overflow: "hidden" }}>

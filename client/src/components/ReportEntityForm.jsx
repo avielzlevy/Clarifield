@@ -1,21 +1,25 @@
-import React, {useEffect, useCallback } from "react";
+import React, { useEffect, useCallback } from "react";
 import { Box, TextField } from "@mui/material";
 
-const ReportEntityForm = ({ node,report,setReport }) => {
-
-  // Set fields when reportedItem changes
+const ReportEntityForm = ({ node, report, setReport }) => {
   useEffect(() => {
     if (node) {
-      setReport({
-        type: 'entity',
-        description: "",
-      });
+      setReport((prev) => ({
+        ...prev,
+        type: prev?.type || "entity", // Ensure type is always set
+        description: prev?.description || "",
+      }));
     }
-  }, [node,setReport]);
+  }, [node, setReport]);
 
-  const handleDescriptionChange = useCallback((e) => {
-    setReport((prev) => ({ ...prev, description: e.target.value }));
-  }, [setReport]);
+  const handleDescriptionChange = useCallback(
+    (e) => {
+      setReport((prev) => ({ ...prev, description: e.target.value }));
+    },
+    [setReport]
+  );
+
+  if (!node) return null; // Prevent rendering if node is undefined
 
   return (
     <Box>
@@ -23,7 +27,7 @@ const ReportEntityForm = ({ node,report,setReport }) => {
         fullWidth
         label="Type"
         variant="outlined"
-        value={report.type}
+        value={report?.type || "entity"}
         disabled
         margin="normal"
       />
@@ -31,7 +35,7 @@ const ReportEntityForm = ({ node,report,setReport }) => {
         fullWidth
         label="Name"
         variant="outlined"
-        value={node.label}
+        value={node?.label || "Unnamed"}
         disabled
         margin="normal"
       />
@@ -42,11 +46,11 @@ const ReportEntityForm = ({ node,report,setReport }) => {
         margin="normal"
         multiline
         rows={4}
-        value={report.description}
+        value={report?.description || ""}
         onChange={handleDescriptionChange}
       />
     </Box>
   );
 };
 
-export default ReportEntityForm;
+export default React.memo(ReportEntityForm);

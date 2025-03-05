@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -18,46 +18,48 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
     description: "",
   });
 
-  // When reportedItem changes, update reportData.
+  // Memoize type to avoid unnecessary state updates
+  const reportType = useMemo(
+    () => (reportedItem?.pattern ? "format" : "definition"),
+    [reportedItem]
+  );
+
+  // Sync reportData when reportedItem changes
   useEffect(() => {
     if (reportedItem) {
-      setReportData({
-        type: reportedItem.pattern ? "format" : "definition",
+      setReportData((prev) => ({
+        ...prev,
+        type: reportType,
         name: reportedItem.name || "",
         description: "",
-      });
+      }));
     }
-  }, [reportedItem]);
+  }, [reportedItem, reportType]);
 
-  // Handle description change.
+  // Handle input change
   const handleDescriptionChange = useCallback((e) => {
-    const { value } = e.target;
-    setReportData((prev) => ({ ...prev, description: value }));
+    setReportData((prev) => ({ ...prev, description: e.target.value }));
   }, []);
 
-  // Send the report via an API call.
+  // Submit report
   const submitReport = useCallback(async () => {
     try {
       await axios.post(
         `${process.env.REACT_APP_API_URL}/api/report/${reportData.name}`,
         {
           type: reportData.type,
-          description: reportData.description,
+          description: reportData.description.trim(),
         }
       );
       enqueueSnackbar("Report submitted successfully", { variant: "success" });
+      onClose();
     } catch (error) {
       console.error("Error submitting report:", error);
-      enqueueSnackbar("Error submitting report", { variant: "error" });
+      const errorMessage =
+        error.response?.data?.message || "Failed to submit the report";
+      enqueueSnackbar(errorMessage, { variant: "error" });
     }
-  }, [reportData]);
-
-  // Handle form submission.
-  const handleSubmit = useCallback(async () => {
-    await submitReport();
-    setReportData({ type: "", name: "", description: "" });
-    onClose();
-  }, [submitReport, onClose]);
+  }, [reportData, onClose]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -100,7 +102,7 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
         <Button
           onClick={(e) => {
             e.stopPropagation();
-            handleSubmit()
+            submitReport();
           }}
           variant="contained"
           color="primary"

@@ -50,7 +50,6 @@ function Validation() {
     if (isValidJSON(value)) {
       setIsValidating(true);
       const response = await validateJSON(value);
-      console.log('Validation response:', response);
       if (response && response.data) {
         // Assume response.data is an array of violations when invalid
         setValidationResult({ isValid: false, violations: response.data });

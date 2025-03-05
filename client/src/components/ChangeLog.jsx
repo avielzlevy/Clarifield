@@ -1,12 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Box,
   Typography,
-  Divider,
   List,
   ListItemButton,
   ListItemText,
-  CircularProgress,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -19,6 +17,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Boxes, FileJson, Book } from "lucide-react";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
+import Loading from "./Loading";
 
 const ChangeLog = ({ activeFilters }) => {
   const [changeData, setChangeData] = useState({ formats: [], definitions: [], entities: [] });
@@ -32,54 +31,62 @@ const ChangeLog = ({ activeFilters }) => {
     const fetchChangeLog = async () => {
       try {
         const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/changes`);
-        if (data.formats && data.definitions) {
+        if (data?.formats || data?.definitions || data?.entities) {
           setChangeData({
-            formats: data.formats,
-            definitions: data.definitions,
-            entities: data.entities,
+            formats: data.formats || [],
+            definitions: data.definitions || [],
+            entities: data.entities || [],
           });
         }
       } catch (error) {
         console.error("Error fetching change log:", error);
-        enqueueSnackbar("Error fetching change log", { variant: "error" });
+        enqueueSnackbar(t("error_fetching_log"), { variant: "error" });
       } finally {
         setLoading(false);
       }
     };
-    fetchChangeLog();
-  }, []);
 
-  // Combine and filter logs based on active filters
+    fetchChangeLog();
+  }, [t]);
+
+  // Memoized filtered and sorted logs
   const combinedLogs = useMemo(() => {
     let logs = [
-      ...(changeData.formats || []).map((item) => ({ ...item, category: "format" })),
-      ...(changeData.definitions || []).map((item) => ({ ...item, category: "definition" })),
-      ...(changeData.entities || []).map((item) => ({ ...item, category: "entity" })),
-    ];
-    // Sort newest first
-    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      ...changeData.formats.map((item) => ({ ...item, category: "format" })),
+      ...changeData.definitions.map((item) => ({ ...item, category: "definition" })),
+      ...changeData.entities.map((item) => ({ ...item, category: "entity" })),
+    ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-    // Filter out logs based on activeFilters
-    if (!activeFilters.definitions) {
-      logs = logs.filter((log) => log.category !== "definition");
-    }
-    if (!activeFilters.formats) {
-      logs = logs.filter((log) => log.category !== "format");
-    }
-    if (!activeFilters.entities) {
-      logs = logs.filter((log) => log.category !== "entity");
-    }
-    return logs;
+    return logs.filter(
+      (log) =>
+        (activeFilters.definitions || log.category !== "definition") &&
+        (activeFilters.formats || log.category !== "format") &&
+        (activeFilters.entities || log.category !== "entity")
+    );
   }, [changeData, activeFilters]);
 
-  const handleItemClick = (log) => {
+  const handleItemClick = useCallback((log) => {
     setSelectedLog(log);
     setOpenDialog(true);
-  };
+  }, []);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setOpenDialog(false);
     setSelectedLog(null);
+  }, []);
+
+  const getCategoryIcon = (category) => {
+    const iconProps = { size: 16, style: { color: theme.palette.custom.bright } };
+    switch (category) {
+      case "format":
+        return <FileJson {...iconProps} />;
+      case "definition":
+        return <Book {...iconProps} />;
+      case "entity":
+        return <Boxes {...iconProps} />;
+      default:
+        return null;
+    }
   };
 
   const renderChangeLogList = () => {
@@ -89,54 +96,36 @@ const ChangeLog = ({ activeFilters }) => {
 
     return (
       <List sx={{ overflow: "auto" }}>
-        {combinedLogs.map((log, index) => {
-          const { name, timestamp, before, after, userName, category } = log;
-          const changeType =
-            before === "" ? "created" : after === "" ? "deleted" : "updated";
+        {combinedLogs.map(({ name, timestamp, before, after, userName, category }, index) => {
+          const changeType = before === "" ? "created" : after === "" ? "deleted" : "updated";
           const timeAgo = formatDistanceToNow(new Date(timestamp), { addSuffix: true });
-          const primaryContent = (
-            <>
-              {userName || t("admin")} {t(changeType)} <Box sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 1,
-              }}>
-                <Typography component="span" fontWeight={600}>
-                  {name}
-                </Typography>
-                {category === "format" ? (
-                    <FileJson size={16} style={{ color: theme.palette.custom.bright }} />
-                  ) : category === "definition" ? (
-                    <Book size={16} style={{ color: theme.palette.custom.bright }} />
-                  ) : category === "entity" ? (
-                    <Boxes size={16} style={{ color: theme.palette.custom.bright }} />
-                  ) : null}
-              </Box>
-              
-            </>
-          );
 
           return (
             <ListItemButton
               key={index}
-              onClick={() => handleItemClick(log)}
+              onClick={() => handleItemClick({ name, timestamp, before, after, userName, category })}
               sx={{
                 borderRadius: 1,
                 mb: 1,
                 backgroundColor: theme.palette.background.default,
-                "&:hover": {
-                  backgroundColor: theme.palette.custom.light,
-                },
+                "&:hover": { backgroundColor: theme.palette.custom.light },
               }}
             >
-              <Box sx={{
-                display: "flex",
-                // alignItems: "center",
-                gap: 1,
-                // p: 1,
-                // borderRadius: 1,
-              }}>
-                <ListItemText primary={primaryContent} secondary={timeAgo} />
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <ListItemText
+                  primary={
+                    <>
+                      {userName || t("admin")} {t(changeType)}{" "}
+                      <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
+                        <Typography component="span" fontWeight={600}>
+                          {name}
+                        </Typography>
+                        {getCategoryIcon(category)}
+                      </Box>
+                    </>
+                  }
+                  secondary={timeAgo}
+                />
               </Box>
             </ListItemButton>
           );
@@ -144,17 +133,6 @@ const ChangeLog = ({ activeFilters }) => {
       </List>
     );
   };
-
-  if (loading) {
-    return (
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <Typography variant="h6">{t("change_log")}</Typography>
-        <Divider sx={{ my: 1 }} />
-        <CircularProgress />
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box sx={{ textAlign: "center" }}>
@@ -162,9 +140,10 @@ const ChangeLog = ({ activeFilters }) => {
           {t("change_log")}
         </Typography>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", height: "92.5%" }}>
-        {renderChangeLogList()}
-      </Box>
+      {loading ? <Loading/> : (
+      <Box sx={{ flexGrow: 1, overflowY: "auto" }}>{renderChangeLogList()}</Box>
+      )}
+      {/* Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} fullWidth maxWidth="md">
         <DialogTitle>
           {selectedLog ? `${t("details_for")} ${selectedLog.name}` : t("change_details")}
@@ -177,7 +156,7 @@ const ChangeLog = ({ activeFilters }) => {
               </Typography>
               {selectedLog.before && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" color="error" fontWeight="bold">
+                  <Typography variant="body2" color="error.main" fontWeight="bold">
                     {t("before")}:
                   </Typography>
                   <Box

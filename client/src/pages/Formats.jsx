@@ -38,7 +38,7 @@ const Formats = () => {
   );
 
   // Columns for the data grid
-  const columns = [
+  const columns = useMemo(()=>[
     { field: 'name', headerName: t('name'), flex: 1 },
     {
       field: 'pattern',
@@ -51,7 +51,7 @@ const Formats = () => {
       ),
     },
     { field: 'description', headerName: t('description'), flex: 2 },
-  ];
+  ],[t]);
 
 
 
@@ -74,7 +74,6 @@ const Formats = () => {
   }, []);
 
   const openReportDialog = useCallback((format) => {
-    console.trace("openReportDialog triggered", format)
     setSelectedFormat(format);
     setReportDialogOpen(true);
   }, []);

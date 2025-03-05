@@ -62,13 +62,13 @@ const DefinitionDialog = ({
   useEffect(() => {
     fetchFormats();
     fetchNamingConvention();
-    if (editedDefinition) {
+    if (editedDefinition&&mode === "edit") {
       setDefinition(editedDefinition);
       fetchAffectedItems({ name: editedDefinition.name, type: 'definition' });
     } else {
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems]);
+  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems,mode]);
 
   // Validate the naming convention.
   const validateNamingConvention = useCallback(() => {
@@ -182,6 +182,8 @@ const DefinitionDialog = ({
               {...params}
               label="Format"
               fullWidth
+              error={mode==='edit' &&!formats[definition.format]}
+              helperText={mode==='edit' &&!formats[definition.format] &&`${definition.format} is not a valid format`}
               margin="normal"
               placeholder="Select a format"
             />

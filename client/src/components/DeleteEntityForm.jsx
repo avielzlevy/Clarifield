@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Box, Typography, FormControlLabel, Checkbox } from '@mui/material';
-const DeleteEntityForm = ({ node, sureDelete, setSureDelete }) => {
+
+const DeleteEntityForm = ({ node: { label }, sureDelete, setSureDelete }) => {
+  const handleCheckboxChange = useCallback(() => {
+    setSureDelete((prev) => !prev);
+  }, [setSureDelete]);
+
   return (
     <Box
       sx={{
@@ -12,20 +17,21 @@ const DeleteEntityForm = ({ node, sureDelete, setSureDelete }) => {
       }}
     >
       <Typography variant="body1">
-        Are you sure you want to delete the entity "{node.label}"? This action cannot be undone.
+        Are you sure you want to delete the entity "{label}"? This action cannot be undone.
       </Typography>
 
       <FormControlLabel
         control={
           <Checkbox
             checked={sureDelete}
-            onChange={() => setSureDelete((prev) => !prev)}
+            onChange={handleCheckboxChange}
+            inputProps={{ 'aria-label': 'Confirm entity deletion' }}
           />
         }
         label="I confirm I want to delete this entity"
       />
     </Box>
   );
-};
+}
 
-export default DeleteEntityForm;
+export default React.memo(DeleteEntityForm);

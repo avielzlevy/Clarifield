@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Box,
   Typography,
@@ -41,23 +41,40 @@ function Definitions() {
     [definitions]
   );
 
-  const handleAddDialogClick = () => {
+  const handleAddDialogClick = useCallback(() => {
     setDialogMode('add');
+    setActionedDefinition(null);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleEditDialogClick = async (definition) => {
+  const handleEditDialogClick = useCallback(async (definition) => {
     setDialogMode('edit');
     setActionedDefinition(definition);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteDialogClick = (definition) => {
+  const handleDeleteDialogClick = useCallback((definition) => {
     setActionedDefinition(definition);
     setDeleteDialogOpen(true);
-  };
+  }, []);
 
-  const handleDeleteDefinition = async () => {
+
+
+  const handleDeleteDialogClose = useCallback(() => {
+    setDeleteDialogOpen(false);
+  }, []);
+
+  const handleReportDialogClick = useCallback((definition) => {
+    setActionedDefinition(definition);
+    setReportDialogOpen(true);
+  }, []);
+
+  const closeReportDialog = useCallback(() => {
+    setActionedDefinition(null);
+    setReportDialogOpen(false);
+  }, []);
+
+  const deleteDefinition = useCallback(async () => {
     if (!actionedDefinition) return;
     try {
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/definitions/${actionedDefinition.name}`, {
@@ -71,18 +88,9 @@ function Definitions() {
     } catch (error) {
       enqueueSnackbar('Error deleting definition', { variant: 'error' });
     }
-  };
+  }, [actionedDefinition, fetchDefinitions, setRefreshSearchables, token]);
 
-  const handleDeleteDialogClose = () => {
-    setDeleteDialogOpen(false);
-  };
-
-  const handleReportDialogClick = (definition) => {
-    setActionedDefinition(definition);
-    setReportDialogOpen(true);
-  };
-
-  const columns = [
+  const columns = useMemo(()=>[
     { field: 'name', headerName: t('name'), flex: 1, editable: true },
     {
       field: 'format',
@@ -91,7 +99,7 @@ function Definitions() {
       editable: true,
     },
     { field: 'description', headerName: t('description'), flex: 2, editable: true },
-  ];
+  ],[t]);
 
   return (
     <Box sx={{ padding: 1, width: '100%' }}>
@@ -131,11 +139,11 @@ function Definitions() {
           open={deleteDialogOpen}
           onClose={handleDeleteDialogClose}
           deletedItem={actionedDefinition}
-          onDelete={handleDeleteDefinition}
+          onDelete={deleteDefinition}
           type="definition"
         />
 
-        <ReportDialog open={reportDialogOpen} onClose={() => setReportDialogOpen(false)} reportedItem={actionedDefinition} />
+        <ReportDialog open={reportDialogOpen} onClose={closeReportDialog} reportedItem={actionedDefinition} />
       </Box>
     </Box>
   );

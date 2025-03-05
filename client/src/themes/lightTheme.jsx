@@ -5,7 +5,7 @@ const lightTheme = createTheme({
   palette: {
     mode: 'light',
     custom: {
-      titleIcon: '#2dd4bf', // ADDED for consistency with dark theme
+      titleIcon: '#2dd4bf',
       bright: '#9333ea',
       light: '#f3e8ff',
       dark: '#d7cde0',
@@ -13,14 +13,15 @@ const lightTheme = createTheme({
     },
     primary: {
       main: '#7f56da',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#faf5ff',  // e.g. Tailwind's purple-50
-      paper: '#ffffff',    // White for surfaces
+      default: '#faf5ff',
+      paper: '#ffffff',
     },
     text: {
-      primary: '#111827',  // Near‐black
-      secondary: '#6b7280', // Gray for subtext
+      primary: '#111827',
+      secondary: '#4b5563',
     },
   },
   typography: {
@@ -51,6 +52,17 @@ const lightTheme = createTheme({
           '&:hover': {
             backgroundColor: '#6f44c9',
           },
+          '&:disabled': {
+            backgroundColor: '#d1d5db',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          boxShadow: '0px 4px 10px rgba(0, 0, 0, 0.05)',
         },
       },
     },

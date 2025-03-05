@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography } from '@mui/material';
 import axios from 'axios';
 import { enqueueSnackbar } from 'notistack';
@@ -19,7 +19,6 @@ const Settings = () => {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 setSettings(response.data);
-                // console.log({ data: response.data });
             } catch (error) {
                 if (error.response.status === 401) {
                     logout({ mode: 'bad_token' });
@@ -32,20 +31,18 @@ const Settings = () => {
         fetchSettings();
     }, [logout, token, t]);
 
-    const handleNamingConventionChange = (event) => {
+    const handleNamingConventionChange = useCallback((event) => {
         setSettings((prevSettings) => ({
             ...prevSettings,
             namingConvention: event.target.value,
         }));
-    };
-
-    const handleApplyClick = async () => {
+    }, []);
+    const handleApplyClick = useCallback(async () => {
         try {
             await axios
                 .put(`${process.env.REACT_APP_API_URL}/api/settings`, settings, {
                     headers: { Authorization: `Bearer ${token}` },
                 })
-            // console.log('Settings applied successfully');
             enqueueSnackbar(t('settings_updated'), { variant: 'success' });
         } catch (error) {
             if (error.response.status === 401) {
@@ -55,7 +52,7 @@ const Settings = () => {
             console.error('Error applying settings:', error);
             enqueueSnackbar(t('settings_update_failed'), { variant: 'error' });
         }
-    };
+    }, [logout, settings, token, t]);
 
     return (
         <Box

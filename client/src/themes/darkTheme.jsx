@@ -1,11 +1,10 @@
-// src/themes/darkTheme.js
 import { createTheme } from '@mui/material';
 
 const darkTheme = createTheme({
   palette: {
     mode: 'dark',
     custom: {
-      titleIcon: '#2dd4bf', // ADDED to lightTheme below for consistency
+      titleIcon: '#2dd4bf',
       bright: '#9333ea',
       light: '#3f3f46',
       dark: '#d7cde0',
@@ -13,14 +12,15 @@ const darkTheme = createTheme({
     },
     primary: {
       main: '#7f56da',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#191919', // Main background for Dark
-      paper: '#2c2c2c',   // Surfaces, cards
+      default: '#191919',
+      paper: '#2c2c2c',
     },
     text: {
-      primary: '#f3f4f6',   // Very light gray
-      secondary: '#9ca3af', // Medium gray
+      primary: '#f3f4f6',
+      secondary: '#9ca3af',
     },
   },
   typography: {
@@ -51,6 +51,17 @@ const darkTheme = createTheme({
           '&:hover': {
             backgroundColor: '#6f44c9',
           },
+          '&:disabled': {
+            backgroundColor: '#4b5563',
+          },
+        },
+      },
+    },
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
+          boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.1)',
         },
       },
     },

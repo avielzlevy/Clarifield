@@ -8,12 +8,11 @@ import darkTheme from '../themes/darkTheme';
 import lightTheme from '../themes/lightTheme';
 
 const FADE_DURATION = 1000; // Duration for fade out/in transitions in ms
-const FADE_DELAY = 100; // Delay before applying the theme change in ms
+const FADE_DELAY = 200; // Delay before applying the theme change in ms
 
 function ThemeButton({ theme, setTheme }) {
   const [fade, setFade] = useState(false);
   const [overlayStyle, setOverlayStyle] = useState({});
-
   // Helper to update the theme and persist preference to localStorage.
   const applyThemeChange = useCallback(
     (newTheme) => {
@@ -27,7 +26,6 @@ function ThemeButton({ theme, setTheme }) {
   // Handles theme change with a fade effect when transitioning from dark to light.
   const changeTheme = useCallback(
     (newTheme) => {
-      if (theme.palette.mode === 'dark' && newTheme === 'light') {
         // Set up the overlay with initial styles.
         setOverlayStyle({
           backgroundColor: theme.palette.background.default,
@@ -46,12 +44,8 @@ function ThemeButton({ theme, setTheme }) {
             setFade(false);
           }, FADE_DURATION);
         }, FADE_DELAY);
-      } else {
-        // Directly update the theme without fade.
-        applyThemeChange(newTheme);
-      }
     },
-    [theme.palette.mode, theme.palette.background.default, applyThemeChange]
+    [theme.palette.background.default, applyThemeChange]
   );
 
   const handleClick = useCallback(() => {

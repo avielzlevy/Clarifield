@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo,useCallback } from 'react';
 import {
   Autocomplete,
   TextField,
@@ -7,10 +7,6 @@ import {
   Button,
   Typography,
 } from '@mui/material';
-// import DeleteIcon from '@mui/icons-material/Delete';
-// import AddIcon from '@mui/icons-material/Add';
-// import DataObjectIcon from '@mui/icons-material/DataObject';
-// import ImportContactsOutlinedIcon from '@mui/icons-material/ImportContactsOutlined';
 import {
   Boxes,
   Trash2 as Trash,
@@ -20,6 +16,12 @@ import {
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 import { useTheme } from '@mui/material/styles';
+
+const groupIconMap = {
+  Definitions: <Book style={{ fontSize: '1.2rem', marginRight: '0.5rem' }} />,
+  Entities: <Boxes style={{ fontSize: '1.2rem', marginRight: '0.5rem' }} />,
+};
+
 
 function EditEntityForm({ node, setNode}) {
   const theme = useTheme();
@@ -38,76 +40,78 @@ function EditEntityForm({ node, setNode}) {
     return [...entityOptions, ...defOptions];
   }, [definitions, entities]);
 
-  // Map group names to icon components.
-  const groupIconMap = {
-    Definitions: <Book style={{ fontSize: '1.2rem', mr: 0.5 }} />,
-    Entities: <Boxes style={{ fontSize: '1.2rem', mr: 0.5 }} />,
-  };
-
   // Update a field's value and its type based on the selected option.
-  const handleFieldChange = (index, newValue) => {
-    let label = '';
-    let group = null;
+  const handleFieldChange = useCallback(
+    (index, newValue) => {
+      let label = '';
+      let group = null;
 
-    if (typeof newValue === 'object' && newValue !== null) {
-      label = newValue.label;
-      group = newValue.group;
-    } else if (typeof newValue === 'string') {
-      label = newValue;
-      if (definitions && definitions.hasOwnProperty(newValue)) {
-        group = 'Definitions';
-      } else if (entities && entities.hasOwnProperty(newValue)) {
-        group = 'Entities';
+      if (typeof newValue === 'object' && newValue !== null) {
+        label = newValue.label;
+        group = newValue.group;
+      } else if (typeof newValue === 'string') {
+        label = newValue;
+        if (definitions[label]) {
+          group = 'Definitions';
+        } else if (entities[label]) {
+          group = 'Entities';
+        }
       }
-    }
 
-    const newFields = [...node.fields];
-    newFields[index] = {
-      ...newFields[index],
-      label,
-      type:
-        group === 'Definitions'
-          ? 'definition'
-          : group === 'Entities'
-          ? 'entity'
-          : 'unknown',
-    };
-    setNode({ ...node, fields: newFields });
-  };
+      setNode((prevNode) => {
+        const newFields = [...prevNode.fields];
+        newFields[index] = {
+          ...newFields[index],
+          label,
+          type: group === 'Definitions' ? 'definition' : group === 'Entities' ? 'entity' : 'unknown',
+        };
+        return { ...prevNode, fields: newFields };
+      });
+    },
+    [setNode, definitions, entities]
+  );
+
 
   // Adds an empty field.
-  const addField = () => {
-    setNode({ ...node, fields: [...node.fields, { label: '' }] });
-  };
+  const addField = useCallback(() => {
+    setNode((prevNode) => ({
+      ...prevNode,
+      fields: [...prevNode.fields, { label: '' }],
+    }));
+  }, [setNode]);
 
   // Removes a field at a given index.
-  const removeField = (index) => {
-    const newFields = node.fields.filter((_, i) => i !== index);
-    setNode({ ...node, fields: newFields });
-  };
+  const removeField = useCallback(
+    (index) => {
+      setNode((prevNode) => ({
+        ...prevNode,
+        fields: prevNode.fields.filter((_, i) => i !== index),
+      }));
+    },
+    [setNode]
+  );
+
+  const filteredOptions = useCallback((index) => {
+    const selectedLabelsExceptCurrent = node.fields
+      .filter((_, i) => i !== index)
+      .map((f) => f.label);
+
+    return options.filter(
+      (option) => !selectedLabelsExceptCurrent.includes(option.label) && option.label !== node.label
+    );
+  }, [node.fields, options, node.label]);
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2, minWidth: 250 }}>
-      {node &&
-        node.fields.map((field, index) => {
-          // Exclude options already selected in other fields.
-          const selectedLabelsExceptCurrent = node.fields
-            .filter((_, i) => i !== index)
-            .map((f) => f.label);
+        {node?.fields.map((field, index) => {
 
-            // Filter options based on selected labels and dont allow to select the same label as the main entity
-          const filteredOptions = options.filter(
-            (option) => !selectedLabelsExceptCurrent.includes(option.label) && option.label !== node.label
-          );
           return (
             <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Autocomplete
                 freeSolo
-                options={filteredOptions}
+                options={filteredOptions(index)}
                 groupBy={(option) => option.group || ''}
-                getOptionLabel={(option) =>
-                  typeof option === 'string' ? option : option.label
-                }
+                getOptionLabel={(option) => (typeof option === 'string' ? option : option.label)}
                 value={field.label}
                 onChange={(event, newValue) => handleFieldChange(index, newValue)}
                 onInputChange={(event, newInputValue) =>

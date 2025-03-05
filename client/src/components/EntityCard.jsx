@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import {
   Box,
   Paper,
@@ -8,25 +8,29 @@ import {
   ListSubheader,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import {
-  Boxes,
-  Pencil,
-  Trash2 as Trash,
-  Copy,
-  Flag,
-} from 'lucide-react';
+import { Boxes, Pencil, Trash2 as Trash, Copy, Flag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 
-const ICON_SIZE = { width: 10, height: 10 };
-
-function EntityCard({ data }) {
+const EntityCard = ({ data }) => {
   const { auth } = useAuth();
   const theme = useTheme();
   const { definitions } = useDefinitions();
   const { entities } = useEntities();
-  const capitalizedLabel = data.label.charAt(0).toUpperCase() + data.label.slice(1);
+
+  const ICON_SIZE = useMemo(() => ({ width: 10, height: 10 }), []);
+
+  const capitalizedLabel = useMemo(() =>
+    data.label.charAt(0).toUpperCase() + data.label.slice(1),
+    [data.label]);
+
+  const handleEntityClick = useCallback(
+    (label) => {
+      if (data.onEntityClick) data.onEntityClick(label);
+    },
+    [data]
+  );
 
   return (
     <Box
@@ -43,10 +47,6 @@ function EntityCard({ data }) {
         sx={{
           position: 'absolute',
           top: -7.5,
-          // left: '50%',
-          // transform: 'translateX(-50%)',
-          // display: 'flex',
-          // justifyContent: 'space-between',
           gap: 7.5,
           opacity: 0,
           transition: 'opacity 0.3s',
@@ -61,9 +61,7 @@ function EntityCard({ data }) {
               justifyContent: 'space-between',
               alignItems: 'center',
               width: '100%',
-              flexGrow: 1,
-              // bgcolor:'red',
-              px: 1, // optional padding to space from edges
+              px: 1,
             }}
           >
             {/* Left side: edit and copy */}
@@ -112,7 +110,6 @@ function EntityCard({ data }) {
             justifyContent: 'center',
             gap: 0.3,
             px: 1,
-
           }}
           subheader={
             <ListSubheader
@@ -134,40 +131,42 @@ function EntityCard({ data }) {
             </ListSubheader>
           }
         >
-          {data.fields &&
-            data.fields.map((field, index) => {
-              let textColor = 'inherit';
+          {data.fields?.map((field, index) => {
+            const isDefinitionMissing = field.type === 'definition' && !definitions[field.label];
+            const isEntityMissing = field.type === 'entity' && !entities[field.label];
+            const textColor = isDefinitionMissing || isEntityMissing ? 'red' : 'inherit';
 
-              if ((field.type === 'definition' && !definitions[field.label]) || (field.type === 'entity' && !entities[field.label])) {
-                textColor = 'red'
-              }
-
-              return (
-                <ListItem
-                  key={index}
-                  onClick={field.type === 'entity' ? () => data.onEntityClick(field.label) : undefined}
-                  sx={{
-                    backgroundColor:
-                      theme.palette.mode === 'light'
-                        ? theme.palette.custom.light
-                        : theme.palette.background.paper,
-                    borderRadius: 2,
-                    height: '3vh',
-                  }}
-                >
-                  {field.type === 'entity' && <Boxes style={{
-                    width: '12px',
-                    height: '12px',
-                    color: theme.palette.custom.bright,
-                  }} />}
-                  <ListItemText
-                    primary={field.label}
-                    slotProps={{ primary: { sx: { fontSize: 10 } } }}
-                    sx={{ textAlign: 'center', mx: 0.5, color: textColor }}
+            return (
+              <ListItem
+                key={field.label || index}
+                onClick={field.type === 'entity' ? () => handleEntityClick(field.label) : undefined}
+                sx={{
+                  backgroundColor:
+                    theme.palette.mode === 'light'
+                      ? theme.palette.custom.light
+                      : theme.palette.background.paper,
+                  borderRadius: 2,
+                  height: '3vh',
+                  cursor: field.type === 'entity' ? 'pointer' : 'default',
+                }}
+              >
+                {field.type === 'entity' && (
+                  <Boxes
+                    style={{
+                      width: '12px',
+                      height: '12px',
+                      color: theme.palette.custom.bright,
+                    }}
                   />
-                </ListItem>
-              )
-            })}
+                )}
+                <ListItemText
+                  primary={field.label}
+                  slotProps={{ primary: { sx: { fontSize: 10 } } }}
+                  sx={{ textAlign: 'center', mx: 0.5, color: textColor }}
+                />
+              </ListItem>
+            );
+          })}
         </List>
       </Paper>
     </Box>

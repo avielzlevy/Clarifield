@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState,useCallback } from "react";
 import { Box, Paper } from "@mui/material";
 import ChangeLog from "../components/ChangeLog";
 import QuickAccess from "../components/QuickAccess";
 import FilterToolbar from "../components/FilterToolbar";
+
 
 const ViewerHomepage = () => {
   // Active filters state – all active by default
@@ -13,9 +14,9 @@ const ViewerHomepage = () => {
   });
 
   // Toggle filter state
-  const toggleFilter = (filterKey) => {
+  const toggleFilter = useCallback((filterKey) => {
     setActiveFilters((prev) => ({ ...prev, [filterKey]: !prev[filterKey] }));
-  };
+  }, []);
 
   console.log(`                                                                          
     _____       _        _____        _____     _     _    __                
@@ -28,7 +29,6 @@ const ViewerHomepage = () => {
   return (
     <>
       <FilterToolbar activeFilters={activeFilters} toggleFilter={toggleFilter} />
-
       <Box sx={{ p: 2, display: "flex", gap: 3 }}>
         <Paper sx={{ p: 1, minWidth: "25vw", width: "50%", height: "70vh" }}>
           <ChangeLog activeFilters={activeFilters} />

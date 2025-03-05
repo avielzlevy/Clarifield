@@ -7,7 +7,6 @@ import {
   TextField,
   DialogActions,
   Button,
-  Box,
 } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
@@ -171,7 +170,7 @@ const FormatDialog = ({
           Save
         </Button>
       </DialogActions>
-      <RegexBuilderDialog open={regexBuilderDialogOpen} setOpen={setRegexBuilderDialogOpen} setFormat={setFormat} />
+      <RegexBuilderDialog open={regexBuilderDialogOpen} setOpen={setRegexBuilderDialogOpen} setFormat={setFormat} defaultPattern={format.pattern} />
     </Dialog>
   );
 };

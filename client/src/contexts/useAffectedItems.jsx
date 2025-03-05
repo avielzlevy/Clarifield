@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
@@ -11,7 +11,6 @@ export const AffectedItemsProvider = ({ children }) => {
 
     const fetchAffectedItems = useCallback(
         async ({ name, type }) => {
-            console.trace(`Fetching affected items for ${type} ${name}`);
             let affectedItems = {};
 
             switch (type) {
@@ -21,7 +20,6 @@ export const AffectedItemsProvider = ({ children }) => {
                             `${process.env.REACT_APP_API_URL}/api/affected?format=${encodeURIComponent(name)}`,
                             { headers: { Authorization: `Bearer ${token}` } }
                         );
-                        console.log(`Data for affected definitions:`, data);
                         affectedItems.definitions = data.definitions;
                     } catch (error) {
                         if (error.response?.status === 401) {
@@ -117,10 +115,6 @@ export const AffectedItemsProvider = ({ children }) => {
         setAffected(null);
     }, []);
 
-    useEffect(() => {
-        console.log('Affected items updated:', affected);
-    }, [affected]);
-    
     const value = useMemo(() => ({ affected, fetchAffectedItems, clearAffected }), [
         affected,
         fetchAffectedItems,

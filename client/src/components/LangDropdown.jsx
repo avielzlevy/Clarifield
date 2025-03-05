@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Button, Tooltip, Box } from '@mui/material';
 import { useTheme, styled } from '@mui/material/styles';
 import i18next from 'i18next';
@@ -6,9 +6,9 @@ import { useRtl } from '../contexts/RtlContext';
 import ReactCountryFlag from "react-country-flag";
 
 const countryMapping = {
-  en: 'US', // or 'GB' depending on which English flag you want
+  en: 'US',
   he: 'IL',
-  ar: 'SA', // or consider 'AE' for UAE or another Arabic-speaking country
+  ar: 'SA',
   es: 'ES',
   fr: 'FR',
   de: 'DE',
@@ -23,14 +23,16 @@ const languages = [
   { code: 'de', flag: '🇩🇪' },
 ];
 
-const LanguageGrid = styled(Box)(({ theme }) => ({
+const rtlLangs = ['he', 'ar'];
+
+const LanguageGrid = React.memo(styled(Box)(({ theme }) => ({
   display: 'flex',
   flexDirection: 'row',
   flexWrap: 'wrap',
   maxWidth: 135,
   gap: theme.spacing(1),
   padding: theme.spacing(1),
-}));
+})));
 
 const LanguageItem = styled(Box)(({ theme, selected }) => ({
   display: 'flex',
@@ -55,12 +57,13 @@ function LangDropdown() {
   const { setRtl, setRtlLoading } = useRtl();
   const theme = useTheme();
 
-  const [selectedLang, setSelectedLang] = useState(() => {
-    const lang = localStorage.getItem('lang');
-    return lang ? languages.find((l) => l.code === lang) : languages[0];
-  });
+  // Get initial language code from localStorage
+  const initialLangCode = useMemo(() => localStorage.getItem('lang') || 'en', []);
+  const [selectedLangCode, setSelectedLangCode] = useState(initialLangCode);
 
-  // Memoize the RTL slow load handler
+  // Track the current RTL state to prevent unnecessary reloads
+  const isCurrentLangRtl = useMemo(() => rtlLangs.includes(selectedLangCode), [selectedLangCode]);
+
   const handleRtlSlowLoad = useCallback(() => {
     setRtlLoading(true);
     setTimeout(() => {
@@ -69,17 +72,22 @@ function LangDropdown() {
   }, [setRtlLoading]);
 
   useEffect(() => {
-    const rtlLangs = ['he', 'ar'];
-    i18next.changeLanguage(selectedLang.code);
-    localStorage.setItem('lang', selectedLang.code);
-    handleRtlSlowLoad();
-    setRtl(rtlLangs.includes(selectedLang.code));
-  }, [selectedLang, handleRtlSlowLoad, setRtl]);
+    i18next.changeLanguage(selectedLangCode);
+    localStorage.setItem('lang', selectedLangCode);
+
+    const newLangIsRtl = rtlLangs.includes(selectedLangCode);
+
+    if (newLangIsRtl !== isCurrentLangRtl) {
+      handleRtlSlowLoad();
+    }
+    
+    setRtl(newLangIsRtl);
+  }, [selectedLangCode, isCurrentLangRtl, setRtl, handleRtlSlowLoad]);
 
   const handleTooltipClose = useCallback(() => setOpen(false), []);
   const handleTooltipToggle = useCallback(() => setOpen((prev) => !prev), []);
-  const handleLanguageSelect = useCallback((lang) => {
-    setSelectedLang(lang);
+  const handleLanguageSelect = useCallback((langCode) => {
+    setSelectedLangCode(langCode);
     setOpen(false);
   }, []);
 
@@ -96,21 +104,17 @@ function LangDropdown() {
         }}
         title={
           <LanguageGrid>
-            {languages.map((lang) => (
+            {languages.map(({ code }) => (
               <LanguageItem
-                key={lang.code}
-                selected={lang.code === selectedLang.code}
-                onClick={() => handleLanguageSelect(lang)}
+                key={code}
+                selected={code === selectedLangCode}
+                onClick={() => handleLanguageSelect(code)}
               >
                 <ReactCountryFlag
-                  countryCode={countryMapping[lang.code]}
+                  countryCode={countryMapping[code]}
                   svg
-                  style={{
-                    borderRadius: '7px',
-                    width: '1.05em',
-                    height: '1.05em',
-                  }}
-                  title={lang.code}
+                  style={{ borderRadius: '7px', width: '1.05em', height: '1.05em' }}
+                  title={code}
                 />
               </LanguageItem>
             ))}
@@ -130,21 +134,16 @@ function LangDropdown() {
           sx={{
             textTransform: 'none',
             fontSize: '2rem',
-            width: '2px',
             height: '24px',
             backgroundColor: 'transparent',
             mb: '4px',
           }}
         >
           <ReactCountryFlag
-            countryCode={countryMapping[selectedLang.code]}
+            countryCode={countryMapping[selectedLangCode]}
             svg
-            style={{
-              borderRadius: '9px',
-              width: '1.05em',
-              height: '1.05em',
-            }}
-            title={selectedLang.code}
+            style={{ borderRadius: '9px', width: '1.05em', height: '1.05em' }}
+            title={selectedLangCode}
           />
         </Button>
       </Tooltip>

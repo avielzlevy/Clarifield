@@ -23,7 +23,6 @@ export const determineRegexType = (pattern) => {
 
 export const generateSampleValue = (field) => {
   const { type, format } = field;
-  console.log(field);
   switch (type.toLowerCase()) {
     case 'string':
       if (format) {

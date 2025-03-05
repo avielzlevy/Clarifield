@@ -41,8 +41,7 @@ function EntityDialog({
   const { entities, fetchEntities } = useEntities();
   const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
   const [sureDelete, setSureDelete] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState(null);
   const [error, setError] = useState(null);
   const [report, setReport] = useState({ type: '', description: '' });
   const { logout } = useAuth();
@@ -58,116 +57,70 @@ function EntityDialog({
 
 
   useEffect(() => {
-    if (selectedNode && (mode === 'edit' || mode === 'delete')) {
+    if (selectedNode && ['edit', 'delete'].includes(mode)) {
       fetchAffectedItems({ name: selectedNode.label, type: 'entity' });
     }
   }, [selectedNode, mode, fetchAffectedItems]);
-
+  const handleMenuOpen = (event) => setMenuAnchor(event.currentTarget);
+  const handleMenuClose = () => setMenuAnchor(null);
   // Handle the dialog action based on the current mode.
   const handleAction = useCallback(async () => {
     try {
+      let response;
+      const headers = { Authorization: `Bearer ${token}` };
+
       switch (mode) {
-        case 'edit': {
-          const res = await axios.put(
+        case 'edit':
+          response = await axios.put(
             `${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`,
             selectedNode,
-            { headers: { Authorization: `Bearer ${token}` } }
+            { headers }
           );
-          if (res.status === 200) {
-            fetchNodes();
-            enqueueSnackbar('Entity edited successfully!', { variant: 'success' });
-          } else {
-            enqueueSnackbar('Failed to edit entity!', { variant: 'error' });
-          }
           break;
-        }
-        case 'create': {
+
+        case 'create':
           if (/[A-Z]/.test(newEntity.label)) {
             setError('Entity name must be lowercase');
             throw new Error('Entity name must be lowercase');
           }
-          try {
-            await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            await fetchEntities()
-            fetchNodes();
-            enqueueSnackbar('Entity created successfully!', { variant: 'success' });
-            setNewEntity({ label: '', fields: [] });
-          } catch (e) {
-            if (e.response?.status === 400) {
-              enqueueSnackbar('Failed to create entity!', { variant: 'error' });
-            } else if (e.response?.status === 409) {
-              enqueueSnackbar('Entity already exists!', { variant: 'error' });
-            } else if (e.response?.status === 401) {
-              logout({ mode: 'bad_token' });
-              onClose();
-              return;
-            } else {
-              enqueueSnackbar('Failed to create entity!', { variant: 'error' });
-            }
-          }
+          response = await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, { headers });
           break;
-        }
-        case 'delete': {
-          try {
-            await axios.delete(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            await fetchEntities()
-            fetchNodes();
-            enqueueSnackbar('Entity deleted successfully!', { variant: 'success' });
-          } catch (e) {
-            if (e.response?.status === 401) {
-              logout({ mode: 'bad_token' });
-              onClose();
-              return;
-            } else {
-              enqueueSnackbar('Failed to delete entity!', { variant: 'error' });
-            }
-          } finally {
-            setSureDelete(false);
-          }
+
+        case 'delete':
+          response = await axios.delete(`${process.env.REACT_APP_API_URL}/api/entity/${selectedNode.label}`, { headers });
+          setSureDelete(false);
           break;
-        }
-        case 'report': {
-          await axios.post(`${process.env.REACT_APP_API_URL}/api/report/${selectedNode.label}`, report, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          enqueueSnackbar('Entity reported successfully!', { variant: 'success' });
+
+        case 'report':
+          response = await axios.post(`${process.env.REACT_APP_API_URL}/api/report/${selectedNode.label}`, report, { headers });
           break;
-        }
+
         default:
-          break;
+          return;
       }
+
+      if (response?.status >= 200 && response?.status < 300) {
+        enqueueSnackbar(`${mode.charAt(0).toUpperCase() + mode.slice(1)} successful!`, { variant: 'success' });
+        await fetchEntities();
+        fetchNodes();
+        setNewEntity({ label: '', fields: [] });
+      }
+
       setRefreshSearchables((prev) => prev + 1);
       onClose();
     } catch (error) {
-      console.error('Error in handleAction:', error);
-      enqueueSnackbar(`Failed to ${mode} entity!`, { variant: 'error' });
+      if (error.response?.status === 401) {
+        logout({ mode: 'bad_token' });
+        onClose();
+        return;
+      } else if (error.response?.status === 409) {
+        enqueueSnackbar('Entity already exists', { variant: 'error' });
+      } else {
+        console.error(`Error ${mode}ing entity:`, error);
+        enqueueSnackbar(`Error ${mode}ing entity`, { variant: 'error' });
+      }
     }
-  }, [
-    mode,
-    selectedNode,
-    fetchNodes,
-    token,
-    logout,
-    setRefreshSearchables,
-    onClose,
-    newEntity,
-    fetchEntities,
-    report,
-  ]);
-
-  const handleMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-    setMenuOpen(true);
-  }
-
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    setMenuOpen(false);
-  }
+  }, [mode, selectedNode, fetchNodes, token, logout, setRefreshSearchables, onClose, newEntity, fetchEntities, report]);
 
   function processField(field) {
     // For a field from definitions:
@@ -320,8 +273,6 @@ function EntityDialog({
   }
 
   const handleCopyClick = async ({ entity, selectedData, type }) => {
-    console.log(selectedData, type);
-
     // Process the selected fields. Each field might be a definition or an entity.
     sendAnalytics(entity.label, 'entity', 1);
     const data = selectedData
@@ -386,88 +337,55 @@ function EntityDialog({
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
-        {mode === 'edit'
-          ? 'Edit'
-          : mode === 'copy'
-            ? 'Copy'
-            : mode === 'create'
-              ? 'Create'
-              : mode === 'delete'
-                ? 'Delete'
-                : mode === 'report'
-                  ? 'Report'
-                  : null}
-        {' '}
-        Entity
-        {mode === 'edit'
-          ? affected && <ChangeWarning items={affected} level="warning" />
-          : mode === 'delete'
-            ? affected && <ChangeWarning items={affected} level="error" />
-            : null}
+      {mode && mode.charAt(0).toUpperCase() + mode.slice(1)} Entity
+        {affected && ['edit', 'delete'].includes(mode) && (
+          <ChangeWarning items={affected} level={mode === 'edit' ? 'warning' : 'error'} />
+        )}
       </DialogTitle>
       <DialogContent>
-        {mode === 'edit' ? (
-          <EditEntityForm
-            node={selectedNode}
-            setNode={setSelectedNode}
-          />
-        ) : mode === 'copy' ? (
-          <CopyEntityForm node={selectedNode} onCheckChange={setCheckedFields} />
-        ) : mode === 'create' ? (
-          <CreateEntityForm
-            newEntity={newEntity}
-            setNewEntity={setNewEntity}
-            error={error}
-          />
-        ) : mode === 'delete' ? (
+        {mode === 'edit' && <EditEntityForm node={selectedNode} setNode={setSelectedNode} />}
+        {mode === 'copy' && <CopyEntityForm node={selectedNode} onCheckChange={setCheckedFields} />}
+        {mode === 'create' && <CreateEntityForm newEntity={newEntity} setNewEntity={setNewEntity} error={error} />}
+        {mode === 'delete' && (
           <DeleteEntityForm
             node={selectedNode}
             sureDelete={sureDelete}
             setSureDelete={setSureDelete}
             onDelete={handleAction}
             onCancel={onClose}
-            setSelectedNode={setSelectedNode}
           />
-        ) : mode === 'report' ? (
-          <ReportEntityForm node={selectedNode} report={report} setReport={setReport} />
-        ) : null}
+        )}
+        {mode === 'report' && <ReportEntityForm node={selectedNode} report={report} setReport={setReport} />}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Close</Button>
+        <Button
+        sx={{
+          textTransform: 'capitalize',
+        }} 
+        onClick={onClose}>Close</Button>
         {mode !== 'copy' ? <Button
           onClick={handleAction}
           variant="contained"
           color="primary"
+          sx={{
+            textTransform: 'capitalize',
+          }}
           disabled={
-            (mode === 'create' && (newEntity.label === '' || newEntity.fields.filter((field) => field.label === '').length > 0)) ||
-            (mode === 'edit' && selectedNode.fields.filter((field) => field.label === '').length > 0) ||
+            (mode === 'create' && (!newEntity.label || newEntity.fields.some((f) => !f.label))) ||
+            (mode === 'edit' && selectedNode.fields.some((f) => !f.label)) ||
             (mode === 'delete' && !sureDelete)
           }
         >
-          {mode === 'edit'
-            ? 'Save'
-            : mode === 'create'
-              ? 'Create'
-              : mode === 'delete'
-                ? 'Delete'
-                : mode === 'report'
-                  ? 'Report'
-                  : null}
+          {mode}
         </Button> :
           <Box>
             <Button variant="contained" color="primary" onClick={handleMenuOpen} disabled={checkedFields.length === 0}>
               Copy
             </Button>
-            <Menu
-              anchorEl={anchorEl}
-              open={menuOpen}
-              onClose={handleMenuClose}
-              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            >
-              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'table' })}>Copy as Table</MenuItem>
-              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'object' })}>Copy as Object</MenuItem>
-              <MenuItem onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type: 'example' })}>Copy as Example</MenuItem>
+            <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
+              {['table', 'object', 'example'].map((type) => (
+                <MenuItem key={type} onClick={() => handleCopyClick(type)}>Copy as {type.charAt(0).toUpperCase() + type.slice(1)}</MenuItem>
+              ))}
             </Menu>
           </Box>}
       </DialogActions>
