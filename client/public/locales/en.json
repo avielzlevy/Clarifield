@@ -57,5 +57,7 @@
     "format_dialog_instructions":"Please fill out the details below to ",
     "format_pattern_must_have_boundaries":"format.{'\n'}The pattern must be a valid regular expression enclosed with ^ and $",
     "pattern_boundaries_error":"Pattern must start with ^ and end with $",
-    "details_for":"Details for"
+    "details_for":"Details for",
+    "static_format_delete_error":"Static formats cannot be deleted",
+    "static_format_edit_error":"Static formats cannot be edited"
 }

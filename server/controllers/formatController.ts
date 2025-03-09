@@ -80,6 +80,11 @@ export const updateFormat = async (
   try {
     const formats = await formatRepo.getFormats();
     if (!formats[name]) {
+      if(name in staticFormats) {
+        ctx.response.status = 403;
+        ctx.response.body = { message: "Cannot update static format" };
+        return;
+      }
       ctx.response.status = 404;
       ctx.response.body = { message: "Format not found" };
       return;
@@ -123,6 +128,11 @@ export const deleteFormat = async (
   try {
     const formats = await formatRepo.getFormats();
     if (!formats[name]) {
+      if(name in staticFormats) {
+        ctx.response.status = 403;
+        ctx.response.body = { message: "Cannot delete static format" };
+        return;
+      }
       ctx.response.status = 404;
       ctx.response.body = { message: "Format not found" };
       return;

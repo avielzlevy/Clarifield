@@ -113,14 +113,15 @@ const Formats = () => {
       console.debug(error);
       if (error.response?.status === 404) {
         enqueueSnackbar('Format not found', { variant: 'error' });
-      } else if (error.response?.status === 409) {
-        enqueueSnackbar('Default format cannot be deleted', { variant: 'error' });
+      } else if (error.response?.status === 403) {
+        enqueueSnackbar(t('static_format_delete_error'), { variant: 'error' });
+        closeDeleteDialog();
       } else {
         enqueueSnackbar('Error deleting format', { variant: 'error' });
       }
       closeDeleteDialog();
     }
-  }, [token, logout, setRefreshSearchables, closeDeleteDialog, fetchFormats]);
+  }, [token, logout, setRefreshSearchables, closeDeleteDialog, fetchFormats,t]);
 
   return (
     <Box sx={{ p: 1, width: '100%' }}>

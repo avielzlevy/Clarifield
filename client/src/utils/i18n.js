@@ -7,7 +7,7 @@ i18n
   .use(initReactI18next)
   .init({
     // debug: true,
-    lng: 'he', // Default language
+    lng: 'en', // Default language
     fallbackLng: 'en', // Fallback language
     backend: {
       loadPath: '/locales/{{lng}}.json',

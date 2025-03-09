@@ -3,24 +3,14 @@ import { Button, Tooltip, Box } from '@mui/material';
 import { useTheme, styled } from '@mui/material/styles';
 import i18next from 'i18next';
 import { useRtl } from '../contexts/RtlContext';
-import ReactCountryFlag from "react-country-flag";
-
-const countryMapping = {
-  en: 'US',
-  he: 'IL',
-  ar: 'SA',
-  es: 'ES',
-  fr: 'FR',
-  de: 'DE',
-};
 
 const languages = [
-  { code: 'en', flag: '🇺🇸' },
-  { code: 'he', flag: '🇮🇱' },
-  { code: 'ar', flag: '🇸🇦' },
-  { code: 'es', flag: '🇪🇸' },
-  { code: 'fr', flag: '🇫🇷' },
-  { code: 'de', flag: '🇩🇪' },
+  { code: 'en'},
+  { code: 'he'},
+  { code: 'ar'},
+  { code: 'es'},
+  { code: 'fr'},
+  { code: 'de'},
 ];
 
 const rtlLangs = ['he', 'ar'];
@@ -80,7 +70,7 @@ function LangDropdown() {
     if (newLangIsRtl !== isCurrentLangRtl) {
       handleRtlSlowLoad();
     }
-    
+
     setRtl(newLangIsRtl);
   }, [selectedLangCode, isCurrentLangRtl, setRtl, handleRtlSlowLoad]);
 
@@ -110,12 +100,18 @@ function LangDropdown() {
                 selected={code === selectedLangCode}
                 onClick={() => handleLanguageSelect(code)}
               >
-                <ReactCountryFlag
-                  countryCode={countryMapping[code]}
-                  svg
-                  style={{ borderRadius: '7px', width: '1.05em', height: '1.05em' }}
-                  title={code}
+                <Box
+                  sx={{
+                    backgroundImage: `url(/flags/${code}.svg)`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    borderRadius: '6px',
+                    width: '1.20em',
+                    height: '0.90em',
+                    display: 'inline-block'
+                  }}
                 />
+
               </LanguageItem>
             ))}
           </LanguageGrid>
@@ -139,12 +135,18 @@ function LangDropdown() {
             mb: '4px',
           }}
         >
-          <ReactCountryFlag
-            countryCode={countryMapping[selectedLangCode]}
-            svg
-            style={{ borderRadius: '9px', width: '1.05em', height: '1.05em' }}
-            title={selectedLangCode}
+          <Box
+            sx={{
+              backgroundImage: `url(/flags/${selectedLangCode}.svg)`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              borderRadius: '5px',
+              width: '1.20em',
+              height: '0.95em',
+              display: 'inline-block'
+            }}
           />
+
         </Button>
       </Tooltip>
     </Box>

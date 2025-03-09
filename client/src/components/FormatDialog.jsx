@@ -85,8 +85,9 @@ const FormatDialog = ({
       if (error.response?.status === 401) {
         logout({ mode: "bad_token" });
         return;
-      } else if (error.response?.status === 409) {
-        enqueueSnackbar(t("format_exists_error"), { variant: "error" });
+      } else if (error.response?.status === 403) {
+        enqueueSnackbar(t("static_format_edit_error"), { variant: "error" });
+        onClose();
       } else {
         console.error(
           `Error ${mode === "add" ? "adding" : "editing"} format:`,
