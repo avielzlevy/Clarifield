@@ -59,5 +59,6 @@
     "pattern_boundaries_error":"Pattern must start with ^ and end with $",
     "details_for":"Details for",
     "static_format_delete_error":"Static formats cannot be deleted",
-    "static_format_edit_error":"Static formats cannot be edited"
+    "static_format_edit_error":"Static formats cannot be edited",
+    "error_fetching_popular":"Error fetching popular items"
 }

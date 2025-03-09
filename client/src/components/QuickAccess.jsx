@@ -33,23 +33,24 @@ const QuickAccess = ({ activeFilters }) => {
       try {
         const analytics = await getAnalytics();
         const combinedItems = Object.entries({
-          ...analytics.definition,
-          ...analytics.entity,
-          ...analytics.format,
+          ...(analytics.definition || {}),
+          ...(analytics.entity || {}),
+          ...(analytics.format || {}),
         }).map(([name, count]) => ({
           name,
           count,
-          category: analytics.definition[name]
+          category: analytics.definition?.[name]
             ? "definition"
-            : analytics.entity[name]
+            : analytics.entity?.[name]
             ? "entity"
             : "format",
         }));
+        
 
         setMostUsedItems(combinedItems.sort((a, b) => b.count - a.count));
       } catch (error) {
         console.error("Error fetching analytics:", error);
-        enqueueSnackbar(t("error_fetching_analytics"), { variant: "error" });
+        enqueueSnackbar(t("error_fetching_popular"), { variant: "error" });
       } finally {
         setLoading(false);
       }
