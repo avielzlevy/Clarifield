@@ -17,6 +17,7 @@ import { useDefinitions } from "../contexts/useDefinitions";
 import { useFormats } from "../contexts/useFormats";
 import { useEntities } from "../contexts/useEntities";
 import { useTheme } from "@mui/material/styles";
+import { useTranslation } from "react-i18next";
 
 export default function Problems() {
   const [isOpen, setIsOpen] = useState(false);
@@ -24,6 +25,7 @@ export default function Problems() {
   const { definitions } = useDefinitions();
   const { entities } = useEntities();
   const theme = useTheme();
+  const { t } = useTranslation();
 
   const toggleOpen = useCallback(() => setIsOpen((prev) => !prev), []);
 
@@ -81,7 +83,7 @@ export default function Problems() {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <ClickAwayListener onClickAway={() => setIsOpen(false)}>
+        <ClickAwayListener onClickAway={() => setIsOpen(false)} dir='ltr'>
           <Paper
             elevation={3}
             sx={{
@@ -107,7 +109,7 @@ export default function Problems() {
             >
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                 <AlertCircle size={24} />
-                <Typography variant="h6">Problems</Typography>
+                <Typography variant="h6">{t('navbar.problems')}</Typography>
               </Box>
               <IconButton size="small" onClick={() => setIsOpen(false)} sx={{ color: "white" }}>
                 <X size={20} />
@@ -117,18 +119,26 @@ export default function Problems() {
             {/* Description */}
             <Box sx={{ p: 2, bgcolor: "error.light" }}>
               <Typography variant="body2" color="white">
-                {totalProblems} problem{totalProblems !== 1 ? "s" : ""} need
-                {totalProblems === 1 ? "s" : ""} attention
+                {totalProblems} {t('navbar.problem_need')}
+                {totalProblems === 1 ? "s" : ""} {t('navbar.attention')}
               </Typography>
             </Box>
 
             {/* List of Problems */}
             <List sx={{ maxHeight: 400, overflowY: "auto" }}>
               {problems.map((problem, index) => (
-                <React.Fragment key={index}>
+                <Box key={index} dir='ltr' sx={{
+                  textAlign: 'left',
+                }}>
                   <ListItem>
                     <ListItemIcon sx={{ minWidth: 35 }}>{getProblemIcon(problem.type)}</ListItemIcon>
                     <ListItemText
+                      dir='ltr'
+                      sx={{
+                        display: "flex",
+                        alignItems: "left",
+                        gap: 1,
+                      }}
                       primary={problem.message}
                       slotProps={{
                         primary: {
@@ -145,15 +155,14 @@ export default function Problems() {
                     />
                   </ListItem>
                   {index < problems.length - 1 && <Divider />}
-                </React.Fragment>
+                </Box>
               ))}
             </List>
 
             {/* Footer */}
             <Box sx={{ p: 2, bgcolor: "grey.100", textAlign: "center" }}>
               <Typography variant="body2" color="textSecondary">
-                Review and update your definitions, formats, and entity references to resolve these
-                issues.
+                {t('navbar.review_and_update')}
               </Typography>
             </Box>
           </Paper>

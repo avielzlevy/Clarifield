@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import { useTranslation } from 'react-i18next';
 
 function ChangeWarning({ items, level }) {
+  const { t } = useTranslation();
   // Helper function to format items into a readable tooltip
   const formatTooltipText = (items) => {
     return Object.entries(items)
@@ -13,10 +15,10 @@ function ChangeWarning({ items, level }) {
   // Memoize the tooltip message for performance optimization
   const message = useMemo(() => {
     const tooltipText = formatTooltipText(items);
-    return `The following items will ${
+    return `${t('change_warning_1')} ${
       level === 'warning' ? 'be affected' : 'break'
-    } by this change:\n${tooltipText}`;
-  }, [items, level]);
+  } ${t('change_warning_2')}${tooltipText}`;
+  }, [items, level,t]);
 
   return (
     <Tooltip title={<span style={{ whiteSpace: 'pre-line' }}>{message}</span>}>

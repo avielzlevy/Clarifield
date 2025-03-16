@@ -1,7 +1,9 @@
 import React, { useEffect, useCallback } from "react";
 import { Box, TextField } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 const ReportEntityForm = ({ node, report, setReport }) => {
+  const { t } = useTranslation();
   useEffect(() => {
     if (node) {
       setReport((prev) => ({
@@ -25,7 +27,7 @@ const ReportEntityForm = ({ node, report, setReport }) => {
     <Box>
       <TextField
         fullWidth
-        label="Type"
+        label={t("common.type")}
         variant="outlined"
         value={report?.type || "entity"}
         disabled
@@ -33,7 +35,7 @@ const ReportEntityForm = ({ node, report, setReport }) => {
       />
       <TextField
         fullWidth
-        label="Name"
+        label={t("common.name")}
         variant="outlined"
         value={node?.label || "Unnamed"}
         disabled
@@ -42,7 +44,7 @@ const ReportEntityForm = ({ node, report, setReport }) => {
       <TextField
         fullWidth
         variant="outlined"
-        label="Description"
+        label={t("common.description")}
         margin="normal"
         multiline
         rows={4}

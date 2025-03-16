@@ -30,7 +30,7 @@ function SignIn() {
         );
         localStorage.setItem('username', data.username);
         login(data.token);
-        enqueueSnackbar(t('signed_in'), { variant: 'success' });
+        enqueueSnackbar(t('login.signed_in'), { variant: 'success' });
 
         const previousPage = localStorage.getItem('previousPage');
         setPage(previousPage || 'home');
@@ -40,7 +40,7 @@ function SignIn() {
       } catch (error) {
         console.error('Authentication failed', error);
         const message = error.response?.data?.message || 'Authentication failed';
-        enqueueSnackbar(t('sign_in_failed', { message }), { variant: 'error' });
+        enqueueSnackbar(t('login.sign_in_failed', { message }), { variant: 'error' });
       }
     },
     [credentials, login, enqueueSnackbar, t, setPage]
@@ -61,11 +61,11 @@ function SignIn() {
         }}
       >
         <Typography variant="h4" gutterBottom>
-          {t('sign_in')}
+          {t('login.sign_in')}
         </Typography>
         <TextField
           name="username"
-          label={t('user_name')}
+          label={t('login.username')}
           fullWidth
           required
           value={credentials.username}
@@ -73,7 +73,7 @@ function SignIn() {
         />
         <TextField
           name="password"
-          label={t('password')}
+          label={t('login.password')}
           type="password"
           fullWidth
           required
@@ -81,7 +81,7 @@ function SignIn() {
           onChange={handleChange}
         />
         <Button variant="contained" color="primary" type="submit" fullWidth>
-          {t('sign_in')}
+          {t('login.sign_in')}
         </Button>
       </Box>
     </Container>

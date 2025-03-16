@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 // Adjust these imports to match your icon library
 import { Shield, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
+import Loading from '../components/Loading';
 
 // Define a simple keyframes animation for the loading spinner
 const spinAnimation = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
@@ -76,6 +77,7 @@ function Validation() {
       {/* Editor Section */}
       <Box sx={{ flexGrow: 1 }} dir="ltr">
         <Editor
+          loading={<Loading />}
           width="100%"
           defaultLanguage="json"
           defaultValue=""
@@ -119,7 +121,7 @@ function Validation() {
                   color: '#6366F1',
                 }}
               />
-              {t('validation_results') || 'Validation Results'}
+              {t('validation.results')}
             </Typography>
           </Box>
 
@@ -145,7 +147,7 @@ function Validation() {
                   }}
                 />
                 <Typography variant="body2" color="text.secondary">
-                  {t('validating_json') || 'Validating JSON...'}
+                  {t('validation.validating_json')}
                 </Typography>
               </Box>
             ) : validationResult ? (
@@ -184,7 +186,7 @@ function Validation() {
                     )}
                     <Box>
                       <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                        {validationResult.isValid ? 'Valid JSON' : 'Invalid JSON'}
+                        {validationResult.isValid ? t('validation.valid') : t('validation.invalid')} JSON
                       </Typography>
                       <Typography
                         variant="body2"
@@ -193,8 +195,9 @@ function Validation() {
                         }}
                       >
                         {validationResult.isValid
-                          ? 'The JSON is valid and meets all schema requirements.'
-                          : 'The JSON contains errors or does not meet schema requirements.'}
+                          ? t('validation.meet_requirements')
+                          : t('validation.does_not_meet')
+                        }
                       </Typography>
                     </Box>
                   </Box>
@@ -209,9 +212,9 @@ function Validation() {
                         variant="subtitle1"
                         sx={{ fontWeight: 500, mb: 2, color: 'text.primary' }}
                       >
-                        Validation Issues
+                        {t('validation.validations_issues')}
                       </Typography>
-                      <Stack spacing={2}>
+                      <Stack spacing={2} dir="ltr">
                         {validationResult.violations.map((violation, index) => (
                           <Box
                             key={index}
@@ -226,8 +229,10 @@ function Validation() {
                           >
                             <AlertTriangle
                               style={{
-                                minHeight: 16,
-                                minWidth: 16,
+                                height: 20,
+                                width: 20,
+                                minWidth:20,
+                                minHeight:20,
                                 color: '#EF4444',
                                 marginRight: 8,
                                 marginTop: 0,
@@ -265,11 +270,10 @@ function Validation() {
                       variant="subtitle1"
                       sx={{ fontWeight: 500, mb: 1, color: 'text.primary' }}
                     >
-                      Schema Validation
+                      {t('validation.schema_validation')}
                     </Typography>
                     <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      All schema requirements have been met. The JSON structure is valid and can be
-                      used in your application.
+                      {t('validation.schema_valid')}
                     </Typography>
                   </Box>
                 )}

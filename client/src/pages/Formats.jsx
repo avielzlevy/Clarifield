@@ -39,10 +39,10 @@ const Formats = () => {
 
   // Columns for the data grid
   const columns = useMemo(()=>[
-    { field: 'name', headerName: t('name'), flex: 1 },
+    { field: 'name', headerName: t('common.name'), flex: 1 },
     {
       field: 'pattern',
-      headerName: t('pattern'),
+      headerName: t('formats.pattern'),
       flex: 2,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ mt: '3%' }} dir="ltr">
@@ -50,7 +50,7 @@ const Formats = () => {
         </Typography>
       ),
     },
-    { field: 'description', headerName: t('description'), flex: 2 },
+    { field: 'description', headerName: t('common.description'), flex: 2 },
   ],[t]);
 
 
@@ -127,7 +127,7 @@ const Formats = () => {
     <Box sx={{ p: 1, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-          {t('formats')}
+          {t('navbar.formats')}
         </Typography>
         {auth && (
           <Button
@@ -141,7 +141,7 @@ const Formats = () => {
             variant="contained"
             startIcon={<AddIcon />}
           >
-            {reverseWords(`${t('new')} ${t('format')}`)}
+            {reverseWords(`${t('common.new')} ${t('common.format')}`)}
           </Button>
         )}
       </Box>

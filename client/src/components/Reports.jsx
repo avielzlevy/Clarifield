@@ -80,10 +80,10 @@ const ReportCard = React.memo(({ report, isExpanded, onToggleExpand, theme, t, r
         description: desc.description,
         status: newStatus,
       });
-      enqueueSnackbar("Report updated", { variant: "success" });
+      enqueueSnackbar(t('home.report_updated'), { variant: "success" });
       refreshReports();
     } catch (error) {
-      enqueueSnackbar("Error updating report", { variant: "error" });
+      enqueueSnackbar(t('home.error_updating_report'), { variant: "error" });
     }
   }, 300);
   const icon = useMemo(() => getIconForCategory(report.category, theme), [report.category, theme]);
@@ -105,7 +105,7 @@ const ReportCard = React.memo(({ report, isExpanded, onToggleExpand, theme, t, r
       >
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Chip
-            label={desc?.status || desc}
+            label={t(`home.${desc?.status}`)}
             size="small"
             sx={{
               p: 1,
@@ -191,7 +191,7 @@ const Reports = ({ activeFilters }) => {
       const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/reports`);
       setReportsData(data);
     } catch {
-      enqueueSnackbar("Error fetching reports", { variant: "error" });
+      enqueueSnackbar(t('home.error_fetching_reports'), { variant: "error" });
     } finally {
       setLoadingReports(false);
     }
@@ -207,6 +207,15 @@ const Reports = ({ activeFilters }) => {
     );
   }, [reportsData]);
 
+  const filteredReports = useMemo(() => {
+    return combinedReports.filter(
+      (report) =>
+        (activeFilters.definitions || report.category !== "definition") &&
+        (activeFilters.entities || report.category !== "entity") &&
+        (activeFilters.formats || report.category !== "format")
+    );
+  }, [combinedReports, activeFilters]);
+
   if (loadingReports) return <Loading />;
 
   return (
@@ -216,9 +225,9 @@ const Reports = ({ activeFilters }) => {
       alignItems: "center",
     }}>
       <Typography variant="h5" fontWeight={600} sx={{ mb: 2 }}>
-        {t("reports")}
+        {t("home.reports")}
       </Typography>
-      {combinedReports.map((report) => <ReportCard key={report.name} report={report} isExpanded={expanded[report.name]} onToggleExpand={() => dispatch(report.name)} theme={theme} t={t} refreshReports={fetchReports} />)}
+      {filteredReports.map((report) => <ReportCard key={report.name} report={report} isExpanded={expanded[report.name]} onToggleExpand={() => dispatch(report.name)} theme={theme} t={t} refreshReports={fetchReports} />)}
     </Box>);
 };
 

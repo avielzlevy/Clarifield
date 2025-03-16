@@ -23,7 +23,7 @@ function CopyEntityForm({ node, onCheckChange }) {
   );
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <Box sx={{ display: "flex", flexDirection: "column" }} dir='ltr'>
       {node?.fields?.map((field) => (
         <FormControlLabel
           key={field.label}

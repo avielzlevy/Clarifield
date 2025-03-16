@@ -40,13 +40,13 @@ const FormatDialog = ({
 
   // Update form when editedFormat changes
   useEffect(() => {
-    if (editedFormat&&mode === "edit") {
+    if (editedFormat && mode === "edit") {
       setFormat(editedFormat);
       fetchAffectedItems({ name: editedFormat.name, type: 'format' });
     } else {
       resetFormat();
     }
-  }, [editedFormat, resetFormat, fetchAffectedItems,mode]);
+  }, [editedFormat, resetFormat, fetchAffectedItems, mode]);
 
   // Validate that the pattern starts with ^ and ends with $, and is a valid regex.
   const validatePattern = useCallback(() => {
@@ -77,10 +77,7 @@ const FormatDialog = ({
       resetFormat();
       onClose();
       setRefreshSearchables((prev) => prev + 1);
-      enqueueSnackbar(
-        `Format ${mode === "add" ? "added" : "edited"} successfully!`,
-        { variant: "success" }
-      );
+      enqueueSnackbar(`${t("common.format")} ${t(`common.${mode}`)} ${t("common.successfully")}`, { variant: "success" });
     } catch (error) {
       if (error.response?.status === 401) {
         logout({ mode: "bad_token" });
@@ -93,10 +90,7 @@ const FormatDialog = ({
           `Error ${mode === "add" ? "adding" : "editing"} format:`,
           error
         );
-        enqueueSnackbar(
-          `Error ${mode === "add" ? "adding" : "editing"} format`,
-          { variant: "error" }
-        );
+        enqueueSnackbar(`${t("common.error")} ${t(`common.${mode}ing`)} ${t("common.format")}`, { variant: "error" });
       }
       resetFormat();
     }
@@ -127,15 +121,19 @@ const FormatDialog = ({
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>
         {mode === "add" ? "Add Format" : "Edit Format"}
-        {affected && mode !== 'add'&& <ChangeWarning items={affected} level="warning" />}
+        {affected && mode !== 'add' && <ChangeWarning items={affected} level="warning" />}
       </DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Please fill out the details below to {mode === "add" ? "add a new" : "edit the"} format.{"\n"}
-          The pattern must be a valid regular expression enclosed with ^ and $.
+        <DialogContentText sx={{
+          whiteSpace: "pre-line",
+          fontSize: "1rem",
+        }}>
+          {
+            `${t("formats.fill_all_fields")} ${t(`common.${mode}`)} ${t("common.format")} ${'\n'} ${t("formats.pattern_must")}`
+          }
         </DialogContentText>
         <TextField
-          label="Name"
+          label={t("common.name")}
           disabled={mode === "edit"}
           fullWidth
           margin="normal"
@@ -145,7 +143,7 @@ const FormatDialog = ({
           }
         />
         <TextField
-          label="Pattern"
+          label={t("formats.pattern")}
           fullWidth
           margin="normal"
           value={format.pattern}
@@ -154,7 +152,7 @@ const FormatDialog = ({
           helperText={patternError}
         />
         <TextField
-          label="Description"
+          label={t("common.description")}
           fullWidth
           margin="normal"
           value={format.description}
@@ -165,10 +163,10 @@ const FormatDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel} color="secondary">
-          Cancel
+          {t("common.cancel")}
         </Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          Save
+          {t("common.save")}
         </Button>
       </DialogActions>
       <RegexBuilderDialog open={regexBuilderDialogOpen} setOpen={setRegexBuilderDialogOpen} setFormat={setFormat} defaultPattern={format.pattern} />

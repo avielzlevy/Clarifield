@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo,useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -47,6 +47,7 @@ import { useRtl } from '../contexts/RtlContext';
 import SearchAll from './SearchAll';
 import Problems from './Problems';
 import Loading from './Loading';
+import { t } from 'i18next';
 
 
 
@@ -97,10 +98,9 @@ const PageContent = () => {
       case 'logs':
         return <Logs />;
       default:
-        return <div>Page Not Found</div>;
+        return <div>{t('page_not_found')}</div>;
     }
   }, [page, auth]);
-
   return <React.Suspense fallback={<Loading />}>
     {ComponentToRender}
   </React.Suspense>
@@ -115,9 +115,9 @@ function NavBar({ theme, setTheme }) {
   const { page, setPage } = usePage();
   const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
-  const username = useMemo(() => localStorage.getItem('username') || 'Viewer', []);
+  const [username] = useState(() => localStorage.getItem('username') || 'Viewer');
   const { t } = useTranslation();
-  const { rtl, rtlLoading } = useRtl();
+  const { rtl} = useRtl();
   // Handle switching user or logging out.
   const handleChangeUser = useCallback(() => {
     if (token) {
@@ -153,8 +153,6 @@ function NavBar({ theme, setTheme }) {
     return items;
   }, [auth]);
 
-  if (rtlLoading) return <Loading />;
-
   return (
     <Box dir={rtl ? 'rtl' : 'ltr'} sx={{ display: 'flex' }}>
       <AppBar
@@ -175,13 +173,13 @@ function NavBar({ theme, setTheme }) {
               }}
               onClick={() => setPage('home')}
             >
-              {t('app_name')}
+              {t('navbar.app_name')}
             </Typography>
           </Box>
           <SearchAll setPage={setPage} />
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Problems />
-            <Tooltip title={username === 'Viewer' ? t('viewer') : t('admin')}>
+            <Tooltip title={username === 'Viewer' || username === '' ? t('navbar.viewer') : t('navbar.admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
                 {auth ? <EnginnerIcon /> : <PersonIcon />}
               </IconButton>
@@ -254,7 +252,7 @@ function NavBar({ theme, setTheme }) {
               >
                 {item.icon}
               </ListItemIcon>
-              <ListItemText primary={t(item.text)} />
+              <ListItemText primary={t(`navbar.${item.text}`)} />
             </ListItemButton>
           ))}
         </List>

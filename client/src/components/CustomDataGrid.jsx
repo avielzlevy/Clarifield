@@ -102,7 +102,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
                       size={16}
                       onClick={() => {
                         navigator.clipboard.writeText(params.value);
-                        enqueueSnackbar('Copied to clipboard', { variant: 'success' });
+                        enqueueSnackbar(t('common.copied'), { variant: 'success' });
                         sendAnalytics(params.row.id, type, 1);
                       }}
                     />
@@ -133,7 +133,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
       ...enhancedColumns,
       {
         field: 'actions',
-        headerName: t('actions'),
+        headerName: t('common.actions'),
         sortable: false,
         width: 80,
         disableColumnMenu: true,
@@ -160,7 +160,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
     <Box sx={{ mt: 0.5 }}>
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <TextField
-          label={t('filter')}
+          label={t('common.filter')}
           value={searchTerm}
           onChange={handleSearchChange}
           variant="outlined"
@@ -181,6 +181,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
         isCellEditable={() => false}
         sx={{
           height: 'calc(100vh - 200px)',
+          maxWidth: '100%',
           width: '100%',
           '& .MuiDataGrid-cell': { outline: 'none' },
         }}

@@ -11,9 +11,11 @@ import {
 } from '@mui/material';
 import ChangeWarning from './ChangeWarning';
 import { useAffectedItems } from '../contexts/useAffectedItems';
+import { useTranslation } from 'react-i18next';
 
 const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {
   const { affected, fetchAffectedItems } = useAffectedItems();
+  const { t } = useTranslation();
   const [sure, setSure] = useState(false);
   const hasAffectedItems = !!affected; // Memoized check for reusability
 
@@ -41,12 +43,12 @@ const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
-        Delete Confirmation
+        {t('common.delete_confirmation')}
         {hasAffectedItems && <ChangeWarning items={affected} level="error" />}
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Are you sure you want to delete: <strong>{deletedItem?.name}</strong>? This action is permanent and cannot be reverted.
+          {t('common.delete_sure')} <strong>{deletedItem?.name}</strong>? {t('common.cannot_be_undone')}
         </DialogContentText>
         {hasAffectedItems && (
           <FormControlLabel
@@ -57,7 +59,7 @@ const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {
                 onChange={() => setSure((prev) => !prev)}
               />
             }
-            label="Are you sure?"
+            label={t('common.sure')}
             labelPlacement="start"
           />
         )}
@@ -70,7 +72,7 @@ const DeleteDialog = ({ open, onClose, deletedItem, onDelete, type }) => {
           color="error"
           disabled={hasAffectedItems && !sure}
         >
-          Delete
+          {t('common.delete')}
         </Button>
       </DialogActions>
     </Dialog>

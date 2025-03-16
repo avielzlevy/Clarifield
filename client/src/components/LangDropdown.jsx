@@ -44,15 +44,13 @@ const LanguageItem = styled(Box)(({ theme, selected }) => ({
 
 function LangDropdown() {
   const [open, setOpen] = useState(false);
-  const { setRtl, setRtlLoading } = useRtl();
+  // Extract the dynamic 'rtl' state from context along with setters
+  const { rtl, setRtl, setRtlLoading } = useRtl();
   const theme = useTheme();
 
   // Get initial language code from localStorage
   const initialLangCode = useMemo(() => localStorage.getItem('lang') || 'en', []);
   const [selectedLangCode, setSelectedLangCode] = useState(initialLangCode);
-
-  // Track the current RTL state to prevent unnecessary reloads
-  const isCurrentLangRtl = useMemo(() => rtlLangs.includes(selectedLangCode), [selectedLangCode]);
 
   const handleRtlSlowLoad = useCallback(() => {
     setRtlLoading(true);
@@ -62,17 +60,21 @@ function LangDropdown() {
   }, [setRtlLoading]);
 
   useEffect(() => {
+    // Update language in i18next and localStorage
     i18next.changeLanguage(selectedLangCode);
     localStorage.setItem('lang', selectedLangCode);
 
+    // Determine the writing direction for the new language
     const newLangIsRtl = rtlLangs.includes(selectedLangCode);
 
-    if (newLangIsRtl !== isCurrentLangRtl) {
+    // Trigger slow loading only if the writing direction is actually changing
+    if (newLangIsRtl !== rtl) {
       handleRtlSlowLoad();
     }
 
+    // Update the RTL state accordingly
     setRtl(newLangIsRtl);
-  }, [selectedLangCode, isCurrentLangRtl, setRtl, handleRtlSlowLoad]);
+  }, [selectedLangCode, rtl, setRtl, handleRtlSlowLoad]);
 
   const handleTooltipClose = useCallback(() => setOpen(false), []);
   const handleTooltipToggle = useCallback(() => setOpen((prev) => !prev), []);
@@ -111,7 +113,6 @@ function LangDropdown() {
                     display: 'inline-block'
                   }}
                 />
-
               </LanguageItem>
             ))}
           </LanguageGrid>
@@ -146,7 +147,6 @@ function LangDropdown() {
               display: 'inline-block'
             }}
           />
-
         </Button>
       </Tooltip>
     </Box>

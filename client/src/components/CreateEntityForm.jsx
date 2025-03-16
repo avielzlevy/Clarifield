@@ -13,11 +13,13 @@ import { Trash2 as Trash, Plus, Book, Boxes } from 'lucide-react';
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 import { useTheme } from '@emotion/react';
+import { useTranslation } from 'react-i18next';
 
 const CreateEntityForm = ({ newEntity, setNewEntity, error }) => {
   const theme = useTheme();
   const { definitions } = useDefinitions();
   const { entities } = useEntities();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!newEntity.fields || newEntity.fields.length === 0) {
@@ -111,7 +113,7 @@ const CreateEntityForm = ({ newEntity, setNewEntity, error }) => {
   return (
     <Paper sx={{ p: 2 }}>
       <TextField
-        label="Entity Name"
+        label={`${t('entities.entity')} ${t('common.name')}`}
         variant="outlined"
         fullWidth
         value={newEntity.label}
@@ -133,7 +135,7 @@ const CreateEntityForm = ({ newEntity, setNewEntity, error }) => {
                 onChange={(event, newValue) => handleFieldChange(index, newValue)}
                 onInputChange={(event, newInputValue) => handleFieldChange(index, newInputValue)}
                 renderInput={(params) => (
-                  <TextField {...params} label={`Field ${index + 1}`} variant="outlined" fullWidth />
+                  <TextField {...params} label={`${t('common.field')} ${index + 1}`} variant="outlined" fullWidth />
                 )}
                 renderGroup={(params) => {
                   const { key, group, children, ...rest } = params;
@@ -158,9 +160,9 @@ const CreateEntityForm = ({ newEntity, setNewEntity, error }) => {
           );
         })}
         <Button variant="outlined" startIcon={<Plus />} onClick={addField}>
-          Add Field
+          {`${t('common.add')} ${t('common.field')}`}
         </Button>
-        {newEntity.fields.length === 0 && <Alert severity="warning">At least one field is required</Alert>}
+        {newEntity.fields.length === 0 && <Alert severity="warning">{t('minimum_one_field')}</Alert>}
       </Box>
     </Paper>
   );

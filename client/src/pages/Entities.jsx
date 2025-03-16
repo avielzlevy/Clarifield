@@ -17,6 +17,7 @@ import axios from 'axios';
 import AddIcon from '@mui/icons-material/Add';
 import { useSearch } from '../contexts/SearchContext';
 import Loading from '../components/Loading';
+import { useRtl } from '../contexts/RtlContext';
 
 function Entities() {
     const nodeTypes = useMemo(() => ({ entityCard: EntityCard }), []);
@@ -31,6 +32,7 @@ function Entities() {
     const viewport = useViewport();
     const nodesRef = useRef(nodes);
     const reactFlowInstanceRef = useRef(null);
+    const { rtl } = useRtl();
 
     // Ensure nodesRef is always up to date
     useEffect(() => {
@@ -164,11 +166,10 @@ function Entities() {
     const onInit = useCallback((instance) => {
         reactFlowInstanceRef.current = instance;
     }, []);
-
-    if (loading) return <Loading />;
     return (
         <>
             <Box sx={{ position: 'relative', height: 'calc(100vh - 80px)', width: '100%' }}>
+                {loading && <Loading />}
                 <Box
                     sx={{
                         height: '100%',
@@ -188,7 +189,9 @@ function Entities() {
                         snapToGrid
                     >
                         <Background />
-                        <Controls style={{
+                        <Controls
+                        position={rtl ? 'bottom-right' : 'bottom-left'}
+                        style={{
                                 '--xy-controls-button-background-color-default':
                                     theme.palette.background.paper !== '#fff'
                                         ? theme.palette.custom.light

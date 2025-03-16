@@ -16,6 +16,7 @@ import {
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useEntities } from '../contexts/useEntities';
 import { useTheme } from '@mui/material/styles';
+import { useTranslation } from 'react-i18next';
 
 const groupIconMap = {
   Definitions: <Book style={{ fontSize: '1.2rem', marginRight: '0.5rem' }} />,
@@ -25,6 +26,7 @@ const groupIconMap = {
 
 function EditEntityForm({ node, setNode}) {
   const theme = useTheme();
+  const { t } = useTranslation();
   // Build grouped options from definitions and entities.
   const {definitions} = useDefinitions();
   const {entities} = useEntities();
@@ -118,7 +120,7 @@ function EditEntityForm({ node, setNode}) {
                   handleFieldChange(index, newInputValue)
                 }
                 renderInput={(params) => (
-                  <TextField {...params} label={`Field ${index + 1}`} variant="outlined" fullWidth />
+                  <TextField {...params} label={`${t('common.field')} ${index + 1}`} variant="outlined" fullWidth />
                 )}
                 // Render group headers with icons.
                 renderGroup={(params) => {
@@ -135,7 +137,7 @@ function EditEntityForm({ node, setNode}) {
                       >
                         {groupIconMap[group] || null}
                         <Typography sx={{ fontWeight: 'bold', ml: 1 }}>
-                          {group}
+                          {t(`navbar.${group.toLowerCase()}`)}
                         </Typography>
                       </Box>
                       {children}
@@ -153,7 +155,7 @@ function EditEntityForm({ node, setNode}) {
           );
         })}
       <Button variant="outlined" startIcon={<Plus />} onClick={addField}>
-        Add Field
+        {t('common.add')} {t('common.field').toLowerCase()}
       </Button>
     </Box>
   );

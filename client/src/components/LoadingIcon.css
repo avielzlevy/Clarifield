@@ -1,0 +1,7 @@
+@keyframes orbit {
+    0% { transform: rotate(0deg) translateX(12px) rotate(0deg); } /* Smaller, tighter orbit */
+    25% { transform: rotate(90deg) translateX(12px) rotate(-90deg); }
+    50% { transform: rotate(180deg) translateX(12px) rotate(-180deg); }
+    75% { transform: rotate(270deg) translateX(12px) rotate(-270deg); }
+    100% { transform: rotate(360deg) translateX(0px) rotate(-360deg); } /* Smooth return */
+}

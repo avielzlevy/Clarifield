@@ -25,6 +25,7 @@ import { useEntities } from '../contexts/useEntities';
 import { useFormats } from '../contexts/useFormats';
 import { useAffectedItems } from '../contexts/useAffectedItems';
 import { generateSampleObject, determineRegexType } from '../utils/clipboardUtils';
+import { useTranslation } from 'react-i18next';
 
 function EntityDialog({
   open,
@@ -39,6 +40,7 @@ function EntityDialog({
   const { definitions, fetchDefinitions } = useDefinitions();
   const { formats } = useFormats();
   const { entities, fetchEntities } = useEntities();
+  const { t } = useTranslation();
   const [newEntity, setNewEntity] = useState({ label: '', fields: [] });
   const [sureDelete, setSureDelete] = useState(false);
   const [menuAnchor, setMenuAnchor] = useState(null);
@@ -80,7 +82,7 @@ function EntityDialog({
 
         case 'create':
           if (/[A-Z]/.test(newEntity.label)) {
-            setError('Entity name must be lowercase');
+            setError(t('entity_name_lowercase_error'));
             throw new Error('Entity name must be lowercase');
           }
           response = await axios.post(`${process.env.REACT_APP_API_URL}/api/entities`, newEntity, { headers });
@@ -114,13 +116,13 @@ function EntityDialog({
         onClose();
         return;
       } else if (error.response?.status === 409) {
-        enqueueSnackbar('Entity already exists', { variant: 'error' });
+        enqueueSnackbar(t('entity_already_exists'), { variant: 'error' });
       } else {
         console.error(`Error ${mode}ing entity:`, error);
-        enqueueSnackbar(`Error ${mode}ing entity`, { variant: 'error' });
+        enqueueSnackbar(`${t('common.error')} ${t(`common.${mode}ing`)} ${t('entities.entity')}`, { variant: 'error' });
       }
     }
-  }, [mode, selectedNode, fetchNodes, token, logout, setRefreshSearchables, onClose, newEntity, fetchEntities, report]);
+  }, [mode, selectedNode, fetchNodes, token, logout, setRefreshSearchables, onClose, newEntity, fetchEntities, report, t]);
 
   function processField(field) {
     // For a field from definitions:
@@ -337,7 +339,7 @@ function EntityDialog({
   return (
     <Dialog open={open} onClose={onClose}>
       <DialogTitle>
-      {mode && mode.charAt(0).toUpperCase() + mode.slice(1)} Entity
+        {mode && t(`common.${mode}ing`)} {selectedNode?.label}
         {affected && ['edit', 'delete'].includes(mode) && (
           <ChangeWarning items={affected} level={mode === 'edit' ? 'warning' : 'error'} />
         )}
@@ -359,10 +361,10 @@ function EntityDialog({
       </DialogContent>
       <DialogActions>
         <Button
-        sx={{
-          textTransform: 'capitalize',
-        }} 
-        onClick={onClose}>Close</Button>
+          sx={{
+            textTransform: 'capitalize',
+          }}
+          onClick={onClose}>{t('common.cancel')}</Button>
         {mode !== 'copy' ? <Button
           onClick={handleAction}
           variant="contained"
@@ -376,15 +378,17 @@ function EntityDialog({
             (mode === 'delete' && !sureDelete)
           }
         >
-          {mode}
+          {t(`common.${mode}`)}
         </Button> :
           <Box>
-            <Button variant="contained" color="primary" onClick={handleMenuOpen} disabled={checkedFields.length === 0}>
-              Copy
+            <Button variant="contained" color="primary" onClick={handleMenuOpen} disabled={checkedFields.length === 0} sx={{
+              textTransform: 'capitalize',
+            }}>
+              {t('common.copy')}
             </Button>
             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
               {['table', 'object', 'example'].map((type) => (
-                <MenuItem key={type} onClick={() => handleCopyClick(type)}>Copy as {type.charAt(0).toUpperCase() + type.slice(1)}</MenuItem>
+                <MenuItem key={type} onClick={() => handleCopyClick(type)}>{t('common.copy_as')} {t(`common.${type}`)}</MenuItem>
               ))}
             </Menu>
           </Box>}

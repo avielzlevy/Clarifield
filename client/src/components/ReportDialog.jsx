@@ -10,14 +10,17 @@ import {
 } from "@mui/material";
 import axios from "axios";
 import { enqueueSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
+import { useRtl } from "../contexts/RtlContext";
 
 const ReportDialog = ({ open, onClose, reportedItem }) => {
+  const { rtl } = useRtl();
   const [reportData, setReportData] = useState({
     type: "",
     name: "",
     description: "",
   });
-
+  const { t } = useTranslation();
   // Memoize type to avoid unnecessary state updates
   const reportType = useMemo(
     () => (reportedItem?.pattern ? "format" : "definition"),
@@ -51,27 +54,29 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
           description: reportData.description.trim(),
         }
       );
-      enqueueSnackbar("Report submitted successfully", { variant: "success" });
+      enqueueSnackbar(t('definitions.report_submitted'), { variant: "success" });
       onClose();
     } catch (error) {
       console.error("Error submitting report:", error);
       const errorMessage =
-        error.response?.data?.message || "Failed to submit the report";
+        error.response?.data?.message || t('error_submitting_report');
       enqueueSnackbar(errorMessage, { variant: "error" });
     }
-  }, [reportData, onClose]);
+  }, [reportData, onClose, t]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Submit a Report</DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" PaperProps={{
+      style: { direction: rtl ? "rtl" : "ltr" }
+    }}>
+      <DialogTitle>{t('definitions.report_submit')}</DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Please provide a brief description of the issue.
+          {t('definitions.provide_description')}
         </DialogContentText>
         <TextField
           fullWidth
           variant="outlined"
-          label="Type"
+          label={t('common.type')}
           value={reportData.type}
           disabled
           margin="normal"
@@ -79,7 +84,7 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
         <TextField
           fullWidth
           variant="outlined"
-          label="Name"
+          label={t('common.name')}
           value={reportData.name}
           disabled
           margin="normal"
@@ -90,14 +95,14 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
           rows={4}
           margin="normal"
           variant="outlined"
-          label="Description"
+          label={t('common.description')}
           value={reportData.description}
           onChange={handleDescriptionChange}
         />
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} color="secondary">
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button
           onClick={(e) => {
@@ -108,7 +113,7 @@ const ReportDialog = ({ open, onClose, reportedItem }) => {
           color="primary"
           disabled={!reportData.description.trim()}
         >
-          Submit
+          {t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

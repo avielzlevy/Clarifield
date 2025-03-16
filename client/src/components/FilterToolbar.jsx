@@ -4,11 +4,13 @@ import { useTheme } from "@mui/material/styles";
 import { Book, Boxes, FileJson } from "lucide-react";
 import axios from "axios";
 import { useSnackbar } from "notistack";
+import { useTranslation } from "react-i18next";
 
 const BASE_API_URL = process.env.REACT_APP_API_URL;
 
 const FilterToolbar = ({ activeFilters, toggleFilter }) => {
   const { enqueueSnackbar } = useSnackbar();
+  const { t } = useTranslation();
   const [itemsAmount, setItemsAmount] = useState({ formats: 0, definitions: 0, entities: 0 });
 
   useEffect(() => {
@@ -27,12 +29,12 @@ const FilterToolbar = ({ activeFilters, toggleFilter }) => {
         });
       } catch (error) {
         console.error("Error fetching items amount:", error);
-        enqueueSnackbar("Error fetching items amount", { variant: "error" });
+        enqueueSnackbar(t('home.error_fetching_items'), { variant: "error" });
       }
     };
 
     fetchItemsAmount();
-  }, [enqueueSnackbar]);
+  }, [enqueueSnackbar,t]);
 
   const handleToggleFilter = useCallback((filterType) => {
     toggleFilter(filterType);
@@ -43,21 +45,21 @@ const FilterToolbar = ({ activeFilters, toggleFilter }) => {
       <Paper elevation={3} sx={{ p: 1, borderRadius: 4, display: "flex", gap: 2 }}>
         <ToolbarItem
           icon={Boxes}
-          label="Entities"
+          label={t('navbar.entities')}
           count={itemsAmount.entities}
           isActive={activeFilters.entities}
           onClick={() => handleToggleFilter("entities")}
         />
         <ToolbarItem
           icon={Book}
-          label="Definitions"
+          label={t('navbar.definitions')}
           count={itemsAmount.definitions}
           isActive={activeFilters.definitions}
           onClick={() => handleToggleFilter("definitions")}
         />
         <ToolbarItem
           icon={FileJson}
-          label="Formats"
+          label={t('navbar.formats')}
           count={itemsAmount.formats}
           isActive={activeFilters.formats}
           onClick={() => handleToggleFilter("formats")}

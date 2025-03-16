@@ -11,12 +11,13 @@ import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import { useSearch } from '../contexts/SearchContext';
 import { useTranslation } from 'react-i18next';
+import { useRtl } from '../contexts/RtlContext';
 
 export default function SearchAll({ setPage }) {
   const theme = useTheme();
   const { setSearch, refreshSearchables } = useSearch();
   const { t } = useTranslation();
-
+  const { rtl } = useRtl();
   const [searchables, setSearchables] = useState([]);
   const [inputValue, setInputValue] = useState('');
   const [value, setValue] = useState(null);
@@ -113,10 +114,15 @@ export default function SearchAll({ setPage }) {
       onChange={handleSelection}
       open={forceOpen || Boolean(inputValue)}
       onClose={() => setForceOpen(false)}
+      slotProps={{
+        listbox: {
+          dir: 'ltr'
+        }
+      }}
       renderInput={(params) => (
         <TextField
           {...params}
-          placeholder={t('search')}
+          placeholder={t('navbar.search')}
           InputProps={{
             ...params.InputProps,
             startAdornment: (
@@ -143,6 +149,7 @@ export default function SearchAll({ setPage }) {
       renderGroup={(params) => (
         <div key={params.key}>
           <Box
+            dir={rtl ? 'rtl' : 'ltr'}
             sx={{
               bgcolor: theme.palette.custom?.light || 'inherit',
               display: 'flex',
@@ -152,7 +159,7 @@ export default function SearchAll({ setPage }) {
           >
             {groupIconMap[params.group] || null}
             <Typography sx={{ padding: '1px', fontWeight: 'bold', fontSize: '1rem', ml: 1 }}>
-              {params.group}
+              {t(`common.${params.group.toLowerCase()}`)}
             </Typography>
           </Box>
           {params.children}

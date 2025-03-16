@@ -117,9 +117,9 @@ const Analytics = () => {
     <Paper elevation={3} sx={{ p: 2, height: "calc(100vh - 90px)", overflow: "hidden" }}>
       <Box sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
         <Tabs value={activeTab} onChange={handleTabChange} centered>
-          <Tab label={t("formats")} />
-          <Tab label={t("definitions")} />
-          <Tab label={t("entities")} />
+          <Tab label={t("navbar.formats")} />
+          <Tab label={t("navbar.definitions")} />
+          <Tab label={t("navbar.entities")} />
         </Tabs>
         <Box sx={{ flex: 1, overflow: "auto", mt: 2 }}>
           {activeTab === 0 && <Bar data={formatsData} options={commonOptions} />}

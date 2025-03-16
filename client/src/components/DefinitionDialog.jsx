@@ -17,6 +17,7 @@ import ChangeWarning from "./ChangeWarning";
 import { useAffectedItems } from "../contexts/useAffectedItems";
 import { useDefinitions } from "../contexts/useDefinitions";
 import { useFormats } from "../contexts/useFormats";
+import { useTranslation } from "react-i18next";
 
 const DefinitionDialog = ({
   mode,
@@ -29,6 +30,7 @@ const DefinitionDialog = ({
     format: "",
     description: "",
   });
+  const { t } = useTranslation();
   const { formats, fetchFormats } = useFormats();
   const options = useMemo(() => Object.keys(formats), [formats]);
   const [namingConvention, setNamingConvention] = useState("");
@@ -54,9 +56,9 @@ const DefinitionDialog = ({
       }
       console.error("Error fetching naming convention:");
       console.debug(error);
-      enqueueSnackbar("Error fetching naming convention", { variant: "error" });
+      enqueueSnackbar(t('error_fetching_naming_convention'), { variant: "error" });
     }
-  }, [logout]);
+  }, [logout,t]);
 
   // When the dialog opens or editedDefinition changes, initialize the form.
   useEffect(() => {
@@ -77,25 +79,25 @@ const DefinitionDialog = ({
     switch (namingConvention) {
       case "snake_case":
         if (!/^[a-z0-9_]+$/.test(name)) {
-          setNamingConventionError("Name must be in snake_case");
+          setNamingConventionError(`${t('definitions.bad_naming_convention')} ${t('common.snake_case')}`);
           return false;
         }
         break;
       case "camelCase":
         if (!/^[a-z]+([A-Z][a-z]*)*$/.test(name)) {
-          setNamingConventionError("Name must be in camelCase");
+          setNamingConventionError(`${t('definitions.bad_naming_convention')} ${t('common.camelCase')}`);
           return false;
         }
         break;
       case "PascalCase":
         if (!/^[A-Z][a-z]+([A-Z][a-z]*)*$/.test(name)) {
-          setNamingConventionError("Name must be in PascalCase");
+          setNamingConventionError(`${t('definitions.bad_naming_convention')} ${t('common.PascalCase')}`);
           return false;
         }
         break;
       case "kebab-case":
         if (!/^[a-z0-9-]+$/.test(name)) {
-          setNamingConventionError("Name must be in kebab-case");
+          setNamingConventionError(`${t('definitions.bad_naming_convention')} ${t('common.kebab-case')}`);
           return false;
         }
         break;
@@ -103,7 +105,7 @@ const DefinitionDialog = ({
         break;
     }
     return true;
-  }, [definition, namingConvention]);
+  }, [definition, namingConvention,t]);
 
   // Handle form submission.
   const handleSubmit = useCallback(async () => {
@@ -120,7 +122,7 @@ const DefinitionDialog = ({
       onClose();
       setRefreshSearchables((prev) => prev + 1);
       enqueueSnackbar(
-        `Definition ${mode === "add" ? "added" : "edited"} successfully!`,
+        `${t('definitions.definition')} ${t(`common.${mode}ed`)} ${t('common.successfully')}`,
         { variant: "success" }
       );
     } catch (error) {
@@ -128,17 +130,17 @@ const DefinitionDialog = ({
         logout({ mode: "bad_token" });
         return;
       } else if (error.response?.status === 409) {
-        enqueueSnackbar("Definition already exists", { variant: "error" });
+        enqueueSnackbar(t('definition_already_exists'), { variant: "error" });
       } else {
         console.error(`Error ${mode === "add" ? "adding" : "editing"} definition:`, error);
         enqueueSnackbar(
-          `Error ${mode === "add" ? "adding" : "editing"} definition`,
+          `${t('common.error')} ${t(`common.${mode}ing`)} ${t('definitions.definition')}`,
           { variant: "error" }
         );
       }
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token]);
+  }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token,t]);
 
   const handleCancel = () => {
     // setDefinition({ name: "", format: "", description: "" });
@@ -159,9 +161,10 @@ const DefinitionDialog = ({
       <DialogContent>
         <DialogContentText>
           Please fill out the details below to {mode === "add" ? "add" : "edit"} a definition.
+          {t('definitions.fill_in_fields_1')} {t(`common.${mode}`)} {t('definitions.definition')}.
         </DialogContentText>
         <TextField
-          label="Name"
+          label={t('common.name')}
           fullWidth
           margin="normal"
           value={definition.name}
@@ -180,7 +183,7 @@ const DefinitionDialog = ({
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Format"
+              label={t('common.format')}
               fullWidth
               error={mode==='edit' &&!formats[definition.format]}
               helperText={mode==='edit' &&!formats[definition.format] &&`${definition.format} is not a valid format`}
@@ -190,7 +193,7 @@ const DefinitionDialog = ({
           )}
         />
         <TextField
-          label="Description"
+          label={t('common.description')}
           fullWidth
           margin="normal"
           multiline
@@ -203,10 +206,10 @@ const DefinitionDialog = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={handleCancel} color="secondary">
-          Cancel
+          {t('common.cancel')}
         </Button>
         <Button onClick={handleSubmit} variant="contained" color="primary">
-          Save
+          {t('common.submit')}
         </Button>
       </DialogActions>
     </Dialog>

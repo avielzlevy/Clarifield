@@ -50,7 +50,7 @@ const QuickAccess = ({ activeFilters }) => {
         setMostUsedItems(combinedItems.sort((a, b) => b.count - a.count));
       } catch (error) {
         console.error("Error fetching analytics:", error);
-        enqueueSnackbar(t("error_fetching_popular"), { variant: "error" });
+        enqueueSnackbar(t("home.error_fetching_popular"), { variant: "error" });
       } finally {
         setLoading(false);
       }
@@ -88,10 +88,10 @@ const QuickAccess = ({ activeFilters }) => {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-          {t("quick_access")}
+          {t("home.popular")}
         </Typography>
         <Divider sx={{ mb: 2 }} />
-        <Typography color="textSecondary">{t("quick_access_empty")}</Typography>
+        <Typography color="textSecondary">{t("home.popular_empty")}</Typography>
       </Box>
     );
   }
@@ -100,7 +100,7 @@ const QuickAccess = ({ activeFilters }) => {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box sx={{ textAlign: "center" }}>
         <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1 }}>
-          {t("quick_access")}
+          {t("home.popular")}
         </Typography>
       </Box>
       <Box

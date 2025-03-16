@@ -14,6 +14,7 @@ import {
 } from '@mui/material'
 import RandExp from 'randexp'
 import { RefreshCcw, CircleCheck, CircleX, Copy } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 
 const HEBREW_CHARS = "אבגדהוזחטיכלמנסעפצקרשתךםןףץ";
 const DEFAULT_MIN_MAX = { min: "", max: "" };
@@ -61,6 +62,7 @@ export default function RegexBuilderDialog(props) {
   const [testString, setTestString] = useState("Test your regex here");
   const [matches, setMatches] = useState(false);
   const [examples, setExamples] = useState([]);
+  const { t } = useTranslation();
 
   // Presets now merely reflect what's in the regex.
   const [presets, dispatch] = useReducer(presetReducer, initialPresets);
@@ -220,10 +222,12 @@ export default function RegexBuilderDialog(props) {
   return (
     <>
       <Button variant="contained" onClick={() => setOpen(true)}>
-        Open Regex Builder
+        {t('formats.open_regex_builder')}
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="xl">
-        <DialogTitle>Regex Builder</DialogTitle>
+        <DialogTitle>
+          {t('formats.regex_builder')}
+        </DialogTitle>
         <DialogContent dividers>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Box
@@ -235,7 +239,7 @@ export default function RegexBuilderDialog(props) {
               }}
             >
               <Typography variant="h7" gutterBottom>
-                Character Classes
+                {t('formats.presets')}
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 {Object.keys(initialPresets).map((key) => (
@@ -245,12 +249,12 @@ export default function RegexBuilderDialog(props) {
                     variant={presets[key] ? "contained" : "outlined"}
                     onClick={() => handlePresetToggle(key)}
                   >
-                    {key.replace(/([A-Z])/g, " $1").replace(/^./, (str) => str.toUpperCase())}
+                    {t(`formats.${key}`)}
                   </Button>
                 ))}
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                   <TextField
-                    label="Min"
+                    label={t('formats.min')}
                     variant="outlined"
                     size="small"
                     type="number"
@@ -258,7 +262,7 @@ export default function RegexBuilderDialog(props) {
                     onChange={handleMinChange}
                   />
                   <TextField
-                    label="Max"
+                    label={t('formats.max')}
                     variant="outlined"
                     size="small"
                     type="number"
@@ -278,7 +282,7 @@ export default function RegexBuilderDialog(props) {
               }}
             >
               <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="subtitle1">Current Regex</Typography>
+                <Typography variant="subtitle1">{t('formats.currentRegex')}</Typography>
                 <Box
                   sx={{
                     display: 'flex',
@@ -310,7 +314,7 @@ export default function RegexBuilderDialog(props) {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant="subtitle1">Test String</Typography>
                   <Button onClick={generateRandomTestString} startIcon={<RefreshCcw fontSize="small" />}>
-                    Random
+                    {t('formats.random')}
                   </Button>
                 </Box>
                 <TextField
@@ -345,16 +349,16 @@ export default function RegexBuilderDialog(props) {
                     <Chip key={i} label={ex} variant="outlined" color="success" onClick={() => setTestString(ex)} />
                   ))
                 ) : (
-                  <Typography>No examples available</Typography>
+                  <Typography>{t('formats.no_examples')}</Typography>
                 )}
               </Box>
             </Box>
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpen(false)}>Close</Button>
+          <Button onClick={() => setOpen(false)}>{t('common.close')}</Button>
           <Button onClick={useFormat} variant="contained" color="primary">
-            Use Regex
+            {t('formats.use_regex')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -81,31 +81,31 @@ function Definitions() {
         headers: { Authorization: `Bearer ${token}` },
       });
       fetchDefinitions();
-      enqueueSnackbar('Definition deleted successfully', { variant: 'success' });
+      enqueueSnackbar(t('definitions.deleted_definition'), { variant: 'success' });
       setDeleteDialogOpen(false);
       setActionedDefinition(null);
       setRefreshSearchables((prev) => prev + 1);
     } catch (error) {
-      enqueueSnackbar('Error deleting definition', { variant: 'error' });
+      enqueueSnackbar(t('error_deleting_definition'), { variant: 'error' });
     }
-  }, [actionedDefinition, fetchDefinitions, setRefreshSearchables, token]);
+  }, [actionedDefinition, fetchDefinitions, setRefreshSearchables, token,t]);
 
   const columns = useMemo(()=>[
-    { field: 'name', headerName: t('name'), flex: 1, editable: true },
+    { field: 'name', headerName: t('common.name'), flex: 1, editable: true },
     {
       field: 'format',
-      headerName: t('format'),
+      headerName: t('common.format'),
       flex: 1,
       editable: true,
     },
-    { field: 'description', headerName: t('description'), flex: 2, editable: true },
+    { field: 'description', headerName: t('common.description'), flex: 2, editable: true },
   ],[t]);
 
   return (
     <Box sx={{ padding: 1, width: '100%' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Typography variant="h5" gutterBottom sx={{ fontWeight: 'bold' }}>
-          {t('definitions')}
+          {t('navbar.definitions')}
         </Typography>
         {auth && (
           <Button
@@ -115,7 +115,7 @@ function Definitions() {
             variant="contained"
             startIcon={<AddIcon />}
           >
-            {reverseWords(`${t('new')} ${t('definition')}`)}
+            {reverseWords(`${t('common.new')} ${t('common.definition')}`)}
           </Button>
         )}
       </Box>

@@ -40,7 +40,7 @@ const ChangeLog = ({ activeFilters }) => {
         }
       } catch (error) {
         console.error("Error fetching change log:", error);
-        enqueueSnackbar(t("error_fetching_log"), { variant: "error" });
+        enqueueSnackbar(t("home.error_fetching_recent"), { variant: "error" });
       } finally {
         setLoading(false);
       }
@@ -91,7 +91,7 @@ const ChangeLog = ({ activeFilters }) => {
 
   const renderChangeLogList = () => {
     if (!combinedLogs.length) {
-      return <Typography>{t("change_log_empty")}</Typography>;
+      return <Typography>{t("home.recent_empty")}</Typography>;
     }
 
     return (
@@ -115,7 +115,7 @@ const ChangeLog = ({ activeFilters }) => {
                 <ListItemText
                   primary={
                     <>
-                      {userName || t("admin")} {t(changeType)}{" "}
+                      {userName || t("navbar.admin")} {t(`common.${changeType}`)}{" "}
                       <Box sx={{ display: "inline-flex", alignItems: "center", gap: 1 }}>
                         <Typography component="span" fontWeight={600}>
                           {name}
@@ -137,7 +137,7 @@ const ChangeLog = ({ activeFilters }) => {
     <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <Box sx={{ textAlign: "center" }}>
         <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-          {t("change_log")}
+          {t("home.recent")}
         </Typography>
       </Box>
       {loading ? <Loading/> : (
@@ -157,7 +157,7 @@ const ChangeLog = ({ activeFilters }) => {
               {selectedLog.before && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="error.main" fontWeight="bold">
-                    {t("before")}:
+                    {t("home.before")}:
                   </Typography>
                   <Box
                     component="pre"
@@ -177,7 +177,7 @@ const ChangeLog = ({ activeFilters }) => {
               {selectedLog.after && (
                 <Box sx={{ mb: 2 }}>
                   <Typography variant="body2" color="success.main" fontWeight="bold">
-                    {t("after")}:
+                    {t("home.after")}:
                   </Typography>
                   <Box
                     component="pre"
@@ -198,7 +198,7 @@ const ChangeLog = ({ activeFilters }) => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>{t("close")}</Button>
+          <Button onClick={handleCloseDialog}>{t("common.close")}</Button>
         </DialogActions>
       </Dialog>
     </Box>

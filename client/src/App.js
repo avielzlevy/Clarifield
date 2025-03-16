@@ -16,6 +16,7 @@ import { FormatsProvider } from './contexts/useFormats';
 import { DefinitionsProvider } from './contexts/useDefinitions';
 import { EntitiesProvider } from './contexts/useEntities';
 import { AffectedItemsProvider } from './contexts/useAffectedItems';
+import Loading from './components/Loading';
 
 const rtlCache = createCache({
   key: 'muirtl',
@@ -65,7 +66,7 @@ const Providers = ({ children }) => (
 );
 
 function AppContent({ theme, setTheme }) {
-  const { rtl } = useRtl();
+  const { rtl,rtlLoading } = useRtl();
   const cache = rtl ? rtlCache : ltrCache;
 
   return (
@@ -74,6 +75,7 @@ function AppContent({ theme, setTheme }) {
         <CssBaseline />
         <SnackbarProvider maxSnack={3}>
           {globalScrollbarStyles}
+          {rtlLoading && <Loading mode="full" />}
           <NavBar theme={theme} setTheme={setTheme} language />
         </SnackbarProvider>
       </ThemeProvider>
@@ -82,7 +84,6 @@ function AppContent({ theme, setTheme }) {
 }
 
 function App() {
-  // TODO: maybe extract this logic into a custom hook
   const [theme, setTheme] = useState(() => {
     const darkMode = localStorage.getItem('darkMode');
     return darkMode === 'true' ? darkTheme : lightTheme;

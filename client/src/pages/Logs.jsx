@@ -1,4 +1,4 @@
-import React, { useEffect, useState,useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { Box, Paper, Typography } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,7 @@ const parseLogs = (logsText) => {
     if (match && match.groups) {
       return {
         id: index, // Unique id for DataGrid
-        timestamp: match.groups.timestamp.trim(),
+        timestamp: match.groups.timestamp.trim().slice(0, -1),
         ip: match.groups.ip.trim(),
         method: match.groups.method.trim(),
         url: match.groups.url.trim(),
@@ -72,20 +72,26 @@ const LogsPage = () => {
   }, [logout]);
 
   // Define columns for the DataGrid
-  const columns = useMemo(()=>[
-    { field: 'timestamp', headerName: t('timestamp'), width: 210 },
-    { field: 'ip', headerName: t('ip_address'), width: 120 },
-    { field: 'method', headerName: t('method'), width: 100 },
-    { field: 'url', headerName: t('url'), flex: 1 },
-    { field: 'status', headerName: t('status'), width: 70 },
-    { field: 'responseTime', headerName: t('response_time'), width: 90 },
-  ],[t]);
+  const columns = useMemo(() => [
+    { field: 'timestamp', headerName: t('logs.timestamp'), width: 210 },
+    { field: 'ip', headerName: t('logs.ip_address'), width: 120 },
+    { field: 'method', headerName: t('logs.method'), width: 100 },
+    {
+      field: 'url', headerName: t('logs.url'), flex: 1, renderCell: (params) => (
+        <Box dir='ltr' sx={{ textAlign: 'left', width: '100%' }}>
+          {params.value}
+        </Box>
+      )
+    },
+    { field: 'status', headerName: t('logs.status'), width: 70 },
+    { field: 'responseTime', headerName: t('logs.response_time'), width: 100 },
+  ], [t]);
 
   if (error) {
     return (
       <Box sx={{ p: 2 }}>
         <Typography variant="h6" color="error">
-          {t('error_fetching_logs')}: {error}
+          {t('logs.error_fetching_logs')}: {error}
         </Typography>
       </Box>
     );

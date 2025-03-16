@@ -1,7 +1,9 @@
 import React, { useCallback } from 'react';
 import { Box, Typography, FormControlLabel, Checkbox } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const DeleteEntityForm = ({ node: { label }, sureDelete, setSureDelete }) => {
+  const { t } = useTranslation();
   const handleCheckboxChange = useCallback(() => {
     setSureDelete((prev) => !prev);
   }, [setSureDelete]);
@@ -17,7 +19,7 @@ const DeleteEntityForm = ({ node: { label }, sureDelete, setSureDelete }) => {
       }}
     >
       <Typography variant="body1">
-        Are you sure you want to delete the entity "{label}"? This action cannot be undone.
+        {t('entities.delete_entity_sure')} "{label}"? ${t('common.cannot_be_undone')}
       </Typography>
 
       <FormControlLabel
@@ -28,7 +30,7 @@ const DeleteEntityForm = ({ node: { label }, sureDelete, setSureDelete }) => {
             inputProps={{ 'aria-label': 'Confirm entity deletion' }}
           />
         }
-        label="I confirm I want to delete this entity"
+        label={t('entities.delete_entity_confirm')}
       />
     </Box>
   );
