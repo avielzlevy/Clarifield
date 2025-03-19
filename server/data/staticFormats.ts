@@ -72,6 +72,10 @@ const staticFormats: { [key: string]: Format } = {
     pattern: "^[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+\\.[A-Za-z0-9-_]+$",
     description: "JSON Web Token",
   },
+  Text:{
+    pattern: "^.*$",
+    description: "Text",
+  }
 };
 
 export default staticFormats;

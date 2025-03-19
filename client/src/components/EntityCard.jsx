@@ -19,11 +19,15 @@ const EntityCard = ({ data }) => {
   const { definitions } = useDefinitions();
   const { entities } = useEntities();
 
+  // Fallback: if data.label is missing, use data.id.
+  const entityLabel = data.label || data.id || 'Unknown';
+
   const ICON_SIZE = useMemo(() => ({ width: 10, height: 10 }), []);
 
-  const capitalizedLabel = useMemo(() =>
-    data.label.charAt(0).toUpperCase() + data.label.slice(1),
-    [data.label]);
+  const capitalizedLabel = useMemo(
+    () => entityLabel.charAt(0).toUpperCase() + entityLabel.slice(1),
+    [entityLabel]
+  );
 
   const handleEntityClick = useCallback(
     (label) => {
@@ -132,14 +136,18 @@ const EntityCard = ({ data }) => {
           }
         >
           {data.fields?.map((field, index) => {
-            const isDefinitionMissing = field.type === 'definition' && !definitions[field.label];
-            const isEntityMissing = field.type === 'entity' && !entities[field.label];
+            const isDefinitionMissing =
+              field.type === 'definition' && !definitions[field.label];
+            const isEntityMissing =
+              field.type === 'entity' && !entities[field.label];
             const textColor = isDefinitionMissing || isEntityMissing ? 'red' : 'inherit';
 
             return (
               <ListItem
                 key={field.label || index}
-                onClick={field.type === 'entity' ? () => handleEntityClick(field.label) : undefined}
+                onClick={
+                  field.type === 'entity' ? () => handleEntityClick(field.label) : undefined
+                }
                 sx={{
                   backgroundColor:
                     theme.palette.mode === 'light'
@@ -171,6 +179,6 @@ const EntityCard = ({ data }) => {
       </Paper>
     </Box>
   );
-}
+};
 
 export default EntityCard;

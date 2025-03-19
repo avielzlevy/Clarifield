@@ -38,6 +38,8 @@ import { getAffected } from "../utils/affected.ts";
 import { getChanges } from "../utils/changes.ts";
 import { getSettings, updateSettings } from "../utils/settings.ts";
 import validate from "../utils/validation.ts";
+import {Import} from "../controllers/importController.ts";
+import { processPostmanCollection,processSwagger } from "../controllers/processController.ts";
 
 const router = new Router();
 
@@ -76,6 +78,11 @@ router
   .get("/api/entities/amount", getEntitiesAmount)
   .post("/api/entities", auditLogger, authMiddleware, addEntity)
   .put("/api/entity/:name", auditLogger, authMiddleware, updateEntity)
-  .delete("/api/entity/:name", auditLogger, authMiddleware, deleteEntity);
+  .delete("/api/entity/:name", auditLogger, authMiddleware, deleteEntity)
+  .post("/api/process", processPostmanCollection)
+  // .post("/api/process/openapi", processOpenAPI)
+  .post("/api/process/swagger", processSwagger)
+  .post("/api/import", Import);
+
 
 export default router;

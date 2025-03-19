@@ -87,20 +87,23 @@ function Entities() {
     }, [approximateTextWidth]);
 
     // Fetch nodes from the API
+    // Replace your fetchNodes function with the following:
     const fetchNodes = useCallback(async () => {
         setLoading(true);
         try {
             const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/entities`);
             let currentX = 0;
-            const newNodes = Object.values(data).map((node, index) => {
-                const cardWidth = getCardWidth(node);
+            // Use Object.entries to capture both key and value.
+            const newNodes = Object.entries(data).map(([entityKey, entity], index) => {
+                // Use the key as the label.
+                const entityData = { label: entityKey, fields: entity.fields };
+                const cardWidth = getCardWidth(entityData);
                 const nodeObject = {
-                    id: index.toString(),
+                    id: entityKey, // Using entityKey as unique id
                     type: 'entityCard',
                     position: { x: currentX, y: 100 },
                     data: {
-                        label: node.label,
-                        fields: node.fields,
+                        ...entityData,
                         onCopy: () => {
                             setDialogMode('copy');
                             setDialogOpen(true);
@@ -114,7 +117,7 @@ function Entities() {
                             setDialogOpen(true);
                         },
                         onMouseEnter: () => {
-                            setSelectedNode(node);
+                            setSelectedNode(entityData);
                         },
                         onMouseLeave: () => {
                             setSelectedNode(null);
@@ -141,6 +144,7 @@ function Entities() {
             setLoading(false);
         }
     }, [getCardWidth, performSearch]);
+
 
     // Initial fetch effect
     useEffect(() => {
@@ -190,8 +194,8 @@ function Entities() {
                     >
                         <Background />
                         <Controls
-                        position={rtl ? 'bottom-right' : 'bottom-left'}
-                        style={{
+                            position={rtl ? 'bottom-right' : 'bottom-left'}
+                            style={{
                                 '--xy-controls-button-background-color-default':
                                     theme.palette.background.paper !== '#fff'
                                         ? theme.palette.custom.light
@@ -203,7 +207,7 @@ function Entities() {
                                 '--xy-controls-button-color-default': theme.palette.text.primary,
                                 '--xy-controls-button-color-hover-default': 'inherit',
                                 '--xy-controls-button-border-color-default': '#5c5c5c',
-                            }}/>
+                            }} />
                     </ReactFlow>
                 </Box>
                 {auth && (

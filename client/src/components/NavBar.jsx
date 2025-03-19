@@ -26,6 +26,7 @@ import {
   Logs as LogsIcon,
   User as PersonIcon,
   UserCog as EnginnerIcon,
+  SquareArrowUp,
 } from 'lucide-react';
 import ThemeButton from './ThemeSwitch';
 import LangDropdown from './LangDropdown';
@@ -48,6 +49,7 @@ import SearchAll from './SearchAll';
 import Problems from './Problems';
 import Loading from './Loading';
 import { t } from 'i18next';
+import ImportDialog from './ImportDialog';
 
 
 
@@ -116,6 +118,7 @@ function NavBar({ theme, setTheme }) {
   const { auth, logout } = useAuth();
   const token = localStorage.getItem('token');
   const [username] = useState(() => localStorage.getItem('username') || 'Viewer');
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { t } = useTranslation();
   const { rtl} = useRtl();
   // Handle switching user or logging out.
@@ -178,6 +181,9 @@ function NavBar({ theme, setTheme }) {
           </Box>
           <SearchAll setPage={setPage} />
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <IconButton onClick={() => setImportDialogOpen(true)}>
+              <SquareArrowUp />
+            </IconButton>
             <Problems />
             <Tooltip title={username === 'Viewer' || username === '' ? t('navbar.viewer') : t('navbar.admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
@@ -260,6 +266,7 @@ function NavBar({ theme, setTheme }) {
       <Box component="main" sx={{ flexGrow: 1, bgcolor: 'background.default', p: 1 }}>
         <Toolbar />
         <PageContent />
+        <ImportDialog open={importDialogOpen} setOpen={setImportDialogOpen} />
       </Box>
     </Box>
   );

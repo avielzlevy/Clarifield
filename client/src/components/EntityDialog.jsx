@@ -276,6 +276,7 @@ function EntityDialog({
 
   const handleCopyClick = async ({ entity, selectedData, type }) => {
     // Process the selected fields. Each field might be a definition or an entity.
+    console.log('data', entity, selectedData, type);
     sendAnalytics(entity.label, 'entity', 1);
     const data = selectedData
       .map(processField)
@@ -388,7 +389,9 @@ function EntityDialog({
             </Button>
             <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={handleMenuClose}>
               {['table', 'object', 'example'].map((type) => (
-                <MenuItem key={type} onClick={() => handleCopyClick(type)}>{t('common.copy_as')} {t(`common.${type}`)}</MenuItem>
+                <MenuItem key={type} onClick={() => handleCopyClick({ entity: selectedNode, selectedData: checkedFields, type })}>
+                  {t('common.copy_as')} {t(`common.${type}`)}
+                  </MenuItem>
               ))}
             </Menu>
           </Box>}

@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import React from "react";
-import "./LoadingIcon.css"; // External CSS for animations
 
 function Loading(props) {
     const { mode } = props;
