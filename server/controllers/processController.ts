@@ -17,7 +17,7 @@ interface EntityDefinition {
 export const processPostmanCollection = async (ctx: Context) => {
   try {
     // Get a postman collection data; check for the body key then aggregate the data.
-    const body = ctx.request.body({ type: "json" });
+    const body = ctx.request.body({ type: "json",limit: 50_000_000 });
     const data: unknown = await body.value;
     const bodyData = getFinalSchema(data);
     if (!bodyData) {
@@ -26,8 +26,9 @@ export const processPostmanCollection = async (ctx: Context) => {
       return;
     }
     ctx.response.body = bodyData;
-  } catch (_e) {
+  } catch (e){
     ctx.response.status = 500;
+    console.log(e)
     ctx.response.body = { message: "Internal server error" };
   }
 };
@@ -54,16 +55,18 @@ export const processSwagger = async (ctx: Context) => {
 
 // --- Postman Collection Processing ---
 /**
- * Recursively searches for all "raw" keys and JSON‑parses their values.
+ * Recursively searches for all "body.raw" keys and JSON‑parses their values.
  */
-const recursiveSearchForBodyKey = (
+const recursiveSearchForBodyRaw = (
   data: unknown,
-  results: unknown[] = []
+  results: unknown[] = [],
+  parentKey: string | null = null
 ): unknown[] => {
   if (data && typeof data === "object") {
     const obj = data as Record<string, unknown>;
     for (const key in obj) {
-      if (key === "raw") {
+      // Check if the current key is "raw" and its parent is "body"
+      if (parentKey === "body" && key === "raw") {
         try {
           const rawValue = obj[key];
           if (typeof rawValue === "string") {
@@ -71,15 +74,16 @@ const recursiveSearchForBodyKey = (
             results.push(parsedValue);
           }
         } catch (error) {
-          console.error(`Error parsing JSON for key "raw":`, error);
+          console.error(`Error parsing JSON for body.raw:`, error);
         }
-      } else {
-        recursiveSearchForBodyKey(obj[key], results);
       }
+      // Recurse into children, passing the current key as the new parentKey
+      recursiveSearchForBodyRaw(obj[key], results, key);
     }
   }
   return results;
 };
+
 
 /**
  * Recursively generates fields from an object.
@@ -167,8 +171,12 @@ const generateEntityDefinitions = (
   bodyArray.forEach((item) => {
     if (item && typeof item === "object") {
       const rawObj = item as Record<string, unknown>;
+
       Object.keys(rawObj).forEach((key) => {
+        //skip numbered keys like 0, 1, 2, etc.
+        if(!isNaN(Number(key))) return;
         const value = rawObj[key];
+        console.log(`Key: ${key}, Value: ${JSON.stringify(value)}`);
         if (isComplex(value)) {
           // Process as entity.
           const newFields = generateFields(value);
@@ -185,49 +193,6 @@ const generateEntityDefinitions = (
     }
   });
   return { entities, topLevelDefinitions };
-};
-
-/**
- * Collects entities into a flat object.
- * Each entity is represented as key: entityName, value: { fields: [...] }.
- * In the entity fields array, each field is simplified to include only the label and type.
- */
-const collectEntities = (
-  schema: Record<string, EntityDefinition>,
-  accumulator: Record<
-    string,
-    { fields: Array<{ label: string; type: "entity" | "definition" }> }
-  > = {}
-): Record<
-  string,
-  { fields: Array<{ label: string; type: "entity" | "definition" }> }
-> => {
-  Object.keys(schema).forEach((entityName) => {
-    const entityDef = schema[entityName];
-    const simplifiedFields = entityDef.fields.map((f: Field) => ({
-      label: f.label,
-      type: f.type,
-    }));
-    accumulator[entityName] = { fields: simplifiedFields };
-    // Process nested entities recursively.
-    entityDef.fields.forEach((f: Field) => {
-      if (f.type === "entity" && f.fields) {
-        if (!accumulator[f.label]) {
-          accumulator[f.label] = {
-            fields: f.fields.map((nf: Field) => ({
-              label: nf.label,
-              type: nf.type,
-            })),
-          };
-        }
-        collectEntities(
-          { [f.label]: { label: f.label, fields: f.fields } },
-          accumulator
-        );
-      }
-    });
-  });
-  return accumulator;
 };
 
 /**
@@ -268,7 +233,7 @@ const getFinalSchema = (
   >;
   definitions: Record<string, { format: string; description: string }>;
 } | null => {
-  const bodies = recursiveSearchForBodyKey(data);
+  const bodies = recursiveSearchForBodyRaw(data);
   if (!bodies || bodies.length === 0) return null;
   const { entities, topLevelDefinitions } = generateEntityDefinitions(bodies);
   const nestedDefinitions = collectDefinitions(entities);
