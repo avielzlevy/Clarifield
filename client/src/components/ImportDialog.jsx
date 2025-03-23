@@ -78,7 +78,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
         setLoadingMessage('Processing file...');
 
         // Call your process API endpoint
-        const processResponse = await fetch(`${BASE_API_URL}/api/process`, {
+        const processResponse = await fetch(`${BASE_API_URL}/api/process/postman`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(parsedData),
