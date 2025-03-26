@@ -18,31 +18,35 @@ import {
   TableRow,
   Paper,
   Stack,
+  Autocomplete,
 } from '@mui/material';
 import Loading from './Loading';
+
+// Adjust these imports to your hook paths
 import { useDefinitions } from '../contexts/useDefinitions';
 import { useFormats } from '../contexts/useFormats';
 
 const BASE_API_URL = process.env.REACT_APP_API_URL;
 
 export default function ImportDialog({ open, setOpen, onFilesSelected }) {
+  // Custom hooks to fetch available definitions and formats
   const { definitions: availableDefinitions } = useDefinitions();
   const { formats: availableFormats } = useFormats();
 
-  // file related states
+  // File related states
   const [files, setFiles] = useState([]);
   const [parsedData, setParsedData] = useState(null);
   const [detectedType, setDetectedType] = useState(null);
 
-  // ui state
+  // UI state
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
-  // steps: 1 = file select, 2 = processed (waiting for review/import), 3 = review table (final confirmation)
+  // Steps: 1 = identification, 2 = processing result (success message), 3 = review & import
   const [step, setStep] = useState(1);
 
-  // data coming from process API
+  // Data coming from process API
   const [processedData, setProcessedData] = useState(null);
-  // states for table review
+  // States for table review
   const [selectedEntities, setSelectedEntities] = useState({});
   const [selectedDefinitions, setSelectedDefinitions] = useState({});
   const [definitionOverrides, setDefinitionOverrides] = useState({});
@@ -56,6 +60,12 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     setDetectedType(null);
     setStep(1);
     setProcessedData(null);
+    // Reset review selections
+    setSelectedEntities({});
+    setSelectedDefinitions({});
+    setDefinitionOverrides({});
+    setDefinitionFormatsOverrides({});
+    setEntityFieldsOverrides({});
   }, [setOpen]);
 
   // Only allow one file in the dropzone
@@ -95,7 +105,6 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     multiple: false,
   });
 
-  // Function to detect file type based on file content
   const detectFileType = (jsonData) => {
     if (jsonData?.info?.schema?.includes('https://schema.getpostman.com')) {
       return 'postman';
@@ -107,63 +116,85 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     return null;
   };
 
-  // Process file using API endpoint /api/process/{type}
-  const handleProcessFile = async () => {
-    if (!parsedData || !detectedType) return;
-    setLoading(true);
-    setLoadingMessage(`Processing ${detectedType} file...`);
+  const handleProcessFile = () => {
+    if (files.length === 0) return;
 
-    try {
-      const processResponse = await fetch(
-        `${BASE_API_URL}/api/process/${detectedType}`,
-        {
+    setLoading(true);
+    setLoadingMessage('Processing file...');
+    // For clarity, switch to processing step immediately (step 2)
+    setStep(2);
+
+    const file = files[0];
+    const reader = new FileReader();
+
+    reader.onload = async (event) => {
+      try {
+        const text = event.target.result;
+        const parsedData = JSON.parse(text);
+
+        const fileType = detectFileType(parsedData);
+        if (!fileType) {
+          throw new Error('Unsupported file type');
+        }
+
+        setLoadingMessage(`Processing ${fileType} file...`);
+
+        const processResponse = await fetch(`${BASE_API_URL}/api/process/${fileType}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(parsedData),
+        });
+
+        if (!processResponse.ok) {
+          throw new Error(`Error processing ${fileType} file`);
         }
-      );
-      if (!processResponse.ok) {
-        throw new Error(`Error processing ${detectedType} file`);
+
+        const data = await processResponse.json();
+        setProcessedData(data);
+
+        // Setup review selections for entities
+        const entitiesSelection = {};
+        const entityFields = {};
+        Object.keys(data.entities).forEach((key) => {
+          entitiesSelection[key] = true;
+          entityFields[key] = data.entities[key].fields || [];
+        });
+        setSelectedEntities(entitiesSelection);
+        setEntityFieldsOverrides(entityFields);
+
+        // Setup review selections for definitions
+        const definitionsSelection = {};
+        const descriptionOverrides = {};
+        const formatOverrides = {};
+        Object.keys(data.definitions).forEach((key) => {
+          definitionsSelection[key] = true;
+          descriptionOverrides[key] = data.definitions[key].description || '';
+          formatOverrides[key] = data.definitions[key].format || '';
+        });
+        setSelectedDefinitions(definitionsSelection);
+        setDefinitionOverrides(descriptionOverrides);
+        setDefinitionFormatsOverrides(formatOverrides);
+
+        // Processing completed—advance to review step
+        setStep(2); // Stay at step 2 to show success summary; user must click "Continue"
+      } catch (error) {
+        console.error('Processing failed:', error);
+      } finally {
+        setLoading(false);
       }
-      const data = await processResponse.json();
-      setProcessedData(data);
+    };
 
-      // Initialize selections (all checked by default)
-      const entitiesSelection = {};
-      const entityFields = {};
-      Object.keys(data.entities).forEach((key) => {
-        entitiesSelection[key] = true;
-        entityFields[key] = data.entities[key].fields || [];
-      });
-      setSelectedEntities(entitiesSelection);
-      setEntityFieldsOverrides(entityFields);
-
-      const definitionsSelection = {};
-      const descriptionOverrides = {};
-      const formatOverrides = {};
-      Object.keys(data.definitions).forEach((key) => {
-        definitionsSelection[key] = true;
-        descriptionOverrides[key] = data.definitions[key].description || '';
-        formatOverrides[key] = data.definitions[key].format || '';
-      });
-      setSelectedDefinitions(definitionsSelection);
-      setDefinitionOverrides(descriptionOverrides);
-      setDefinitionFormatsOverrides(formatOverrides);
-
-      // Move to next step: processed complete (waiting for user to review)
-      setStep(2);
-    } catch (error) {
-      console.error('Processing failed:', error);
-    } finally {
+    reader.onerror = (error) => {
+      console.error('Error reading file:', error);
       setLoading(false);
-    }
+    };
+
+    reader.readAsText(file);
   };
 
-  // Final import call using API endpoint /api/import
   const handleImport = async () => {
     if (!processedData) return;
 
-    // Filter entities and definitions based on user selections
     const filteredEntities = {};
     Object.keys(processedData.entities).forEach((key) => {
       if (selectedEntities[key]) {
@@ -174,6 +205,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
       }
     });
 
+    // Filter definitions based on user selection and include updated format and description
     const filteredDefinitions = {};
     Object.keys(processedData.definitions).forEach((key) => {
       if (selectedDefinitions[key]) {
@@ -185,7 +217,10 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
       }
     });
 
-    const payload = { entities: filteredEntities, definitions: filteredDefinitions };
+    const payload = {
+      entities: filteredEntities,
+      definitions: filteredDefinitions,
+    };
 
     setLoading(true);
     setLoadingMessage('Importing data...');
@@ -208,99 +243,94 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     }
   };
 
-  // Helper functions to update selection states for review table
-  const toggleEntitySelection = (key) => {
-    setSelectedEntities((prev) => ({ ...prev, [key]: !prev[key] }));
+  // --- Helper functions for review step selections ---
+  const toggleEntitySelection = (entity) => {
+    setSelectedEntities((prev) => ({ ...prev, [entity]: !prev[entity] }));
   };
 
-  const toggleDefinitionSelection = (key) => {
-    setSelectedDefinitions((prev) => ({ ...prev, [key]: !prev[key] }));
+  const toggleDefinitionSelection = (def) => {
+    setSelectedDefinitions((prev) => ({ ...prev, [def]: !prev[def] }));
   };
 
   const selectAllEntities = () => {
-    if (processedData) {
-      const all = {};
-      Object.keys(processedData.entities).forEach((key) => {
-        all[key] = true;
-      });
-      setSelectedEntities(all);
-    }
+    const all = {};
+    Object.keys(processedData.entities).forEach((key) => {
+      all[key] = true;
+    });
+    setSelectedEntities(all);
   };
 
   const deselectAllEntities = () => {
-    if (processedData) {
-      const none = {};
-      Object.keys(processedData.entities).forEach((key) => {
-        none[key] = false;
-      });
-      setSelectedEntities(none);
-    }
+    const all = {};
+    Object.keys(processedData.entities).forEach((key) => {
+      all[key] = false;
+    });
+    setSelectedEntities(all);
   };
 
   const selectAllDefinitions = () => {
-    if (processedData) {
-      const all = {};
-      Object.keys(processedData.definitions).forEach((key) => {
-        all[key] = true;
-      });
-      setSelectedDefinitions(all);
-    }
+    const all = {};
+    Object.keys(processedData.definitions).forEach((key) => {
+      all[key] = true;
+    });
+    setSelectedDefinitions(all);
   };
 
   const deselectAllDefinitions = () => {
-    if (processedData) {
-      const none = {};
-      Object.keys(processedData.definitions).forEach((key) => {
-        none[key] = false;
-      });
-      setSelectedDefinitions(none);
-    }
+    const all = {};
+    Object.keys(processedData.definitions).forEach((key) => {
+      all[key] = false;
+    });
+    setSelectedDefinitions(all);
   };
 
-  // Render step 1: File selection and display file info
-  const renderStep1 = () => (
-    <Box>
-      <Box
-        {...getRootProps()}
-        sx={{
-          border: '2px dashed #ccc',
-          borderRadius: 2,
-          padding: 4,
-          textAlign: 'center',
-          cursor: 'pointer',
-          backgroundColor: isDragActive ? '#f0f0f0' : '#fafafa',
-        }}
-      >
-        {files.length > 0 ?
-          <Box mt={2}>
-            <Typography variant="subtitle1">Selected File: {files[0].name}</Typography>
-            <Typography variant="subtitle2">
-              Detected Type:{' '}
-              {detectedType ? detectedType : 'Could not detect file type'}
-            </Typography>
-          </Box> :
-          <>
-            <input {...getInputProps()} />
-            <Typography variant="body1">
-              {isDragActive
-                ? 'Drop the file here...'
-                : 'Drag & drop a file here, or click to select one'}
-            </Typography></>
-        }
-      </Box>
-    </Box>
-  );
+  // --- Render functions for each step ---
 
-  // Render step 2: Show processing complete message with option to review
-  const renderStep2 = () => (
-    <Box textAlign="center">
+  // Step 1: Identification – File selection and type detection
+  const renderIdentificationStep = () => (
+    <Box
+      {...getRootProps()}
+      sx={{
+        border: '2px dashed #ccc',
+        borderRadius: 2,
+        padding: 4,
+        textAlign: 'center',
+        cursor: 'pointer',
+        backgroundColor: isDragActive ? '#f0f0f0' : '#fafafa',
+      }}
+    >
+      <input {...getInputProps()} />
       <Typography variant="body1">
-        File processed successfully.
+        {isDragActive ? 'Drop the file here...' : 'Drag & drop file here or click to select file'}
       </Typography>
+      {detectedType && (
+        <Typography variant="subtitle1" mt={2}>
+          Detected file type: {detectedType}
+        </Typography>
+      )}
     </Box>
   );
 
-  // Render step 3: Review table to toggle unwanted entities/definitions
+  // Step 2: Processing Result – Show summary and “Continue” button
+  const renderProcessingStep = () => (
+    <Box sx={{ textAlign: 'center', mt: 2 }}>
+      <Typography variant="body1" mb={2}>
+        Data processed successfully.
+      </Typography>
+      {processedData && (
+        <Typography variant="body2" mb={2}>
+          {`Processed ${Object.keys(processedData.entities).length} entities and ${Object.keys(
+            processedData.definitions
+          ).length} definitions.`}
+        </Typography>
+      )}
+      <Button variant="contained" onClick={() => setStep(3)}>
+        Continue to Review
+      </Button>
+    </Box>
+  );
+
+  // Step 3: Review – Toggle selections for entities and definitions
   const renderReviewTable = () => (
     <Box>
       <Typography variant="h6" mt={2}>
@@ -386,15 +416,19 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
                   />
                 </TableCell>
                 <TableCell>
-                  <TextField
+                  <Autocomplete
+                    options={availableFormats || []}
                     value={definitionFormatsOverrides[def] || ''}
-                    onChange={(e) =>
+                    onChange={(event, newValue) => {
                       setDefinitionFormatsOverrides((prev) => ({
                         ...prev,
-                        [def]: e.target.value,
-                      }))
-                    }
-                    size="small"
+                        [def]: newValue,
+                      }));
+                    }}
+                    freeSolo
+                    renderInput={(params) => (
+                      <TextField {...params} variant="outlined" size="small" />
+                    )}
                   />
                 </TableCell>
               </TableRow>
@@ -406,7 +440,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
   );
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>Import Files</DialogTitle>
       <DialogContent dividers>
         {loading ? (
@@ -418,8 +452,8 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
           </Box>
         ) : (
           <>
-            {step === 1 && renderStep1()}
-            {step === 2 && processedData && renderStep2()}
+            {step === 1 && renderIdentificationStep()}
+            {step === 2 && renderProcessingStep()}
             {step === 3 && processedData && renderReviewTable()}
           </>
         )}
@@ -429,27 +463,14 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
           Cancel
         </Button>
         {step === 1 && (
-          <Button
-            onClick={handleProcessFile}
-            disabled={loading || files.length === 0 || !detectedType}
-          >
+          <Button onClick={handleProcessFile} disabled={loading || files.length === 0}>
             Process File
           </Button>
         )}
-        {step === 2 && (
-          <Button onClick={() => setStep(3)} disabled={loading}>
-            Review &amp; Import
-          </Button>
-        )}
         {step === 3 && (
-          <>
-            <Button onClick={() => setStep(2)} disabled={loading}>
-              Back
-            </Button>
-            <Button onClick={handleImport} disabled={loading}>
-              Confirm Import
-            </Button>
-          </>
+          <Button onClick={handleImport} disabled={loading}>
+            Import
+          </Button>
         )}
       </DialogActions>
     </Dialog>
