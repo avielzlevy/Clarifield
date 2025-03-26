@@ -8,7 +8,6 @@ interface Field {
 }
 
 interface EntityDefinition {
-  label: string;
   fields: Field[];
 }
 
@@ -175,7 +174,7 @@ const generateEntityDefinitions = (
           if (entities[key]) {
             entities[key].fields = mergeFields(entities[key].fields, newFields);
           } else {
-            entities[key] = { label: key, fields: newFields };
+            entities[key] = { fields: newFields };
           }
         } else {
           // Process as a definition.
@@ -221,7 +220,7 @@ const collectEntities = (
           };
         }
         collectEntities(
-          { [f.label]: { label: f.label, fields: f.fields } },
+          { [f.label]: { fields: f.fields } },
           accumulator
         );
       }
@@ -249,7 +248,7 @@ const collectDefinitions = (
       } else if (f.type === "entity" && f.fields) {
         // Recursively process nested entity fields.
         collectDefinitions(
-          { temp: { label: "temp", fields: f.fields } },
+          { temp: { fields: f.fields } },
           accumulator
         );
       }

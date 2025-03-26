@@ -113,7 +113,7 @@ const CreateEntityForm = ({ newEntity, setNewEntity, error }) => {
   return (
     <Paper sx={{ p: 2 }}>
       <TextField
-        label={`${t('entities.entity')} ${t('common.name')}`}
+        label={`${t('common.entity')} ${t('common.name')}`}
         variant="outlined"
         fullWidth
         value={newEntity.label}

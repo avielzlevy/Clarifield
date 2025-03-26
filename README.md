@@ -20,7 +20,7 @@ It serves as a **centralized repository** that bridges the gap between **securit
 ### ✅ JSON Validation
 - Built-in **JSON editor** that allows users to input JSON data.  
 - The system **validates JSON against predefined fields and formats**, ensuring compliance.  
-- If the JSON contains **non-standard fields**, the system provides **real-time alerts**.  
+- If the JSON contains **non-standard fields**, the system provides **real-time alerts**.
 
 ### ✅ Analytics & Insights  
 - Track **which definitions and formats are most frequently used** in projects.  
@@ -77,4 +77,4 @@ Feel free to **open issues** or **submit pull requests** on GitHub.
 ---
 
 ## 📜 License  
-Clarifield is released under the **MIT License**.  
+Clarifield is released under the **MIT License**.
