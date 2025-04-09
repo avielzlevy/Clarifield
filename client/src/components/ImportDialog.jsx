@@ -19,7 +19,9 @@ import {
   Paper,
   Stack,
   Autocomplete,
+  Chip,
 } from '@mui/material';
+import { Boxes } from 'lucide-react';
 import Loading from './Loading';
 
 // Adjust these imports to your hook paths
@@ -33,6 +35,8 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
   const { definitions: availableDefinitions } = useDefinitions();
   const { formats: availableFormats } = useFormats();
 
+  const token = localStorage.getItem('token');
+
   // File related states
   const [files, setFiles] = useState([]);
   const [parsedData, setParsedData] = useState(null);
@@ -41,7 +45,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
   // UI state
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState('');
-  // Steps: 1 = identification, 2 = processing result (success message), 3 = review & import
+  // Steps: 1 = identification, 2 = processing result, 3 = review & import
   const [step, setStep] = useState(1);
 
   // Data coming from process API
@@ -51,6 +55,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
   const [selectedDefinitions, setSelectedDefinitions] = useState({});
   const [definitionOverrides, setDefinitionOverrides] = useState({});
   const [definitionFormatsOverrides, setDefinitionFormatsOverrides] = useState({});
+  // entityFieldsOverrides will now store an array of objects { label, type }
   const [entityFieldsOverrides, setEntityFieldsOverrides] = useState({});
 
   const onClose = useCallback(() => {
@@ -60,7 +65,6 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     setDetectedType(null);
     setStep(1);
     setProcessedData(null);
-    // Reset review selections
     setSelectedEntities({});
     setSelectedDefinitions({});
     setDefinitionOverrides({});
@@ -121,9 +125,6 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
 
     setLoading(true);
     setLoadingMessage('Processing file...');
-    // For clarity, switch to processing step immediately (step 2)
-    setStep(2);
-
     const file = files[0];
     const reader = new FileReader();
 
@@ -141,7 +142,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
 
         const processResponse = await fetch(`${BASE_API_URL}/api/process/${fileType}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify(parsedData),
         });
 
@@ -152,12 +153,18 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
         const data = await processResponse.json();
         setProcessedData(data);
 
-        // Setup review selections for entities
+        // Setup review selections for entities.
+        // We store fields as an array of objects. If the field is already an object, keep it;
+        // otherwise, convert strings to { label: field, type: 'definition' }
         const entitiesSelection = {};
         const entityFields = {};
         Object.keys(data.entities).forEach((key) => {
           entitiesSelection[key] = true;
-          entityFields[key] = data.entities[key].fields || [];
+          entityFields[key] = (data.entities[key].fields || []).map((field) =>
+            typeof field === 'object' && field !== null
+              ? field
+              : { label: field, type: 'definition' }
+          );
         });
         setSelectedEntities(entitiesSelection);
         setEntityFieldsOverrides(entityFields);
@@ -175,8 +182,8 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
         setDefinitionOverrides(descriptionOverrides);
         setDefinitionFormatsOverrides(formatOverrides);
 
-        // Processing completed—advance to review step
-        setStep(2); // Stay at step 2 to show success summary; user must click "Continue"
+        // Move to processing result step
+        setStep(2);
       } catch (error) {
         console.error('Processing failed:', error);
       } finally {
@@ -192,6 +199,16 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     reader.readAsText(file);
   };
 
+  // Added loading on transition to review
+  const handleContinueToReview = () => {
+    setLoading(true);
+    setLoadingMessage('Loading review data...');
+    setTimeout(() => {
+      setStep(3);
+      setLoading(false);
+    }, 500);
+  };
+
   const handleImport = async () => {
     if (!processedData) return;
 
@@ -205,7 +222,6 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
       }
     });
 
-    // Filter definitions based on user selection and include updated format and description
     const filteredDefinitions = {};
     Object.keys(processedData.definitions).forEach((key) => {
       if (selectedDefinitions[key]) {
@@ -227,7 +243,7 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
     try {
       const importResponse = await fetch(`${BASE_API_URL}/api/import`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(payload),
       });
       if (!importResponse.ok) {
@@ -287,29 +303,38 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
   // --- Render functions for each step ---
 
   // Step 1: Identification – File selection and type detection
-  const renderIdentificationStep = () => (
-    <Box
-      {...getRootProps()}
-      sx={{
-        border: '2px dashed #ccc',
-        borderRadius: 2,
-        padding: 4,
-        textAlign: 'center',
-        cursor: 'pointer',
-        backgroundColor: isDragActive ? '#f0f0f0' : '#fafafa',
-      }}
-    >
-      <input {...getInputProps()} />
-      <Typography variant="body1">
-        {isDragActive ? 'Drop the file here...' : 'Drag & drop file here or click to select file'}
-      </Typography>
-      {detectedType && (
-        <Typography variant="subtitle1" mt={2}>
-          Detected file type: {detectedType}
+  const renderIdentificationStep = () => {
+    if (files.length > 0) {
+      return (
+        <Box sx={{ textAlign: 'center', p: 2 }}>
+          {detectedType && (
+            <Typography variant="subtitle1" mb={1}>
+              Detected file type: {detectedType}
+            </Typography>
+          )}
+          <Typography variant="body1">{files[0].name}</Typography>
+        </Box>
+      );
+    }
+    return (
+      <Box
+        {...getRootProps()}
+        sx={{
+          border: '2px dashed #ccc',
+          borderRadius: 2,
+          padding: 4,
+          textAlign: 'center',
+          cursor: 'pointer',
+          backgroundColor: isDragActive ? '#f0f0f0' : '#fafafa',
+        }}
+      >
+        <input {...getInputProps()} />
+        <Typography variant="body1">
+          {isDragActive ? 'Drop the file here...' : 'Drag & drop file here or click to select file'}
         </Typography>
-      )}
-    </Box>
-  );
+      </Box>
+    );
+  };
 
   // Step 2: Processing Result – Show summary and “Continue” button
   const renderProcessingStep = () => (
@@ -324,123 +349,173 @@ export default function ImportDialog({ open, setOpen, onFilesSelected }) {
           ).length} definitions.`}
         </Typography>
       )}
-      <Button variant="contained" onClick={() => setStep(3)}>
+      <Button variant="contained" onClick={handleContinueToReview}>
         Continue to Review
       </Button>
     </Box>
   );
 
   // Step 3: Review – Toggle selections for entities and definitions
-  const renderReviewTable = () => (
-    <Box>
-      <Typography variant="h6" mt={2}>
-        Entities
-      </Typography>
-      <Stack direction="row" spacing={2} mb={1}>
-        <Button onClick={selectAllEntities} size="small">
-          Select All
-        </Button>
-        <Button onClick={deselectAllEntities} size="small">
-          Deselect All
-        </Button>
-      </Stack>
-      <TableContainer component={Paper} sx={{ mb: 2 }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">Select</TableCell>
-              <TableCell>Entity Name</TableCell>
-              <TableCell>Fields</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Object.keys(processedData.entities).map((entity) => (
-              <TableRow key={entity}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedEntities[entity] || false}
-                    onChange={() => toggleEntitySelection(entity)}
-                  />
-                </TableCell>
-                <TableCell>{entity}</TableCell>
-                <TableCell>
-                  {(processedData.entities[entity].fields || []).join(', ')}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+  const renderReviewTable = () => {
+    // Compute combined options for entity fields from availableDefinitions and imported definitions
+    const definitionOptions = [
+      ...((availableDefinitions && Array.isArray(availableDefinitions))
+        ? availableDefinitions.map((d) =>
+          typeof d === 'object' ? d : { label: d, type: 'definition' }
+        )
+        : []),
+      ...Object.keys(processedData.definitions || {}).map((key) => ({
+        label: key,
+        type: 'definition',
+      })),
+    ];
+    // Remove duplicates based on label
+    const uniqueDefinitionOptions = Array.from(
+      new Set(definitionOptions.map((opt) => opt.label))
+    ).map((label) => definitionOptions.find((opt) => opt.label === label));
 
-      <Typography variant="h6" mt={2}>
-        Definitions
-      </Typography>
-      <Stack direction="row" spacing={2} mb={1}>
-        <Button onClick={selectAllDefinitions} size="small">
-          Select All
-        </Button>
-        <Button onClick={deselectAllDefinitions} size="small">
-          Deselect All
-        </Button>
-      </Stack>
-      <TableContainer component={Paper}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell padding="checkbox">Select</TableCell>
-              <TableCell>Definition Name</TableCell>
-              <TableCell>Description</TableCell>
-              <TableCell>Format</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {Object.keys(processedData.definitions).map((def) => (
-              <TableRow key={def}>
-                <TableCell padding="checkbox">
-                  <Checkbox
-                    checked={selectedDefinitions[def] || false}
-                    onChange={() => toggleDefinitionSelection(def)}
-                  />
-                </TableCell>
-                <TableCell>{def}</TableCell>
-                <TableCell>
-                  <TextField
-                    value={definitionOverrides[def] || ''}
-                    onChange={(e) =>
-                      setDefinitionOverrides((prev) => ({
-                        ...prev,
-                        [def]: e.target.value,
-                      }))
-                    }
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>
-                  <Autocomplete
-                    options={availableFormats || []}
-                    value={definitionFormatsOverrides[def] || ''}
-                    onChange={(event, newValue) => {
-                      setDefinitionFormatsOverrides((prev) => ({
-                        ...prev,
-                        [def]: newValue,
-                      }));
-                    }}
-                    freeSolo
-                    renderInput={(params) => (
-                      <TextField {...params} variant="outlined" size="small" />
-                    )}
-                  />
-                </TableCell>
+    return (
+      <Box>
+        <Typography variant="h6" mt={2}>
+          Entities
+        </Typography>
+        <Stack direction="row" spacing={2} mb={1}>
+          <Button onClick={selectAllEntities} size="small">
+            Select All
+          </Button>
+          <Button onClick={deselectAllEntities} size="small">
+            Deselect All
+          </Button>
+        </Stack>
+        <TableContainer component={Paper} sx={{ mb: 2 }}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">Select</TableCell>
+                <TableCell>Entity Name</TableCell>
+                <TableCell>Fields</TableCell>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
-  );
+            </TableHead>
+            <TableBody>
+              {Object.keys(processedData.entities).map((entity) => (
+                <TableRow key={entity}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedEntities[entity] || false}
+                      onChange={() => toggleEntitySelection(entity)}
+                    />
+                  </TableCell>
+                  <TableCell>{entity}</TableCell>
+                  <TableCell>
+                    <Autocomplete
+                      multiple
+                      options={uniqueDefinitionOptions}
+                      getOptionLabel={(option) => option.label}
+                      value={entityFieldsOverrides[entity] || []}
+                      onChange={(event, newValue) => {
+                        setEntityFieldsOverrides((prev) => ({
+                          ...prev,
+                          [entity]: newValue,
+                        }));
+                      }}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => (
+                          <Chip
+                            key={index}
+                            {...getTagProps({ index })}
+                            label={option.label}
+                            icon={option.type === 'entity' ? <Boxes size={16} /> : undefined}
+                          />
+                        ))
+                      }
+                      renderInput={(params) => (
+                        <TextField {...params} variant="outlined" size="small" />
+                      )}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Typography variant="h6" mt={2}>
+          Definitions
+        </Typography>
+        <Stack direction="row" spacing={2} mb={1}>
+          <Button onClick={selectAllDefinitions} size="small">
+            Select All
+          </Button>
+          <Button onClick={deselectAllDefinitions} size="small">
+            Deselect All
+          </Button>
+        </Stack>
+        <TableContainer component={Paper}>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell padding="checkbox">Select</TableCell>
+                <TableCell>Definition Name</TableCell>
+                <TableCell>Description</TableCell>
+                <TableCell>Format</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {Object.keys(processedData.definitions).map((def) => (
+                <TableRow key={def} disabled={Object.keys(availableDefinitions).map(
+                  //lowercase
+                  (d) => d.toLowerCase()
+                ).includes(def.toLowerCase())}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={Object.keys(availableDefinitions).map(
+                        //lowercase
+                        (d) => d.toLowerCase()
+                      ).includes(def.toLowerCase()) || selectedDefinitions[def] || false}
+                      onChange={() => toggleDefinitionSelection(def)}
+                    />
+                  </TableCell>
+                  <TableCell>{def}</TableCell>
+                  <TableCell>
+                    <TextField
+                      value={definitionOverrides[def] || ''}
+                      onChange={(e) =>
+                        setDefinitionOverrides((prev) => ({
+                          ...prev,
+                          [def]: e.target.value,
+                        }))
+                      }
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Autocomplete
+                      options={Object.keys(availableFormats) || []}
+                      value={definitionFormatsOverrides[def] || ''}
+                      onChange={(event, newValue) => {
+                        setDefinitionFormatsOverrides((prev) => ({
+                          ...prev,
+                          [def]: newValue,
+                        }));
+                      }}
+                      freeSolo
+                      renderInput={(params) => (
+                        <TextField {...params} variant="outlined" size="small" />
+                      )}
+                    />
+                  </TableCell>
+
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+    );
+  };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth={step === 3 ? 'xl' : 'sm'}>
       <DialogTitle>Import Files</DialogTitle>
       <DialogContent dividers>
         {loading ? (

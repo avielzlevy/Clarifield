@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo,useState } from 'react';
+import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -120,7 +120,7 @@ function NavBar({ theme, setTheme }) {
   const [username] = useState(() => localStorage.getItem('username') || 'Viewer');
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const { t } = useTranslation();
-  const { rtl} = useRtl();
+  const { rtl } = useRtl();
   // Handle switching user or logging out.
   const handleChangeUser = useCallback(() => {
     if (token) {
@@ -180,10 +180,13 @@ function NavBar({ theme, setTheme }) {
             </Typography>
           </Box>
           <SearchAll setPage={setPage} />
+
           <Box sx={{ gap: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <IconButton onClick={() => setImportDialogOpen(true)}>
-              <SquareArrowUp />
-            </IconButton>
+            {auth &&
+              <IconButton onClick={() => setImportDialogOpen(true)}>
+                <SquareArrowUp />
+              </IconButton>
+            }
             <Problems />
             <Tooltip title={username === 'Viewer' || username === '' ? t('navbar.viewer') : t('navbar.admin')}>
               <IconButton color="inherit" onClick={handleChangeUser}>
