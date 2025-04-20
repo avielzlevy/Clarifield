@@ -230,6 +230,7 @@ function Entities() {
                     setDialogOpen(false);
                     setDialogMode(null);
                 }}
+                ModalProps={{ disableScrollLock: true }}
                 selectedNode={selectedNode}
                 setSelectedNode={setSelectedNode}
                 mode={dialogMode}
