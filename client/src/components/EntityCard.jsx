@@ -118,6 +118,7 @@ const EntityCard = ({ data }) => {
           subheader={
             <ListSubheader
               component="div"
+              disableSticky
               sx={{
                 backgroundColor: 'transparent',
                 color: theme.palette.custom.bright,
