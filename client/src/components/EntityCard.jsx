@@ -99,7 +99,7 @@ const EntityCard = ({ data }) => {
           display: 'flex',
           justifyContent: 'center',
           p: 0,
-          width: 'auto',
+          width: '100%',
           border: `1px solid ${theme.palette.custom.light}`,
           borderRadius: 2,
         }}
@@ -129,6 +129,7 @@ const EntityCard = ({ data }) => {
                 fontWeight: 'bold',
                 mt: 1,
                 mb: 1,
+                width: '100%',  
               }}
             >
               {capitalizedLabel}
