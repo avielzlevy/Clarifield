@@ -143,6 +143,7 @@ function NavBar({ theme, setTheme }) {
   // Memoize the drawer items so they don't get re-created on every render.
   const drawerItems = useMemo(() => {
     const items = [
+      { text: 'home', icon: <DashboardIcon />, route: 'home' },
       { text: 'entities', icon: <Boxes />, route: 'entities' },
       { text: 'definitions', icon: <Book />, route: 'definitions' },
       { text: 'formats', icon: <FileJson />, route: 'formats' },
