@@ -1,98 +1,92 @@
+// src/services/validate.ts
 import { Context } from "../deps.ts";
 import { Definition } from "../models/definition.ts";
-import { Format } from "../models/format.ts";
 import staticFormats from "../data/staticFormats.ts";
+import { getDefinitions } from "../repositories/definitionRepository.ts";
+import { getFormats } from "../repositories/formatRepository.ts";
 
-const DEFINITIONS_FILE_PATH = "./data/definitions.json";
-const FORMATS_FILE_PATH = "./data/formats.json";
-
-const readDefinitions = async (): Promise<{ [name: string]: Definition }> => {
-  try {
-    const data = await Deno.readTextFile(DEFINITIONS_FILE_PATH);
-    return JSON.parse(data);
-  } catch (e) {
-    if (e instanceof Deno.errors.NotFound) {
-      await Deno.writeTextFile(DEFINITIONS_FILE_PATH, "{}");
-    }
-    return {};
-  }
-};
-
-const readFormats = async (): Promise<{ [name: string]: Format }> => {
-  try {
-    const data = await Deno.readTextFile(FORMATS_FILE_PATH);
-    return JSON.parse(data);
-  } catch (e) {
-    if (e instanceof Deno.errors.NotFound) {
-      await Deno.writeTextFile(FORMATS_FILE_PATH, "{}");
-    }
-    return {};
-  }
-};
-
-// Helper function for recursive validation
 const validateObject = (
   obj: any,
-  definitions: { [name: string]: Definition },
-  formats: { [name: string]: Format },
+  definitions: Record<string, Definition>,
+  formats: Record<string, { pattern: string }>,
   errors: string[],
-  path: string = ""
+  path = ""
 ) => {
   for (const key of Object.keys(obj)) {
     const currentPath = path ? `${path}.${key}` : key;
-    if (!definitions[key]) {
+
+    const def = definitions[key];
+    if (!def) {
       errors.push(`Key "${currentPath}" is not defined in the policy`);
       continue;
     }
 
-    const definition = definitions[key];
-    const format = formats[definition.format];
-    if (!format) {
-      errors.push(`Definition for "${currentPath}" references unknown format "${definition.format}"`);
+    const fmt = formats[def.format];
+    if (!fmt) {
+      errors.push(
+        `Definition for "${currentPath}" references unknown format "${def.format}"`
+      );
       continue;
     }
 
-    const value = obj[key];
-    
-    // If the value is an object and the format allows nested objects
-    if (typeof value === "object" && value !== null) {
-      validateObject(value, definitions, formats, errors, currentPath);
-    } else {
-      if (!new RegExp(format.pattern).test(String(value))) {
-        errors.push(`Invalid value ${value} for "${currentPath}": does not match the pattern "${format.pattern}"`);
-      }
+    const val = obj[key];
+    if (val !== null && typeof val === "object") {
+      validateObject(val, definitions, formats, errors, currentPath);
+    } else if (!new RegExp(fmt.pattern).test(String(val))) {
+      errors.push(
+        `Invalid value "${val}" for "${currentPath}": does not match "${fmt.pattern}"`
+      );
     }
   }
 };
 
-const validate = async (ctx: Context) => {
-  const body = ctx.request.body({ type: "json" });
-  let value;
-  
+export const validate = async (ctx: Context) => {
+  // parse JSON body
+  let payload: unknown;
   try {
-    value = await body.value;
-  } catch (e) {
+    payload = await ctx.request.body({ type: "json" }).value;
+  } catch {
     ctx.response.status = 400;
     ctx.response.body = { message: "Invalid JSON body" };
     return;
   }
 
-  const definitions = await readDefinitions();
-  const formatsFromFile = await readFormats();
-  const formats = { ...staticFormats, ...formatsFromFile };
-  const errors: string[] = [];
-
-  // Start recursive validation
-  validateObject(value, definitions, formats, errors);
-
-  if (errors.length) {
-    ctx.response.status = 400;
-    ctx.response.body = errors;
+  // fetch definitions & formats from your repositories
+  let definitions: Record<string, Definition>;
+  let fileFormats: Record<string, { pattern: string; description?: string }>;
+  try {
+    definitions = await getDefinitions();
+  } catch (e) {
+    console.error("Failed to load definitions:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal error loading definitions" };
+    return;
+  }
+  try {
+    fileFormats = await getFormats();
+  } catch (e) {
+    console.error("Failed to load formats:", e);
+    ctx.response.status = 500;
+    ctx.response.body = { message: "Internal error loading formats" };
     return;
   }
 
-  ctx.response.status = 200;
-  ctx.response.body = { message: "All values are valid" };
-};
+  // merge in‑code static formats with those from storage
+  const formats = { ...staticFormats, ...fileFormats };
 
-export default validate;
+  // run recursive validation
+  const errors: string[] = [];
+  if (payload && typeof payload === "object") {
+    validateObject(payload, definitions, formats, errors);
+  } else {
+    errors.push("Payload must be a JSON object");
+  }
+
+  if (errors.length) {
+    ctx.response.status = 400;
+    ctx.response.body = { errors };
+  } else {
+    ctx.response.status = 200;
+    ctx.response.body = { message: "All values are valid" };
+  }
+};
