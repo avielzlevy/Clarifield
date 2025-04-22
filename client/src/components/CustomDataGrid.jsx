@@ -40,6 +40,17 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
     }
   }, [search, setSearch]);
 
+  const handleCopyRow = useCallback(
+    (row) => {
+      const noIdRow = { ...row }
+      delete noIdRow.id;
+      navigator.clipboard.writeText(JSON.stringify(noIdRow));
+      enqueueSnackbar(t('common.copied'), { variant: 'success' });
+      sendAnalytics(row.id, type, 1);
+    },
+    [t, type]
+  );
+
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
   }, []);
@@ -56,7 +67,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
     const baseColumns = columns.map((col) => ({
       ...col,
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1,justifyContent:"center",mt: 1.5, }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1, justifyContent: "center", mt: 1.5, }}>
           {params.value && (
             <Tooltip title="Copy" arrow>
               <Copy
@@ -90,7 +101,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
               <Box sx={{
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent:"center",
+                justifyContent: "center",
                 mt: 1.5,
                 width: '100%',
                 gap: 1,
@@ -139,7 +150,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
         disableColumnMenu: true,
         renderCell: (params) =>
           auth ? (
-            <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%',alignItems:"center",mt: 1.5, }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: "center", mt: 1.5, }}>
               <Tooltip title="Edit" arrow>
                 <Pencil style={{ cursor: 'pointer' }} onClick={() => handleEditRow(params.row)} />
               </Tooltip>
@@ -148,14 +159,14 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
               </Tooltip>
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%',alignItems:"center",mt: 1.5, }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: "center", mt: 1.5, }}>
+              <Copy style={{ cursor: 'pointer' }} onClick={() => handleCopyRow(params.row)} />
               <Flag style={{ cursor: 'pointer', fill: 'black' }} onClick={() => handleReportRow(params.row)} />
             </Box>
           ),
       },
     ];
-  }, [columns, auth, t, handleEditRow, handleDeleteRow, handleReportRow, type, formats]);
-
+  }, [columns, auth, t, handleEditRow, handleDeleteRow, handleReportRow, type, formats, handleCopyRow])
   return (
     <Box sx={{ mt: 0.5 }}>
       <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
