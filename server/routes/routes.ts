@@ -37,7 +37,7 @@ import { signIn, verifyToken } from "../controllers/authController.ts";
 import { getAffected } from "../utils/affected.ts";
 import { getChanges } from "../utils/changes.ts";
 import { getSettings, updateSettings } from "../utils/settings.ts";
-import validate from "../utils/validation.ts";
+import {validate} from "../utils/validation.ts";
 import {Import} from "../controllers/importController.ts";
 import { processPostmanCollection,processSwagger } from "../controllers/processController.ts";
 
