@@ -1,6 +1,7 @@
 {
   "imports": {
-    "node_modules/": "./node_modules/"
+    "node_modules/": "./node_modules/",
+    "randexp": "npm:randexp@^0.5.3"
   },
   "tasks": {
     "install": "deno cache --reload --import-map=deno.json"

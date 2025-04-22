@@ -4,6 +4,7 @@ import { Definition } from "../models/definition.ts";
 import staticFormats from "../data/staticFormats.ts";
 import { getDefinitions } from "../repositories/definitionRepository.ts";
 import { getFormats } from "../repositories/formatRepository.ts";
+import RandExp from "randexp";
 
 const validateObject = (
   obj: any,
@@ -34,11 +35,42 @@ const validateObject = (
       validateObject(val, definitions, formats, errors, currentPath);
     } else if (!new RegExp(fmt.pattern).test(String(val))) {
       errors.push(
-        `Invalid value "${val}" for "${currentPath}": does not match "${fmt.pattern}"`
+        `Invalid value "${val}" for "${currentPath}": does not match "${fmt.pattern}" \n example of valid value: "${generateExample(fmt.pattern)}"`
       );
     }
   }
 };
+
+/**
+ * generateExample
+ * @param   {string|RegExp} pattern — a regex (or string) describing your format.
+ * @returns {string}           — a randomly generated string that matches `pattern`.
+ *
+ * Examples:
+ *   generateExample('\\d{2,8}')           // e.g. "4759"
+ *   generateExample(/US-[A-Z]{3}\\d{2}/)  // e.g. "US-XQJ84"
+ */
+export function generateExample(pattern: string | RegExp): string {
+  // normalize to RegExp
+  const regex =
+    pattern instanceof RegExp ? pattern : new RegExp(`^${pattern}$`);
+
+  // fallback: simple digit‐only patterns like \d{2,5}
+  const fallbackMatch = regex.source.match(/^\\d\{(\d+)(?:,(\d+))?\}$/);
+  if (fallbackMatch) {
+    const min = parseInt(fallbackMatch[1], 10);
+    const max = fallbackMatch[2] != null ? parseInt(fallbackMatch[2], 10) : min;
+    const len = min + Math.floor(Math.random() * (max - min + 1));
+    let s = "";
+    for (let i = 0; i < len; i++) {
+      s += Math.floor(Math.random() * 10);
+    }
+    return s;
+  }
+
+  // otherwise delegate to RandExp for full support
+  return new RandExp(regex).gen();
+}
 
 export const validate = async (ctx: Context) => {
   // parse JSON body
