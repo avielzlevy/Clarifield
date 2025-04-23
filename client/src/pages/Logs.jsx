@@ -57,8 +57,7 @@ const LogsPage = () => {
         if (status !== 200) {
           throw new Error(`Error ${status}: ${statusText}`);
         }
-        const parsedLogs = parseLogs(data);
-        setLogs(parsedLogs);
+        setLogs(data);
       } catch (err) {
         if (err.response && err.response.status === 401) {
           logout({ mode: 'bad_token' });
@@ -77,7 +76,7 @@ const LogsPage = () => {
     { field: 'ip', headerName: t('logs.ip_address'), width: 120 },
     { field: 'method', headerName: t('logs.method'), width: 100 },
     {
-      field: 'url', headerName: t('logs.url'), flex: 1, renderCell: (params) => (
+      field: 'path', headerName: t('logs.url'), flex: 1, renderCell: (params) => (
         <Box dir='ltr' sx={{ textAlign: 'left', width: '100%' }}>
           {params.value}
         </Box>

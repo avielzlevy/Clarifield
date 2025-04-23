@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       setAuth(false);
       if (mode === 'bad_token') {
         enqueueSnackbar('Session expired.\n Page will reload', { variant: 'info' });
-        setTimeout(() => window.location.reload(), 3000);
+        // setTimeout(() => window.location.reload(), 3000);
       } else if (mode === 'logout') {
         enqueueSnackbar('Logged out', { variant: 'info' });
       }

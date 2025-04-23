@@ -66,7 +66,7 @@ const PageContent = () => {
   useEffect(() => {
     if (token) {
       axios
-        .get(`${process.env.REACT_APP_API_URL}/api/token/verify`, {
+        .get(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(() => {
@@ -125,7 +125,7 @@ function NavBar({ theme, setTheme }) {
   const handleChangeUser = useCallback(() => {
     if (token) {
       axios
-        .get(`${process.env.REACT_APP_API_URL}/api/token/verify`, {
+        .get(`${process.env.REACT_APP_API_URL}/api/auth/verify`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(() => logout({ mode: 'logout' }))

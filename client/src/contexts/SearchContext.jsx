@@ -1,3 +1,4 @@
+//SearchContext.jsx
 import React, { createContext, useContext, useState, useMemo } from 'react';
 
 // Default context value for improved intellisense and fallback behavior

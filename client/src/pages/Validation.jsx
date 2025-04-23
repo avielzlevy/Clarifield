@@ -7,6 +7,7 @@ import axios from 'axios';
 // Adjust these imports to match your icon library
 import { Shield, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 import Loading from '../components/Loading';
+import { sendAnalytics } from '../utils/analytics';
 
 // Define a simple keyframes animation for the loading spinner
 const spinAnimation = '@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }';
@@ -53,7 +54,7 @@ function Validation() {
       const response = await validateJSON(value);
       if (response && response.data) {
         // Assume response.data is an array of violations when invalid
-        setValidationResult({ isValid: false, violations: response.data });
+        setValidationResult({ isValid: false, violations: response.data.errors });
       } else {
         setValidationResult({ isValid: true });
       }

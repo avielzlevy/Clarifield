@@ -25,7 +25,7 @@ function SignIn() {
       e.preventDefault();
       try {
         const { data } = await axios.post(
-          `${process.env.REACT_APP_API_URL}/api/signin`,
+          `${process.env.REACT_APP_API_URL}/api/auth/signin`,
           credentials
         );
         localStorage.setItem('username', data.username);

@@ -58,19 +58,19 @@ const DefinitionDialog = ({
       console.debug(error);
       enqueueSnackbar(t('error_fetching_naming_convention'), { variant: "error" });
     }
-  }, [logout,t]);
+  }, [logout, t]);
 
   // When the dialog opens or editedDefinition changes, initialize the form.
   useEffect(() => {
     fetchFormats();
     fetchNamingConvention();
-    if (editedDefinition&&mode === "edit") {
+    if (editedDefinition && mode === "edit") {
       setDefinition(editedDefinition);
       fetchAffectedItems({ name: editedDefinition.name, type: 'definition' });
     } else {
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems,mode]);
+  }, [editedDefinition, fetchFormats, fetchNamingConvention, fetchAffectedItems, mode]);
 
   // Validate the naming convention.
   const validateNamingConvention = useCallback(() => {
@@ -105,7 +105,7 @@ const DefinitionDialog = ({
         break;
     }
     return true;
-  }, [definition, namingConvention,t]);
+  }, [definition, namingConvention, t]);
 
   // Handle form submission.
   const handleSubmit = useCallback(async () => {
@@ -122,7 +122,7 @@ const DefinitionDialog = ({
       onClose();
       setRefreshSearchables((prev) => prev + 1);
       enqueueSnackbar(
-        `${t('definitions.definition')} ${t(`common.${mode}ed`)} ${t('common.successfully')}`,
+        `${t('common.definition')} ${t(`common.${mode}ed`)} ${t('common.successfully')}`,
         { variant: "success" }
       );
     } catch (error) {
@@ -140,7 +140,7 @@ const DefinitionDialog = ({
       }
       setDefinition({ name: "", format: "", description: "" });
     }
-  }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token,t]);
+  }, [definition, mode, fetchDefinitions, onClose, setRefreshSearchables, validateNamingConvention, logout, token, t]);
 
   const handleCancel = () => {
     // setDefinition({ name: "", format: "", description: "" });
@@ -160,8 +160,7 @@ const DefinitionDialog = ({
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Please fill out the details below to {mode === "add" ? "add" : "edit"} a definition.
-          {t('definitions.fill_in_fields_1')} {t(`common.${mode}`)} {t('definitions.definition')}.
+          {t('definitions.fill_all_fields_1')} {t(`common.${mode}`)} {t('common.definition')}.
         </DialogContentText>
         <TextField
           label={t('common.name')}
@@ -185,8 +184,8 @@ const DefinitionDialog = ({
               {...params}
               label={t('common.format')}
               fullWidth
-              error={mode==='edit' &&!formats[definition.format]}
-              helperText={mode==='edit' &&!formats[definition.format] &&`${definition.format} is not a valid format`}
+              error={mode === 'edit' && !formats[definition.format]}
+              helperText={mode === 'edit' && !formats[definition.format] && `${definition.format} is not a valid format`}
               margin="normal"
               placeholder="Select a format"
             />
