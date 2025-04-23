@@ -33,6 +33,7 @@
         "delete": "Delete",
         "deleted": "Deleted",
         "deleteing": "Deleting",
+        "failed": "Failed",
         "updated": "Updated",
         "save": "Save",
         "copy": "Copy",
@@ -60,10 +61,15 @@
         "successfully": "successfully",
         "delete_confirmation": "Delete Confirmation",
         "delete_sure": "Are you sure you want to delete: ",
+        "sure": "Are you sure?",
         "reporting": "Reporting",
         "report": "Report",
         "actions": "Actions",
-        "filter": "Filter"
+        "filter": "Filter",
+        "source_system": "Source System",
+        "source_system_field": "Source System Field",
+        "change_warning_1": "CAUTION: Changes to this item will",
+        "change_warning_2": " the following items:\n"
     },
     "home": {
         "error_fetching_items": "Error fetching items",

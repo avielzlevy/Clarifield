@@ -1,3 +1,5 @@
+// src/controllers/settingsController.ts
+
 import { Context } from "../deps.ts";
 import {
   toPascalCase,
@@ -22,83 +24,111 @@ import {
 
 const DATA_FILE = "./data/settings.json";
 
-const readSettings = async (): Promise<{ [key: string]: any }> => {
+interface Settings {
+  namingConvention: "snake_case" | "camelCase" | "PascalCase" | "kebab-case";
+  sourceSystems: string[];
+}
+
+const DEFAULT_SETTINGS: Settings = {
+  namingConvention: "snake_case",
+  sourceSystems: [],
+};
+
+const readSettings = async (): Promise<Settings> => {
   try {
-    const data = await Deno.readTextFile(DATA_FILE);
-    return JSON.parse(data);
+    const raw = await Deno.readTextFile(DATA_FILE);
+    return JSON.parse(raw) as Settings;
   } catch (e) {
     if (e instanceof Deno.errors.NotFound) {
-      //default settings
-      await Deno.writeTextFile(
-        DATA_FILE,
-        JSON.stringify({
-          namingConvention: "snake_case",
-        })
-      );
+      await writeSettings(DEFAULT_SETTINGS);
+      return { ...DEFAULT_SETTINGS };
     }
-    return {};
+    throw e;
   }
 };
 
-const writeSettings = async (settings: { [key: string]: any }) => {
-  await Deno.writeTextFile(DATA_FILE, JSON.stringify(settings, null, 2));
+const writeSettings = async (settings: Settings) => {
+  await Deno.writeTextFile(
+    DATA_FILE,
+    JSON.stringify(settings, null, 2),
+  );
 };
 
 export const getSettings = async (ctx: Context) => {
-  const changes = await readSettings();
-  ctx.response.body = changes;
+  const settings = await readSettings();
+  ctx.response.body = settings;
 };
 
 export const updateSettings = async (ctx: Context) => {
   const { value } = ctx.request.body({ type: "json" });
-  const { namingConvention } = await value;
+  const payload = await value;
+  const hasNaming = "namingConvention" in payload;
+  const hasSources = "sourceSystems" in payload;
 
-  if (!namingConvention) {
+  if (!hasNaming && !hasSources) {
     ctx.response.status = 400;
-    ctx.response.body = { message: "Invalid settings data" };
+    ctx.response.body = { message: "No valid settings fields provided." };
     return;
   }
 
-  const settings = await readSettings();
-  // add new fields
-  const updatedSettings = { ...settings, namingConvention };
-  await writeSettings(updatedSettings);
-  await ApplySettings(updatedSettings);
-  ctx.response.status = 201;
-  ctx.response.body = updatedSettings;
+  const existing = await readSettings();
+  const updated: Settings = {
+    namingConvention: hasNaming
+      ? payload.namingConvention
+      : existing.namingConvention,
+    sourceSystems: hasSources
+      ? (Array.isArray(payload.sourceSystems)
+          ? payload.sourceSystems
+          : existing.sourceSystems)
+      : existing.sourceSystems,
+  };
+
+  await writeSettings(updated);
+
+  // only re-apply naming convention transforms when that field changed
+  if (hasNaming) {
+    await applyNamingConvention(updated.namingConvention);
+  }
+
+  ctx.response.status = 200;
+  ctx.response.body = updated;
 };
 
-const ApplySettings = async (settings: { [key: string]: any }) => {
-  const definitions = await readDefinitions();
-  const entities = await readEntities();
-  const analytics = await readAnalytics();
-  let newDefinitions = definitions;
-  let newEntities = entities;
-  let newAnalytics = analytics;
-  switch (settings.namingConvention) {
+// pull out the renaming logic into its own helper
+const applyNamingConvention = async (convention: Settings["namingConvention"]) => {
+  const defs = await readDefinitions();
+  const ents = await readEntities();
+  const an  = await readAnalytics();
+
+  let newDefs = defs;
+  let newEnts = ents;
+  let newAnal = { ...an, definition: an.definition };
+
+  switch (convention) {
     case "camelCase":
-      newDefinitions = transformKeys(definitions, toCamelCase);
-      newEntities = transformEntityKeys(entities, toCamelCase, true);
-      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toCamelCase)};
+      newDefs = transformKeys(defs, toCamelCase);
+      newEnts = transformEntityKeys(ents, toCamelCase, true);
+      newAnal = { ...an, definition: transformKeys(an.definition, toCamelCase) };
       break;
     case "PascalCase":
-      newDefinitions = transformKeys(definitions, toPascalCase);
-      newEntities = transformEntityKeys(entities, toPascalCase, true);
-      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toPascalCase)};
+      newDefs = transformKeys(defs, toPascalCase);
+      newEnts = transformEntityKeys(ents, toPascalCase, true);
+      newAnal = { ...an, definition: transformKeys(an.definition, toPascalCase) };
       break;
     case "kebab-case":
-      newDefinitions = transformKeys(definitions, toKebabCase);
-      newEntities = transformEntityKeys(entities, toKebabCase, true);
-      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toKebabCase)};
+      newDefs = transformKeys(defs, toKebabCase);
+      newEnts = transformEntityKeys(ents, toKebabCase, true);
+      newAnal = { ...an, definition: transformKeys(an.definition, toKebabCase) };
       break;
     case "snake_case":
     default:
-      newDefinitions = transformKeys(definitions, toSnakeCase);
-      newEntities = transformEntityKeys(entities, toSnakeCase, true);
-      newAnalytics = {...analytics, definition: transformKeys(analytics.definition, toSnakeCase)};
+      newDefs = transformKeys(defs, toSnakeCase);
+      newEnts = transformEntityKeys(ents, toSnakeCase, true);
+      newAnal = { ...an, definition: transformKeys(an.definition, toSnakeCase) };
       break;
   }
-  await writeDefinitions(newDefinitions);
-  await writeEntities(newEntities);
-  await writeAnalytics(newAnalytics);
+
+  await writeDefinitions(newDefs);
+  await writeEntities(newEnts);
+  await writeAnalytics(newAnal);
 };

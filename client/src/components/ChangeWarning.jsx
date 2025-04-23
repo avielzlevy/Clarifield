@@ -15,9 +15,9 @@ function ChangeWarning({ items, level }) {
   // Memoize the tooltip message for performance optimization
   const message = useMemo(() => {
     const tooltipText = formatTooltipText(items);
-    return `${t('change_warning_1')} ${
-      level === 'warning' ? 'be affected' : 'break'
-  } ${t('change_warning_2')}${tooltipText}`;
+    return `${t('common.change_warning_1')} ${
+      level === 'warning' ? 'affect' : 'break'
+  } ${t('common.change_warning_2')}${tooltipText}`;
   }, [items, level,t]);
 
   return (

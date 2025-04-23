@@ -58,5 +58,3 @@ export const generateSampleObject = (schema) => {
   });
   return sampleObject;
 };
-
-// You can also move your handleCopy logic here if desired.

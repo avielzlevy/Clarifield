@@ -47,6 +47,8 @@ export const getDefinitions = async (): Promise<Record<string, Definition>> => {
       result[doc.name] = {
         format: doc.format,
         description: doc.description || "",
+        sourceSystem: doc.sourceSystem || "",
+        sourceSystemField: doc.sourceSystemField || "",
       };
     }
     return result;
@@ -75,7 +77,7 @@ export const getDefinition = async (
     }
     const doc = await definitionsCollection.findOne({ name });
     return doc
-      ? { format: doc.format, description: doc.description || "" }
+      ? { format: doc.format, description: doc.description || "",sourceSystem: doc.sourceSystem || "", sourceSystemField: doc.sourceSystemField || "" }
       : null;
   } else {
     const definitions = await getDefinitions();
@@ -108,6 +110,8 @@ export const addDefinition = async (
     definitions[name] = {
       format: definition.format,
       description: definition.description || "",
+      sourceSystem: definition.sourceSystem || "",
+      sourceSystemField: definition.sourceSystemField || "",
     };
     await Deno.writeTextFile(DATA_FILE, JSON.stringify(definitions, null, 2));
   }
@@ -145,6 +149,8 @@ export const updateDefinition = async (
     definitions[name] = {
       format: definition.format,
       description: definition.description || "",
+      sourceSystem: definition.sourceSystem || "",
+      sourceSystemField: definition.sourceSystemField || "",
     };
     await Deno.writeTextFile(DATA_FILE, JSON.stringify(definitions, null, 2));
   }
@@ -193,6 +199,8 @@ export const readDefinitions = async (): Promise<
       result[doc.name] = {
         format: doc.format,
         description: doc.description || "",
+        sourceSystem: doc.sourceSystem || "",
+        sourceSystemField: doc.sourceSystemField || "",
       };
     }
     return result;
