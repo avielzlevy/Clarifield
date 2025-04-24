@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { DataGrid } from '@mui/x-data-grid';
-import { TextField, Box, Tooltip, Typography } from '@mui/material';
+import { TextField, Box, Tooltip, Typography, MenuItem, Button, Menu } from '@mui/material';
 import { Trash2 as Trash, Pencil, Copy, Flag } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { enqueueSnackbar } from 'notistack';
 import { sendAnalytics } from '../utils/analytics';
 import { useSearch } from '../contexts/SearchContext';
 import { useFormats } from '../contexts/useFormats';
+import { generateSampleObject, determineRegexType } from '../utils/clipboardUtils'; // Assuming you have a utility function for generating sample objects
 
 function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleReportRow, type }) {
   const { auth } = useAuth();
@@ -15,6 +16,9 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
   const { search, setSearch } = useSearch();
   const { formats } = useFormats();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectionModel, setSelectionModel] = useState([]);
+  const [copyMenuAnchor, setCopyMenuAnchor] = useState(null);
+
 
   // Fetch locale dynamically based on language
   const [locale, setLocale] = useState(undefined);
@@ -54,6 +58,106 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
   const handleSearchChange = useCallback((event) => {
     setSearchTerm(event.target.value);
   }, []);
+
+
+
+  const handleMultiCopy = useCallback(
+    async (mode) => {
+      // 1️⃣ gather the selected row objects
+      const selectedRows = selectionModel
+        .map((id) => rows.find((row) => row.id === id))
+        .filter(Boolean);
+
+      if (selectedRows.length === 0) {
+        enqueueSnackbar(t('common.nothing_selected'), { variant: 'warning' });
+        return;
+      }
+
+      let clipboardItems;
+
+      if (mode === 'table') {
+        const headerCells = columns
+          .flatMap((col) =>
+            col.field === 'format'
+              ? [
+                `<th style="border:1px solid #ddd;padding:8px;">${t('common.type')}</th>`,
+                `<th style="border:1px solid #ddd;padding:8px;">${col.headerName}</th>`,
+              ]
+              : [`<th style="border:1px solid #ddd;padding:8px;">${col.headerName}</th>`]
+          )
+          .join('');
+
+        let html = `
+      <table dir="ltr" style="border-collapse:collapse;width:100%">
+        <thead style="background:#f2f2f2">
+          <tr>${headerCells}</tr>
+        </thead>
+        <tbody>
+    `;
+
+        // 2️⃣ For each row, emit a <td> for every column – but split "format" into [type, pattern]
+        selectedRows.forEach((row) => {
+          const rowCells = columns
+            .flatMap((col) => {
+              if (col.field === 'format') {
+                const pattern = formats[row.format]?.pattern || '';
+                const type = determineRegexType(pattern);
+                return [
+                  `<td style="border:1px solid #ddd;padding:8px;">${type}</td>`,
+                  `<td style="border:1px solid #ddd;padding:8px;">${pattern}</td>`,
+                ];
+              }
+              return [
+                `<td style="border:1px solid #ddd;padding:8px;">${row[col.field] ?? ''}</td>`,
+              ];
+            })
+            .join('');
+          html += `<tr>${rowCells}</tr>`;
+        });
+
+        html += `</tbody></table>`;
+
+        // 3️⃣ Copy to clipboard as HTML + plaintext
+        const blobHtml = new Blob([html], { type: 'text/html' });
+        const blobText = new Blob([html.replace(/<\/?[^>]+(>|$)/g, '')], {
+          type: 'text/plain',
+        });
+        clipboardItems = [
+          new ClipboardItem({ 'text/html': blobHtml, 'text/plain': blobText }),
+        ];
+      } else if (mode === 'object') {
+        // JSON array of row-objects (sans id)
+        const data = selectedRows.map((row) => {
+          const obj = {};
+          columns.forEach((col) => {
+            if (col.field !== 'id') obj[col.field] = row[col.field];
+          });
+          return obj;
+        });
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'text/plain' });
+        clipboardItems = [new ClipboardItem({ 'text/plain': blob })];
+      } else {
+        // example: generate sample object per definition schema
+        const schema = selectedRows.map((row) => {
+          const pattern = formats[row.format]?.pattern || '';
+          return {
+            name: row.id,
+            type: determineRegexType(pattern),
+            format: pattern,
+            description: row.description || '',
+          };
+        });
+        const sample = generateSampleObject(schema);
+        const blob = new Blob([JSON.stringify(sample, null, 2)], { type: 'text/plain' });
+        clipboardItems = [new ClipboardItem({ 'text/plain': blob })];
+      }
+
+      await navigator.clipboard.write(clipboardItems);
+      enqueueSnackbar(t('common.copied'), { variant: 'success' });
+      sendAnalytics(selectionModel.join(','), type, 1);
+    },
+    [selectionModel, rows, columns, formats, t, type],
+  );
 
   const filteredRows = useMemo(() => {
     if (!searchTerm) return rows;
@@ -151,6 +255,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
         renderCell: (params) =>
           auth ? (
             <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: "center", mt: 1.5, }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-around', width: '100%', alignItems: "center", mt: 1.5, }}>
               <Tooltip title="Edit" arrow>
                 <Pencil style={{ cursor: 'pointer' }} onClick={() => handleEditRow(params.row)} />
               </Tooltip>
@@ -178,6 +283,33 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
           size="small"
           sx={{ maxWidth: 500 }}
         />
+        {selectionModel.length > 0 && (
+          <Box>
+            <Button
+              variant="outlined"
+              onClick={(e) => setCopyMenuAnchor(e.currentTarget)}
+              disabled={selectionModel.length === 0}
+            >
+              {t('common.copy')} ({selectionModel.length})
+            </Button>
+            <Menu
+              anchorEl={copyMenuAnchor}
+              open={Boolean(copyMenuAnchor)}
+              onClose={() => setCopyMenuAnchor(null)}
+            >
+              {['table', 'object', 'example'].map((mode) => (
+                <MenuItem
+                  key={mode}
+                  onClick={() => {
+                    handleMultiCopy(mode);
+                    setCopyMenuAnchor(null);
+                  }}
+                >
+                  {t('common.copy_as')} {t(`common.${mode}`)}
+                </MenuItem>
+              ))}
+            </Menu>
+          </Box>)}
       </Box>
       <DataGrid
         rows={filteredRows}
@@ -187,9 +319,11 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
         disableColumnFilter
         disableColumnSelector
         disableDensitySelector
-        disableRowSelectionOnClick
         localeText={locale}
         isCellEditable={() => false}
+        checkboxSelection
+        rowSelectionModel={selectionModel}
+        onRowSelectionModelChange={(newSel) => setSelectionModel(newSel)}
         sx={{
           height: 'calc(100vh - 200px)',
           maxWidth: '100%',

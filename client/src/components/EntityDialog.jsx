@@ -322,7 +322,6 @@ function EntityDialog({
         enqueueSnackbar('Failed to copy data to clipboard.', { variant: 'error' });
       }
     } else if (type === 'example') {
-      // ... (existing code unchanged for example type)
       const sampleData = generateSampleObject(data);
       const clipboardRawData = {
         [entity.label]: sampleData,

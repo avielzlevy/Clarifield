@@ -37,6 +37,8 @@ function Definitions() {
       name,
       format: defData.format,
       description: defData.description,
+      sourceSystem: defData.sourceSystem,
+      sourceSystemField: defData.sourceSystemField,
     })),
     [definitions]
   );
@@ -91,14 +93,23 @@ function Definitions() {
   }, [actionedDefinition, fetchDefinitions, setRefreshSearchables, token,t]);
 
   const columns = useMemo(()=>[
-    { field: 'name', headerName: t('common.name'), flex: 1, editable: true },
+    { field: 'name', headerName: t('common.name'), flex: 1 },
     {
       field: 'format',
       headerName: t('common.format'),
       flex: 1,
-      editable: true,
     },
-    { field: 'description', headerName: t('common.description'), flex: 2, editable: true },
+    { field: 'description', headerName: t('common.description'), flex: 2 },
+    {
+      field: 'sourceSystem',
+      headerName: t('common.source_system'),
+      flex: 1,
+    },
+    {
+      field: 'sourceSystemField',
+      headerName: t('common.source_system_field'),
+      flex: 1,
+    },
   ],[t]);
 
   return (

@@ -67,7 +67,7 @@ export const getDefinition = async (
 export const addDefinition = async (ctx: Context) => {
   try {
     const { value } = ctx.request.body({ type: "json" });
-    const { name, format, description } = await value;
+    const { name, format, description,sourceSystem,sourceSystemField } = await value;
 
     if (!name || !format) {
       ctx.response.status = 400;
@@ -77,6 +77,8 @@ export const addDefinition = async (ctx: Context) => {
     await defRepo.addDefinition(name, {
       format,
       description: description || "",
+      sourceSystem: sourceSystem || "",
+      sourceSystemField: sourceSystemField || "",
     });
     // Record the change before adding the definition.
     await addChange({
@@ -84,10 +86,10 @@ export const addDefinition = async (ctx: Context) => {
       name,
       timestamp: new Date().toISOString(),
       before: "",
-      after: { name, format, description },
+      after: { name, format, description,sourceSystem, sourceSystemField },
     });
     ctx.response.status = 201;
-    ctx.response.body = { name, format, description };
+    ctx.response.body = { name, format, description,sourceSystem, sourceSystemField };
   } catch (e) {
     if (e instanceof Error) {
       if (e.message && e.message.includes("already exists")) {
@@ -165,7 +167,7 @@ export const updateDefinition = async (
   }
   try {
     const { value } = ctx.request.body({ type: "json" });
-    const { format, description } = await value;
+    const { format, description, sourceSystem, sourceSystemField } = await value;
     if (!format) {
       ctx.response.status = 400;
       ctx.response.body = { message: "Invalid definition data" };
@@ -180,13 +182,15 @@ export const updateDefinition = async (
     await defRepo.updateDefinition(name, {
       format,
       description: description || "",
+      sourceSystem: sourceSystem || "",
+      sourceSystemField: sourceSystemField || "",
     });
     await addChange({
       type: "definitions",
       name,
       timestamp: new Date().toISOString(),
       before: existingDefinition,
-      after: { name, format, description },
+      after: { name, format, description, sourceSystem, sourceSystemField },
     });
     ctx.response.status = 204;
   } catch (e) {
