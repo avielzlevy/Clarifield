@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -27,6 +27,14 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
   const { setRefreshSearchables } = useSearch();
   const { fetchAffectedItems, affected } = useAffectedItems();
   const token = localStorage.getItem("token");
+  const buttonRef = useRef();
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault(); // prevent line breaks in textarea etc.
+      handleSubmit();
+    }
+  };
 
   // form state
   const [definition, setDefinition] = useState({
@@ -82,6 +90,7 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
         sourceSystemField: "",
       });
     }
+
   }, [mode, editedDefinition, fetchFormats, fetchSettings, fetchAffectedItems]);
 
   // validation (unchanged)
@@ -181,6 +190,29 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
     t,
     onClose,
   ]);
+
+  useEffect(() => {
+    const listener = (e) => {
+      if (e.key === 'Enter') {
+        const tag = e.target.tagName.toLowerCase();
+        const isTextArea = tag === 'textarea';
+
+        if (!isTextArea) {
+          e.preventDefault();
+          handleSubmit();
+        }
+      }
+    };
+
+    if (open) {
+      window.addEventListener('keydown', listener);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', listener);
+    };
+  }, [open, handleSubmit]);
+
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
