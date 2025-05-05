@@ -150,7 +150,7 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
       fetchDefinitions();
       setRefreshSearchables((prev) => prev + 1);
       enqueueSnackbar(
-        `${t("definitions.definition")} ${t(`common.${mode}ed`)} ${t("common.successfully")}`,
+        `${t("common.definition")} ${t(`common.${mode}ed`)} ${t("common.successfully")}`,
         { variant: "success" }
       );
 
@@ -163,7 +163,7 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
       } else {
         console.error(`Error ${mode} definition:`, error);
         enqueueSnackbar(
-          `${t("common.error")} ${t(`common.${mode}ing`)} ${t("definitions.definition")}`,
+          `${t("common.error")} ${t(`common.${mode}ing`)} ${t("common.definition")}`,
           { variant: "error" }
         );
       }
