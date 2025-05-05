@@ -115,7 +115,7 @@ const DefinitionDialog = ({ mode, open, onClose, editedDefinition }) => {
         }
         break;
       case "PascalCase":
-        if (!/^[A-Z][a-z]+([A-Z][a-z]*)*$/.test(name)) {
+        if (!/^[A-Z][a-z]*([A-Z][a-z]*)*$/.test(name)) {
           setNamingConventionError(
             `${t("definitions.bad_naming_convention")} ${t("common.pascal_case")}`
           );
