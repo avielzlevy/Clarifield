@@ -135,6 +135,8 @@ export const updateDefinition = async (
         $set: {
           format: definition.format,
           description: definition.description || "",
+          sourceSystem: definition.sourceSystem || "",
+          sourceSystemField: definition.sourceSystemField || "",
         },
       }
     );
