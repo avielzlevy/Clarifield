@@ -303,7 +303,7 @@ function CustomDataGrid({ rows, columns, handleDeleteRow, handleEditRow, handleR
         columns={columnsWithCopy}
         pageSize={10}
         rowsPerPageOptions={[50]}
-        disableColumnFilter
+        keepNonExistentRowsSelected
         disableColumnSelector
         disableDensitySelector
         localeText={locale}

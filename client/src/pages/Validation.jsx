@@ -53,7 +53,7 @@ function Validation() {
       const response = await validateJSON(value);
       if (response && response.data) {
         // Assume response.data is an array of violations when invalid
-        setValidationResult({ isValid: false, violations: response.data });
+        setValidationResult({ isValid: false, violations: response.data.errors });
       } else {
         setValidationResult({ isValid: true });
       }
